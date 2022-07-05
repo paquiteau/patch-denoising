@@ -92,8 +92,12 @@ class HybridPCADenoiser(BaseSpaceTimeDenoiser):
 
 
 class RawSVDDenoiser(BaseSpaceTimeDenoiser):
-    def __init__(self, patch_scale, patch_overlap, threshold_value=1.0):
+    def __init__(
+        self, patch_shape, patch_overlap, threshold_value=1.0, recombination="weighted"
+    ):
         self._threshold_val = threshold_value
+
+        super().__init__(patch_shape, patch_overlap, recombination)
 
     def denoise(self, input_data, mask=None, threshold_scale=1.0):
         self._threshold = self._threshold_val * threshold_scale

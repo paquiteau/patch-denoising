@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.linalg import svd, eigh
+from scipy.integrate import quad
 
 
 def svd_analysis(input_data):
