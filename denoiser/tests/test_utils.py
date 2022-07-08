@@ -16,9 +16,13 @@ from itertools import product
 
 parametrize_random_matrix = pytest.mark.parametrize(
     "matrix",
-    [{"cplx": a, "shape": b, "sigma":c} for a,b,c in product([True, False], [(100, 50), (100, 10)], [0.1, 1, 10])],
+    [
+        {"cplx": a, "shape": b, "sigma": c}
+        for a, b, c in product([True, False], [(100, 50), (100, 10)], [0.1, 1, 10])
+    ],
     indirect=True,
 )
+
 
 @pytest.fixture()
 def matrix(request):
@@ -29,7 +33,8 @@ def matrix(request):
         return rng.randn(M, N) * sigma
     return rng.randn(M, N) * sigma + 1j * rng.randn(M, N) * sigma
 
-@pytest.mark.parametrize("beta", np.arange(1,10)*0.1)
+
+@pytest.mark.parametrize("beta", np.arange(1, 10) * 0.1)
 def test_marshenko_pastur_median(beta, n_runs=10000, n_samples=1000):
     """Test the median estimation of Marshenko Pastur law"""
     print(beta)
