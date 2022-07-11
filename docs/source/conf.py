@@ -34,7 +34,7 @@ extensions = [
     "sphinx.ext.doctest",
     "sphinx.ext.intersphinx",
     "sphinx.ext.mathjax",
-    "sphinx.ext.linkcode",
+    "sphinx.ext.viewcode",
     "sphinx_gallery.gen_gallery",
     "sphinx.ext.napoleon",
     "autoapi.extension"
@@ -84,12 +84,3 @@ sphinx_gallery_conf = {
     },
 }
 
-
-# --- link code to github ---
-def linkcode_resolve(domain, info):
-    if domain != "py":
-        return None
-    if not info["module"]:
-        return None
-    filename = info["module"].replace(".", "/")
-    return f"https://github.com/paquiteau/patch-denoising/blob/master/{filename}.py"
