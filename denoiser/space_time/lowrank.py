@@ -30,7 +30,7 @@ class MPPCADenoiser(BaseSpaceTimeDenoiser):
         self.input_denoising_kwargs["threshold_scale"] = threshold_scale
 
     def _patch_processing(patch, patch_slice=None, threshold_scale=1.0):
-
+        """Process a pach with the MP-PCA method."""
         p_center, eig_vals, eig_vec, p_tmean = eig_analysis(patch)
         eig_vals /= len(eig_vec)
         maxidx = 0
@@ -58,7 +58,17 @@ class MPPCADenoiser(BaseSpaceTimeDenoiser):
 
 
 class HybridPCADenoiser(BaseSpaceTimeDenoiser):
-    """Denoising using the Hybrid-PCA thresholding method."""
+    """Denoising using the Hybrid-PCA thresholding method.
+
+    Parameters
+    ----------
+    patch_shape: tuple
+        The patch shape
+    patch_overlap: tuple
+        The amount of overlap between patches in each direction
+    recombination: str
+        The method of reweighting patches. either "weighed" or "average"
+    """
 
     def denoise(self, input_data, mask=None, noise_std=1.0):
         """Denoise using the Hybrid-PCA method.
@@ -73,7 +83,7 @@ class HybridPCADenoiser(BaseSpaceTimeDenoiser):
         return super().denoise(input_data, mask)
 
     def _patch_processing(self, patch, patch_slice=None):
-
+        """Process a pach with the Hybrid-PCA method."""
         varest = np.mean(self._noise_apriori[patch_slice])
         p_center, eig_vals, eig_vec, p_tmean = eig_analysis(patch)
         n_sval_max = len(eig_vec)
@@ -96,6 +106,19 @@ class HybridPCADenoiser(BaseSpaceTimeDenoiser):
 
 
 class RawSVDDenoiser(BaseSpaceTimeDenoiser):
+    """
+    Classical Patch wise singular value thresholding denoiser.
+
+    Parameters
+    ----------
+    patch_shape: tuple
+        The patch shape
+    patch_overlap: tuple
+        The amount of overlap between patches in each direction
+    recombination: str
+        The method of reweighting patches. either "weighed" or "average"
+    """
+
     def __init__(
         self, patch_shape, patch_overlap, threshold_value=1.0, recombination="weighted"
     ):
@@ -149,9 +172,11 @@ class NordicDenoiser(RawSVDDenoiser):
     Parameters
     ----------
     patch_shape: tuple
+        The patch shape
     patch_overlap: tuple
-    noise_std: numpy.ndarray or float
-        A map of an initial noise standart deviation approximation
+        The amount of overlap between patches in each direction
+    recombination: str
+        The method of reweighting patches. either "weighed" or "average"
     """
 
     def denoise(self, input_data, mask=None, noise_std=1.0, n_iter_threshold=10):
@@ -220,6 +245,23 @@ def _opt_fro_shrink(singvals, beta=1):
 
 
 class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
+    """
+    Optimal Shrinkage of singular values for a specific norm.
+
+    Parameters
+    ----------
+    patch_shape: tuple
+        The patch shape
+    patch_overlap: tuple
+        The amount of overlap between patches in each direction
+    loss: str
+        The loss determines the choise of the optimal thresholding function associated to it.
+        `"fro"`, `"nuc"` and `"op"` are supported, for the frobenius norm, the nuclear norm and the
+        operator norm, respectively.
+    recombination: str
+        The method of reweighting patches. either "weighted" or "average"
+    """
+
     _OPT_LOSS_SHRINK = MappingProxyType(
         {
             "fro": _opt_fro_shrink,

@@ -7,10 +7,12 @@ class BaseSpaceTimeDenoiser:
 
     Parameters
     ----------
-    patch_shape: tuple
-    patch_overlap: tuple
-    recombinaison: str
-
+    patch_shape : tuple
+        The patch shape
+    patch_overlap : tuple
+        The amount of overlap between patches in each direction
+    recombination : str
+        The method of reweighting patches. either "weighed" or "average"
     """
 
     def __init__(self, patch_shape, patch_overlap, recombination="weighted"):
@@ -22,6 +24,9 @@ class BaseSpaceTimeDenoiser:
 
     def denoise(self, input_data, mask=None):
         """Denoise the input_data, according to mask.
+
+        Patches are extracted sequentially and process by the implemented `_patch_processing` function.
+        Only patches which have at least a voxel in the mask ROI are processed.
 
         Parameters
         ----------
@@ -43,7 +48,6 @@ class BaseSpaceTimeDenoiser:
                 The weight associated to each voxel.
             noise_std_map: numpy.ndarray
                 If available, a noise std estimation for each voxel.
-
         """
         data_shape = input_data.shape
 
