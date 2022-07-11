@@ -28,7 +28,7 @@ jobs:
       - name: Run Tests
         shell: bash -l {0}
         run: |
-          pytest -n 4
+          pytest -n auto
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
