@@ -28,14 +28,16 @@ jobs:
       - name: Run Tests
         shell: bash -l {0}
         run: |
-          pytest -n auto
+          pytest -n auto --cov=denoiser --cov-report xml:coverage.xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: unittests # optional
           file: coverage.xml
-          flags: unittests
+          name: codecov-umbrella # optional
+          fail_ci_if_error: true # optional (default = false)
+          verbose: true # optional (default = false)
           
   makedocs:
     name: Deploy API Documentation
