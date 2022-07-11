@@ -187,7 +187,7 @@ class NordicDenoiser(RawSVDDenoiser):
 
 # From MATLAB implementation
 def _opt_loss_x(y, beta):
-    """Compute (8) of :cite:`donoho2017`."""
+    """Compute (8) of donoho2017."""
     tmp = y**2 - beta - 1
     return np.sqrt(0.5 * (tmp + np.sqrt((tmp**2) - (4 * beta)))) * (
         y >= (1 + np.sqrt(beta))

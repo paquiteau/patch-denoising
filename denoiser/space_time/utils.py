@@ -84,7 +84,7 @@ def eig_analysis(input_data, max_eig_val=10):
 def eig_synthesis(data_centered, eig_vec, mean, max_val):
     """Reconstruction the denoise patch with truncated eigen decomposition.
 
-    This implements equations (1) and (2) of :cite:`manjon2013`
+    This implements equations (1) and (2) of manjon2013
     """
     eig_vec[:, :-max_val] = 0
     return ((data_centered @ eig_vec) @ eig_vec.conj().T) + mean
