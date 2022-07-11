@@ -4,7 +4,10 @@ from scipy.integrate import quad
 
 
 def svd_analysis(input_data):
-    """Return the centered SVD decomposition  X = U @ (S * Vt) + M.
+    """Return the centered SVD decomposition.
+
+    U, S, Vt and M are compute such that:
+    ``X = U @ (S * Vt) + M.``
 
     Parameters
     ----------
@@ -25,7 +28,7 @@ def svd_analysis(input_data):
 
 def svd_synthesis(u_vec, s_vals, v_vec, mean, idx):
     """
-    Reconstruct X= (U @ (S * V)) + M with only the max_idx greatest component.
+    Reconstruct ``X = (U @ (S * V)) + M`` with only the max_idx greatest component.
 
     U, S, V must be sorted in decreasing order.
 
@@ -105,10 +108,10 @@ def marshenko_pastur_median(beta, eps=1e-7):
 
     Notes
     -----
-    This method Solve F(x) = 1/2 by dichotomy with
+    This method Solve :math:`F(x) = 1/2` by dichotomy with
     .. math ::
 
-    F(x) = \int_{\beta_{-}}^{x} \frac{\sqrt{(\beta_{+}-t)(t-\beta_{-})}}{2\pi\beta t} \mathrm{d}t
+        F(x) = \int_{\beta_{-}}^{x} \frac{\sqrt{(\beta_{+}-t)(t-\beta_{-})}}{2\pi\beta t} \mathrm{d}t
 
     The integral is computed using scipy.integrate.quad
     """
