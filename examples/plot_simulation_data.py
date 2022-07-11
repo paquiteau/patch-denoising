@@ -14,9 +14,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-from denoiser.data.phantom import mr_shepp_logan_t2_star, g_factor_map
-from denoiser.data.activations import add_activations
-from denoiser.data.noise import add_temporal_gaussian_noise
+from denoiser.simulation.phantom import mr_shepp_logan_t2_star, g_factor_map
+from denoiser.simulation.activations import add_activations
+from denoiser.simulation.noise import add_temporal_gaussian_noise
 
 #%%
 # Setup the parameters for the simulation and noise
