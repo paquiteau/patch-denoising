@@ -19,4 +19,4 @@ def add_activations(volume, n_frames):
         The temporal sequence of volume with activations.
     """
 
-    return np.repeat(volume[...,np.newaxis], n_frames, axis=-1)
+    return np.repeat(volume[..., np.newaxis], n_frames, axis=-1)
