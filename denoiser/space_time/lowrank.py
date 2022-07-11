@@ -1,6 +1,6 @@
 import numpy as np
 from .base import BaseSpaceTimeDenoiser
-from utils import (
+from .utils import (
     eig_analysis,
     eig_synthesis,
     marshenko_pastur_median,
@@ -17,8 +17,12 @@ class MPPCADenoiser(BaseSpaceTimeDenoiser):
 
     Parameters
     ----------
-    patch_shape: tuple
-    patch_overlap: tuple
+    patch_shape : tuple
+        The patch shape
+    patch_overlap : tuple
+        The amount of overlap between patches in each direction
+    recombination : str
+        The method of reweighting patches. either "weighed" or "average"
     """
 
     def __init__(self, patch_shape, patch_overlap, threshold_scale, **kwargs):
