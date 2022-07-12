@@ -9,6 +9,7 @@ from denoiser.space_time.utils import (
     eig_analysis,
     eig_synthesis,
     marshenko_pastur_median,
+    estimate_noise,
 )
 
 from itertools import product
@@ -60,3 +61,17 @@ def test_marshenko_pastur_median(beta, n_runs=10000, n_samples=1000):
 
     # TODO: increase precision of montecarlo simulation
     assert abs(integral_median - montecarlo_median) <= 0.01
+
+@pytest.fixture(scope="function")
+def medium_random_matrix(rng):
+    shape=(200, 200, 100)
+    return rng.randn(*shape)
+
+@pytest.mark.parametrize("block_dim", range(1,6))
+def test_noise_estimation(medium_random_matrix, block_dim):
+
+    noise_map = estimate_noise(medium_random_matrix, block_dim)
+
+    real_std = np.nanstd(medium_random_matrix)
+
+    assert np.nanstd(noise_map) <= 0.2 * real_std
