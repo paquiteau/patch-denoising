@@ -1,5 +1,5 @@
 Denoiser descriptions
-=============================
+=====================
 
 
 Patch-denoiser is a python implementation of different local low rank method for denoising, targeting fMRI thermal noise removal (ie 4D data)
