@@ -22,13 +22,15 @@ def load_complex_nifti(mag_file, phase_file, filename=None):
         The output filename
     """
     if not NIBABEL_AVAILABLE:
-        raise RuntimeError("nibabel is not available, please install it to load experimental data")
+        raise RuntimeError(
+            "nibabel is not available, please install it to load experimental data"
+        )
 
     mag = nib.load(mag_file).get_fdata()
     phase = nib.load(phase_file).get_fdata()
     print(np.min(phase), np.max(phase))
     print(np.min(mag), np.max(mag))
-    img = mag * np.exp(1j*phase)
+    img = mag * np.exp(1j * phase)
 
     if filename is not None:
         np.save(filename, img)

@@ -1,6 +1,7 @@
 import numpy as np
 from .utils import get_patch_locs
 
+
 class BaseSpaceTimeDenoiser:
     """
     Base Class for Patch-based denoising methods for dynamical data.
@@ -25,7 +26,8 @@ class BaseSpaceTimeDenoiser:
     def denoise(self, input_data, mask=None):
         """Denoise the input_data, according to mask.
 
-        Patches are extracted sequentially and process by the implemented `_patch_processing` function.
+        Patches are extracted sequentially and process by the implemented
+        `_patch_processing` function.
         Only patches which have at least a voxel in the mask ROI are processed.
 
         Parameters
@@ -61,9 +63,7 @@ class BaseSpaceTimeDenoiser:
         patchs_weight = np.zeros(data_shape[:-1], np.float32)
         noise_std_estimate = np.zeros(data_shape[:-1], dtype=np.float32)
 
-        for patch_tl in get_patch_locs(
-            patch_shape, patch_overlap, data_shape[:-1]
-        ):
+        for patch_tl in get_patch_locs(patch_shape, patch_overlap, data_shape[:-1]):
 
             patch_slice = tuple(
                 slice(tl, tl + ps) for tl, ps in zip(patch_tl, patch_shape)
@@ -71,10 +71,7 @@ class BaseSpaceTimeDenoiser:
             if not np.any(mask[patch_slice]):
                 continue  # patch is outside the mask.
             # building the casoratti matrix
-            patch = np.reshape(
-                input_data[patch_slice],
-                (-1, input_data.shape[-1]),
-            )
+            patch = np.reshape(input_data[patch_slice], (-1, input_data.shape[-1]))
 
             p_denoise, *extras = self._patch_processing(
                 patch,
@@ -126,4 +123,3 @@ class BaseSpaceTimeDenoiser:
                 + " this makes an ill-conditioned matrix for SVD.",
             )
         return pp
-

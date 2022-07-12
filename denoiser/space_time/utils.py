@@ -177,8 +177,7 @@ def get_patch_locs(p_shape, p_ovl, v_shape):
     for v_s, p_s, p_o in zip(v_shape, p_shape, p_ovl):
         if p_o >= p_s:
             raise ValueError(
-                "Overlap should be a non-negative integer"
-                + "smaller than patch_size",
+                "Overlap should be a non-negative integer smaller than patch_size",
             )
         last_idx = v_s - p_s
         range_ = np.arange(0, last_idx, p_s - p_o, dtype=np.int32)

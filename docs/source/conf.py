@@ -29,15 +29,15 @@ author = "Pierre-Antoine Comby"
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-#    "sphinx.ext.autodoc",
-#    "sphinx.ext.autosummary",
+    #    "sphinx.ext.autodoc",
+    #    "sphinx.ext.autosummary",
     "sphinx.ext.doctest",
     "sphinx.ext.intersphinx",
     "sphinx.ext.mathjax",
     "sphinx.ext.viewcode",
- #   "sphinx_gallery.gen_gallery",
+    #   "sphinx_gallery.gen_gallery",
     "sphinx.ext.napoleon",
-    "autoapi.extension"
+    "autoapi.extension",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -71,8 +71,8 @@ html_theme = "pydata_sphinx_theme"
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 html_context = {
-   # ...
-   "default_mode": "light"
+    # ...
+    "default_mode": "light"
 }
 
 sphinx_gallery_conf = {
@@ -83,4 +83,3 @@ sphinx_gallery_conf = {
         "scipy": "http://docs.scipy.org/doc/scipy-0.17.0/reference",
     },
 }
-
