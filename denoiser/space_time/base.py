@@ -1,5 +1,5 @@
 import numpy as np
-
+from .utils import get_patch_locs
 
 class BaseSpaceTimeDenoiser:
     """
@@ -61,7 +61,7 @@ class BaseSpaceTimeDenoiser:
         patchs_weight = np.zeros(data_shape[:-1], np.float32)
         noise_std_estimate = np.zeros(data_shape[:-1], dtype=np.float32)
 
-        for patch_tl in self.__get_patch_locs(
+        for patch_tl in get_patch_locs(
             patch_shape, patch_overlap, data_shape[:-1]
         ):
 
@@ -127,47 +127,3 @@ class BaseSpaceTimeDenoiser:
             )
         return pp
 
-    def __get_patch_locs(self, p_shape, p_ovl, v_shape):
-
-        """
-        Get all the patch top-left corner locations.
-
-        Parameters
-        ----------
-        vol_shape : tuple
-            The volume shape
-        patch_shape : tuple
-            The patch shape
-        patch_overlap : tuple
-            The overlap of patch for each dimension.
-
-        Returns
-        -------
-        numpy.ndarray
-            All the patch top-left corner locations.
-        """
-        # Create an iterator for all the possible patches top-left corner location.
-        if len(v_shape) != len(p_shape) or len(v_shape) != len(p_ovl):
-            raise ValueError("Dimension mismatch between the arguments.")
-
-        ranges = []
-        for v_s, p_s, p_o in zip(v_shape, p_shape, p_ovl):
-            if p_o >= p_s:
-                raise ValueError(
-                    "Overlap should be a non-negative integer"
-                    + "smaller than patch_size",
-                )
-            last_idx = v_s - p_s
-            range_ = np.arange(0, last_idx, p_s - p_o, dtype=np.int32)
-            if range_[-1] < last_idx:
-                range_ = np.append(range_, last_idx)
-            ranges.append(range_)
-        # fast ND-Cartesian product from https://stackoverflow.com/a/11146645
-        patch_locs = np.empty(
-            [len(arr) for arr in ranges] + [len(p_shape)],
-            dtype=np.int32,
-        )
-        for idx, coords in enumerate(np.ix_(*ranges)):
-            patch_locs[..., idx] = coords
-
-        return patch_locs.reshape(-1, len(p_shape))
