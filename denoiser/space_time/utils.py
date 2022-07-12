@@ -193,3 +193,23 @@ def get_patch_locs(p_shape, p_ovl, v_shape):
         patch_locs[..., idx] = coords
 
     return patch_locs.reshape(-1, len(p_shape))
+
+
+def estimate_noise(noise_sequence, block_size=1):
+    """Estimate the temporal noise standard deviation of a noise only sequence."""
+
+    volume_shape = noise_sequence.shape[:-1]
+    noise_map = np.empty(volume_shape)
+    patch_shape = (block_size,) * len(volume_shape)
+    patch_overlap = (block_size - 1,) * len(volume_shape)
+
+    for patch_tl in get_patch_locs(patch_shape, patch_overlap, volume_shape):
+        patch_slice = tuple(
+            slice(ptl, ptl + ps) for ptl, ps in zip(patch_tl, patch_shape)
+        )
+        patch_center_img = tuple(
+            slice(ptl + ps // 2, ptl + ps // 2 + 1)
+            for ptl, ps in zip(patch_tl, patch_shape)
+        )
+        noise_map[patch_center_img] = np.std(noise_sequence[patch_slice])
+    return noise_map
