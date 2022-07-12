@@ -50,8 +50,7 @@ Consider a sequence of image or volume. From this image, patches are extracted, 
    Where :math:`M = \langle X \rangle` is the mean of each row of :math:`X`, and :math:`U,S,V^T` is the SVD decomposition of :math:`X-M`.
    In particular, :math:`S=\mathrm{diag}(\sigma_1, \dots, \sigma_n)`
 
-
-   The threshold function is :math:`\mathcal{T}(S) = S'` where :math:`S'` is typically sparser than :math:`S`.
+   The processing of the singular values by a threshold function :math:`\eta(\sigma_i) = \sigma_i'` yields  new (typically sparser) singular values :math:`S'`
 
    Then the processed patch is defined as:
 
@@ -78,14 +77,53 @@ Consider a sequence of image or volume. From this image, patches are extracted, 
 Raw Singular Value Thresholding
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+For raw singular value thresholding, the threshold function is simply a hard threshold on the singular value, according to a provided threshold.
+
+.. math::
+
+   \eta_\tau(\sigma_i) = \begin{cases}
+   \sigma_i & \text{if}\quad \sigma_i > \tau \\
+   0 & \text{otherwise}
+   \end{cases}
+
+.. seealso::
+   :class:`~denoiser.space_time.lowrank.RawSVDDenoiser`
+        For the implementation.
+
 MP-PCA Thresholding
 ~~~~~~~~~~~~~~~~~~~
+
+MP-PCA [1]_ uses the Marshenko-Pastur distribution to find a threshold for each patch. In particular, the noise variance is estimated from the eigen values (squared singular values) and uses to determined the threshold. (See equations 10-12 in reference).
+
+
+.. seealso::
+   :class:`~denoiser.space_time.lowrank.MPPCADenoiser`
 
 Hybrid PCA
 ~~~~~~~~~~
 
+Hybrid-PCA [2]_ uses an a priori spatial distribution of the noise variance, and the singular values are selected such that the discarded one have a mean less or equal to this a priori.
+
 NORDIC
 ~~~~~~
 
+NORDIC [3]_ makes the assumptions that the image noise level is uniform (for instance by pre processing the image and dividing it by an externally available g-map). The threshold is determined by taking the average of  maximum singular value of a set of randomly generated matrix with the dimension as the flattened patch. The uniform noise level must also be provided.
+
 Optimal Thresholding
 ~~~~~~~~~~~~~~~~~~~~
+
+An optimal thresholding of the singular values [4]_ is also possible associated with a specific norm (Frobenius, nuclear norm or operator norm).
+
+.. seealso::
+   :class:`~denoiser.space_time.lowrank.OptimalSVDDenoiser`
+
+
+References
+----------
+
+.. [1] Veraart, Jelle, Dmitry S. Novikov, Daan Christiaens, Benjamin Ades-Aron, Jan Sijbers, and Els Fieremans. “Denoising of Diffusion MRI Using Random Matrix Theory.” NeuroImage 142 (November 15, 2016): 394–406. https://doi.org/10.1016/j.neuroimage.2016.08.016.
+
+.. [2] https://submissions.mirasmart.com/ISMRM2022/Itinerary/Files/PDFFiles/2688.html
+
+.. [3] Moeller, Steen, Pramod Kumar Pisharady, Sudhir Ramanna, Christophe Lenglet, Xiaoping Wu, Logan Dowdle, Essa Yacoub, Kamil Uğurbil, and Mehmet Akçakaya. “NOise Reduction with DIstribution Corrected (NORDIC) PCA in DMRI with Complex-Valued Parameter-Free Locally Low-Rank Processing.” NeuroImage 226 (February 1, 2021): 117539. https://doi.org/10.1016/j.neuroimage.2020.117539.
+.. [4] Gavish, Matan, and David L. Donoho. “Optimal Shrinkage of Singular Values.” IEEE Transactions on Information Theory 63, no. 4 (April 2017): 2137–52. https://doi.org/10.1109/TIT.2017.2653801.
