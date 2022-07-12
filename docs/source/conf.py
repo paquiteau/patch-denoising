@@ -35,7 +35,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.mathjax",
     "sphinx.ext.viewcode",
-    "sphinx_gallery.gen_gallery",
+ #   "sphinx_gallery.gen_gallery",
     "sphinx.ext.napoleon",
     "autoapi.extension"
 ]
