@@ -42,7 +42,7 @@ To check if everything worked fine you can run:
 
 
 
-Examples
+Documentation and Examples
 ==========
 
-Examples are available in the documentation.
+Documentation and examples are available at `https://paquiteau.github.io/patch-denoising/`
