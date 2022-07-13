@@ -107,22 +107,24 @@ class BaseSpaceTimeDenoiser:
 
         return output_data, patchs_weight, noise_std_estimate
 
-    def _patch_processing(patch, patch_slice=None, **kwargs):
+    def _patch_processing(self, patch, patch_slice=None, **kwargs):
         """Processing of pach"""
         raise NotImplementedError
 
     def __get_patch_param(self, data_shape):
-        pp = (None, None)
-        for i, attr in enumerate(["p_ovl", "p_shape"]):
+        pp = [None, None]
+        for i, attr in enumerate(["p_shape", "p_ovl"]):
             p = getattr(self, attr)
-            if isinstance(p, [tuple, list]):
-                p = tuple(self.p_ovl)
-            elif isinstance(p, [int, np.integer]):
-                p = (p,) * len(data_shape)
+            if isinstance(p, list):
+                p = tuple(p)
+            elif isinstance(p, (int, np.integer)):
+                p = (p,) * (len(data_shape) - 1)
             pp[i] = p
-        if np.prod(pp[1]) < data_shape[-1]:
+        print(pp)
+        if np.prod(pp[0]) < data_shape[-1]:
             raise ValueError(
-                "the number of voxel in patch is smaller than the last dimension,"
-                + " this makes an ill-conditioned matrix for SVD.",
+                f"the number of voxel in patch ({np.prod(pp[0])}) is smaller than the"
+                f" last dimension ({data_shape[-1]}), this makes an ill-conditioned"
+                "matrix for SVD."
             )
-        return pp
+        return tuple(pp)
