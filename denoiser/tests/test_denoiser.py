@@ -7,7 +7,7 @@ from numpy.testing import assert_allclose, assert_almost_equal
 from denoiser.simulation.phantom import mr_shepp_logan_t2_star
 from denoiser.simulation.noise import add_temporal_gaussian_noise
 
-from denoiser.denoise import mp_pca, hybrid_pca
+from denoiser.denoise import mp_pca, hybrid_pca, nordic, raw_svt
 
 
 @pytest.fixture(scope="module")
@@ -48,6 +48,42 @@ def test_hybridpca_denoiser(phantom, noisy_phantom, recombination):
     """Test the Hybrid-PCA denoiser"""
     print(noisy_phantom.shape)
     denoised, weights, noise = hybrid_pca(
+        noisy_phantom,
+        patch_shape=6,
+        patch_overlap=5,
+        noise_std=1.0,
+        recombination=recombination,
+    )
+
+    noise_std_before = (
+        np.sqrt(np.nanmean(np.nanvar(noisy_phantom - phantom, axis=-1))),
+    )
+    noise_std_after = (np.sqrt(np.nanmean(np.nanvar(denoised - phantom, axis=-1))),)
+    assert noise_std_after < noise_std_before
+
+@pytest.mark.parametrize("recombination", ["weighted", "average", "center"])
+def test_nordic_denoiser(phantom, noisy_phantom, recombination):
+    """Test the Hybrid-PCA denoiser"""
+    print(noisy_phantom.shape)
+    denoised, weights, noise = nordic(
+        noisy_phantom,
+        patch_shape=6,
+        patch_overlap=5,
+        noise_std=1.0,
+        recombination=recombination,
+    )
+
+    noise_std_before = (
+        np.sqrt(np.nanmean(np.nanvar(noisy_phantom - phantom, axis=-1))),
+    )
+    noise_std_after = (np.sqrt(np.nanmean(np.nanvar(denoised - phantom, axis=-1))),)
+    assert noise_std_after < noise_std_before
+
+@pytest.mark.parametrize("recombination", ["weighted", "average", "center"])
+def test_rawsvt_denoiser(phantom, noisy_phantom, recombination):
+    """Test the Hybrid-PCA denoiser"""
+    print(noisy_phantom.shape)
+    denoised, weights, noise = raw_svt(
         noisy_phantom,
         patch_shape=6,
         patch_overlap=5,

@@ -184,7 +184,7 @@ class NordicDenoiser(RawSVDDenoiser):
 
         Along with the input data a noise stp map or value should be provided.
         """
-        patch_shape, _ = self.__get_patch_param(input_data.shape)
+        patch_shape, _ = self._BaseSpaceTimeDenoiser__get_patch_param(input_data.shape)
         # compute the threshold using Monte-Carlo Simulations.
         max_sval = sum(
             max(
