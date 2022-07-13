@@ -61,6 +61,7 @@ def test_hybridpca_denoiser(phantom, noisy_phantom, recombination):
     noise_std_after = (np.sqrt(np.nanmean(np.nanvar(denoised - phantom, axis=-1))),)
     assert noise_std_after < noise_std_before
 
+
 @pytest.mark.parametrize("recombination", ["weighted", "average", "center"])
 def test_nordic_denoiser(phantom, noisy_phantom, recombination):
     """Test the Hybrid-PCA denoiser"""
@@ -78,6 +79,7 @@ def test_nordic_denoiser(phantom, noisy_phantom, recombination):
     )
     noise_std_after = (np.sqrt(np.nanmean(np.nanvar(denoised - phantom, axis=-1))),)
     assert noise_std_after < noise_std_before
+
 
 @pytest.mark.parametrize("recombination", ["weighted", "average", "center"])
 def test_rawsvt_denoiser(phantom, noisy_phantom, recombination):
