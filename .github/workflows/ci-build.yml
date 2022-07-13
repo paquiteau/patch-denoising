@@ -23,7 +23,7 @@ jobs:
         
   test-suite:
     runs-on: ${{ matrix.os }}
-
+    needs: black-check
     strategy:
       fail-fast: true
       matrix:
