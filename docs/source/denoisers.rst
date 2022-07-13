@@ -112,10 +112,18 @@ Hybrid PCA
 
 Hybrid-PCA [3]_ uses an a priori spatial distribution of the noise variance, and the singular values are selected such that the discarded one have a mean less or equal to this a priori.
 
+.. seealso::
+    :class:`~denoiser.space_time.lowrank.HybridPCADenoiser`
+
+
 NORDIC
 ~~~~~~
 
 NORDIC [4]_ makes the assumptions that the image noise level is uniform (for instance by pre processing the image and dividing it by an externally available g-map). The threshold is determined by taking the average of  maximum singular value of a set of randomly generated matrix with the dimension as the flattened patch. The uniform noise level must also be provided.
+
+
+.. seealso::
+    :class:`~denoiser.space_time.lowrank.NordicDenoiser`
 
 Optimal Thresholding
 ~~~~~~~~~~~~~~~~~~~~
