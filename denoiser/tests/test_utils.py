@@ -25,6 +25,12 @@ parametrize_random_matrix = pytest.mark.parametrize(
 )
 
 
+@pytest.fixture(scope="function")
+def medium_random_matrix(rng):
+    shape = (200, 200, 100)
+    return rng.randn(*shape)
+
+
 @pytest.fixture()
 def matrix(request):
     rng = np.random.RandomState(42)
@@ -34,9 +40,6 @@ def matrix(request):
         return rng.randn(M, N) * sigma
     return rng.randn(M, N) * sigma + 1j * rng.randn(M, N) * sigma
 
-@pytest.fixture(scope="module")
-def rng():
-    return np.random.RandomState(42)
 
 @pytest.mark.parametrize("beta", np.arange(1, 10) * 0.1)
 def test_marshenko_pastur_median(beta, rng,  n_runs=10000, n_samples=1000):
@@ -60,16 +63,12 @@ def test_marshenko_pastur_median(beta, rng,  n_runs=10000, n_samples=1000):
     samples = np.zeros(n_runs)
     for i in range(n_runs):
         samples[i] = np.median(rng.choice(vals, size=n_runs, p=proba))
-#    montecarlo_median = np.mean(samples)
+    #    montecarlo_median = np.mean(samples)
 
     # TODO: increase precision of montecarlo simulation
     assert np.std(samples) <= 0.1 * integral_median
 
 
-@pytest.fixture(scope="function")
-def medium_random_matrix(rng):
-    shape=(200, 200, 100)
-    return rng.randn(*shape)
 
 @pytest.mark.parametrize("block_dim", range(1,6))
 def test_noise_estimation(medium_random_matrix, block_dim):
