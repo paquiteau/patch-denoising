@@ -1,5 +1,6 @@
 import numpy as np
 from .utils import get_patch_locs
+from tqdm.auto import tqdm
 
 
 class BaseSpaceTimeDenoiser:
@@ -63,7 +64,9 @@ class BaseSpaceTimeDenoiser:
         patchs_weight = np.zeros(data_shape[:-1], np.float32)
         noise_std_estimate = np.zeros(data_shape[:-1], dtype=np.float32)
 
-        for patch_tl in get_patch_locs(patch_shape, patch_overlap, data_shape[:-1]):
+        for patch_tl in tqdm(
+            get_patch_locs(patch_shape, patch_overlap, data_shape[:-1])
+        ):
 
             patch_slice = tuple(
                 slice(tl, tl + ps) for tl, ps in zip(patch_tl, patch_shape)
