@@ -99,7 +99,7 @@ class HybridPCADenoiser(BaseSpaceTimeDenoiser):
             patch_new = eig_synthesis(p_center, eig_vec, p_tmean, maxidx)
         # Equation (3) of Manjon2013
         weights = 1.0 / (1.0 + maxidx)
-        noise_map = varest * weights
+        noise_map = var_noise * weights
         patch_new *= weights
 
         return patch_new, noise_map, weights
