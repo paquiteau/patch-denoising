@@ -14,10 +14,12 @@ jobs:
     steps: 
       - name: Checkout 
         uses: actions/checkout@v3
+      - name: Black setup
+        shell: bash
+        run: pip install black
       - name: Black Check
-        uses: jpetrucciani/black-check@21.12b0
-        with: 
-          black_flags: --check
+        shell: 
+        run: black . --check
         
   test-suite:
     runs-on: ${{ matrix.os }}
