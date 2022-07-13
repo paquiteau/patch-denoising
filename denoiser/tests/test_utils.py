@@ -42,7 +42,7 @@ def matrix(request):
 
 
 @pytest.mark.parametrize("beta", np.arange(1, 10) * 0.1)
-def test_marshenko_pastur_median(beta, rng,  n_runs=10000, n_samples=1000):
+def test_marshenko_pastur_median(beta, rng, n_runs=10000, n_samples=1000):
     """Test the median estimation of Marshenko Pastur law"""
     print(beta)
     beta_p = (1 + np.sqrt(beta)) ** 2
@@ -69,8 +69,7 @@ def test_marshenko_pastur_median(beta, rng,  n_runs=10000, n_samples=1000):
     assert np.std(samples) <= 0.1 * integral_median
 
 
-
-@pytest.mark.parametrize("block_dim", range(1,6))
+@pytest.mark.parametrize("block_dim", range(1, 6))
 def test_noise_estimation(medium_random_matrix, block_dim):
 
     noise_map = estimate_noise(medium_random_matrix, block_dim)
@@ -79,17 +78,19 @@ def test_noise_estimation(medium_random_matrix, block_dim):
 
     assert np.nanstd(noise_map) <= 0.2 * real_std
 
+
 @parametrize_random_matrix
 def test_svd(matrix):
-    U, S, V, M  = svd_analysis(matrix)
+    U, S, V, M = svd_analysis(matrix)
     new_matrix = svd_synthesis(U, S, V, M, idx=len(S))
 
     # TODO Refine the precision criteria
-    assert np.sqrt(np.mean(np.square(matrix - new_matrix)))  <= np.std(matrix)/10
+    assert np.sqrt(np.mean(np.square(matrix - new_matrix))) <= np.std(matrix) / 10
+
 
 @parametrize_random_matrix
 def test_eig(matrix):
-    A, d, W, M  = eig_analysis(matrix)
+    A, d, W, M = eig_analysis(matrix)
     new_matrix = eig_synthesis(A, W, M, max_val=len(M))
     # TODO Refine the precision criteria
-    assert np.sqrt(np.mean(np.square(matrix - new_matrix)))  <= np.std(matrix)
+    assert np.sqrt(np.mean(np.square(matrix - new_matrix))) <= np.std(matrix)
