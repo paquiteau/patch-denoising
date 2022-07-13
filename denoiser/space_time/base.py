@@ -53,7 +53,7 @@ class BaseSpaceTimeDenoiser:
                 If available, a noise std estimation for each voxel.
         """
         data_shape = input_data.shape
-
+        output_data = np.zeros_like(input_data)
         # Create Default mask
         if mask is None:
             mask = np.full(data_shape[:-1], True)
