@@ -29,7 +29,7 @@ class MPPCADenoiser(BaseSpaceTimeDenoiser):
         super().__init__(patch_shape, patch_overlap, **kwargs)
         self.input_denoising_kwargs["threshold_scale"] = threshold_scale
 
-    def _patch_processing(patch, patch_slice=None, threshold_scale=1.0):
+    def _patch_processing(self, patch, patch_slice=None, threshold_scale=1.0):
         """Process a pach with the MP-PCA method."""
         p_center, eig_vals, eig_vec, p_tmean = eig_analysis(patch)
         eig_vals /= len(eig_vec)
