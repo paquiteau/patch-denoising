@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+  workflow_dispatch:
+
+jobs:
+  black-check:
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Checkout 
+        uses: actions/checkout@v3
+      - name: Black setup
+        shell: bash
+        run: pip install black
+      - name: Black Check
+        shell: bash
+        run: black . --check
+        
+  test-suite:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest]
+        python-version: [3.8, 3.9]
+        
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Conda with Python ${{ matrix.python-version }}
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          python-version: ${{ matrix.python-version }}
+          auto-activate-base: false
+      - name: Install Dependencies
+        shell: bash
+        run: |
+          python --version
+          python -m pip install .[test]
+      - name: Run Tests
+        shell: bash
+        run: | 
+          cd denoiser
+          pytest -n auto -x
