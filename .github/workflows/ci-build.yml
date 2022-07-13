@@ -18,7 +18,7 @@ jobs:
         shell: bash
         run: pip install black
       - name: Black Check
-        shell: 
+        shell: bash
         run: black . --check
         
   test-suite:
