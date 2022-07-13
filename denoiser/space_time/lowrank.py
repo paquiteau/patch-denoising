@@ -76,7 +76,7 @@ class HybridPCADenoiser(BaseSpaceTimeDenoiser):
         Along with the input data a noise std map or value should be provided.
         """
         if isinstance(noise_std, (float, np.floating)):
-            self._noise_apriori = noise_std**2 * np.ones_like(input_data.shape[:-1])
+            self._noise_apriori = noise_std**2 * np.ones(input_data.shape[:-1])
         else:
             self._noise_apriori = noise_std**2
 
