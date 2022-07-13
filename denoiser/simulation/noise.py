@@ -3,7 +3,7 @@ import numpy as np
 from numpy.random import default_rng
 
 
-def add_temporal_gaussian_noise(array, sigma=1, g_factor_map=None):
+def add_temporal_gaussian_noise(array, sigma=1, g_factor_map=None, rng=None):
     """Add gaussian noise to array.
 
     Parameters
@@ -21,7 +21,9 @@ def add_temporal_gaussian_noise(array, sigma=1, g_factor_map=None):
     numpy.ndarray
         A noisy array
     """
-    rng = default_rng()
+    if rng is None:
+
+        rng = default_rng()
     shape = array.shape
 
     g_noise = sigma * rng.standard_normal(shape)
