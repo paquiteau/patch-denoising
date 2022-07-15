@@ -297,6 +297,57 @@ def nordic(
     )
 
 
+def optimal_thresholding(
+    volume_sequence,
+    patch_shape,
+    patch_overlap,
+    mask=None,
+    loss="fro",
+    recombination="weighted",
+    eps_marshenko_pastur=1e-7,
+):
+    """
+    Optimal thresholing denoising method
+
+    Parameters
+    ----------
+    volume_sequence: numpy.ndarray
+        The volume shape to denoise
+    patch_shape: tuple
+        The patch shape
+    patch_overlap: tuple
+        the overlap of each pixel
+    mask: numpy.ndarray
+        A boolean array, defining a ROI in the volume. Only patch with voxels in the ROi will be processed.
+    loss: str
+        The loss for which the optimal thresholding is perform.
+    recombination: str
+        The recombination method of the patch. "weighted" or "mean"
+    eps_marshenko_pastur: float
+        The precision with which the optimal threshold is computed.
+
+    Returns
+    -------
+    tuple
+        numpy.ndarray: The denoised sequence of volume
+        numpy.ndarray: The weight of each pixel after the processing.
+        numpy.ndarray: If possible, the noise variance distribution in the volume.
+
+    See Also
+    --------
+    denoiser.space_time.lowrank.OptimalSVDDenoiser
+    """
+    denoiser = OptimalSVDDenoiser(
+        patch_shape,
+        patch_overlap,
+        recombination=recombination,
+        loss=loss,
+    )
+    return denoiser.denoise(
+        volume_sequence, mask=mask, eps_marshenko_pastur=eps_marshenko_pastur
+    )
+
+
 def volume_denoise(volume_sequence, method):
     """Denoise each volume independently.
 

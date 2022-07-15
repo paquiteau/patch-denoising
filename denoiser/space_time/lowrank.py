@@ -279,13 +279,13 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
 
     def denoise(self, input_data, mask=None, eps_marshenko_pastur=1e-7):
 
-        patch_shape, _ = self.__get_patch_param(input_data.shape)
+        patch_shape, _ = self._BaseSpaceTimeDenoiser__get_patch_param(input_data.shape)
         self._mp_median = marshenko_pastur_median(
             beta=input_data.shape[-1] / np.prod(patch_shape),
             eps=eps_marshenko_pastur,
         )
 
-        super().denoise(input_data, mask)
+        return super().denoise(input_data, mask)
 
     def _patch_processing(self, patch, patch_slice=None, **kwargs):
 
