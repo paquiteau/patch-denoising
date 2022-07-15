@@ -36,10 +36,8 @@ def test_mppca_denoiser(phantom, noisy_phantom, recombination):
         threshold_scale=2.3,
         recombination=recombination,
     )
-    noise_std_before = (
-        np.sqrt(np.nanmean(np.nanvar(noisy_phantom - phantom, axis=-1))),
-    )
-    noise_std_after = (np.sqrt(np.nanmean(np.nanvar(denoised - phantom, axis=-1))),)
+    noise_std_before = np.sqrt(np.nanmean(np.nanvar(noisy_phantom - phantom, axis=-1)))
+    noise_std_after = np.sqrt(np.nanmean(np.nanvar(denoised - phantom, axis=-1)))
     assert noise_std_after < noise_std_before
 
 
@@ -55,10 +53,8 @@ def test_hybridpca_denoiser(phantom, noisy_phantom, recombination):
         recombination=recombination,
     )
 
-    noise_std_before = (
-        np.sqrt(np.nanmean(np.nanvar(noisy_phantom - phantom, axis=-1))),
-    )
-    noise_std_after = (np.sqrt(np.nanmean(np.nanvar(denoised - phantom, axis=-1))),)
+    noise_std_before = np.sqrt(np.nanmean(np.nanvar(noisy_phantom - phantom, axis=-1)))
+    noise_std_after = np.sqrt(np.nanmean(np.nanvar(denoised - phantom, axis=-1)))
     assert noise_std_after < noise_std_before
 
 
@@ -74,10 +70,8 @@ def test_nordic_denoiser(phantom, noisy_phantom, recombination):
         recombination=recombination,
     )
 
-    noise_std_before = (
-        np.sqrt(np.nanmean(np.nanvar(noisy_phantom - phantom, axis=-1))),
-    )
-    noise_std_after = (np.sqrt(np.nanmean(np.nanvar(denoised - phantom, axis=-1))),)
+    noise_std_before = np.sqrt(np.nanmean(np.nanvar(noisy_phantom - phantom, axis=-1)))
+    noise_std_after = np.sqrt(np.nanmean(np.nanvar(denoised - phantom, axis=-1)))
     assert noise_std_after < noise_std_before
 
 
@@ -96,5 +90,6 @@ def test_rawsvt_denoiser(phantom, noisy_phantom, recombination):
     noise_std_before = (
         np.sqrt(np.nanmean(np.nanvar(noisy_phantom - phantom, axis=-1))),
     )
-    noise_std_after = (np.sqrt(np.nanmean(np.nanvar(denoised - phantom, axis=-1))),)
+
+    noise_std_after = np.sqrt(np.nanmean(np.nanvar(denoised - phantom, axis=-1)))
     assert noise_std_after < noise_std_before
