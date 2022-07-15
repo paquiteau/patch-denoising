@@ -1,18 +1,17 @@
 import pytest
 import numpy as np
 
-from numpy.testing import assert_allclose, assert_almost_equal
-
 
 from denoiser.simulation.phantom import mr_shepp_logan_t2_star
 from denoiser.simulation.noise import add_temporal_gaussian_noise
+from denoiser.simulation.activations import add_activations
 
 from denoiser.denoise import mp_pca, hybrid_pca, nordic, optimal_thresholding, raw_svt
 
 
 @pytest.fixture(scope="module")
 def phantom(N_rep=20):
-    return np.repeat(mr_shepp_logan_t2_star(64)[32, :, :, np.newaxis], N_rep, axis=-1)
+    return add_activations(mr_shepp_logan_t2_star(64)[32], N_rep)
 
 
 @pytest.fixture(scope="module")
