@@ -7,7 +7,7 @@ except ImportError:
     NIBABEL_AVAILABLE = False
 
 
-def load_complex_nifti(mag_file, phase_file, filename=None):
+def load_complex_nifti(mag_file, phase_file, filename=None): # pragma: no cover
     """Load two nifti image (magnitude and phase) to create a complex valued array.
 
     Optionally, the result can be save as a .npy file
@@ -73,7 +73,7 @@ def array2zigzag(array):
         raise ValueError("The array shoud be 2-dimensional.")
     zigzag = _zigzag(*array.shape)
 
-    return array[zigzag]
+    return array[tuple(zip(*zigzag))]
 
 def zigzag2array(array, shape):
     """
@@ -96,8 +96,9 @@ def zigzag2array(array, shape):
         raise ValueError("The shape of the new array should be 2-dimensional")
     zigzag = _zigzag(*shape)
 
-    new_array = np.zeros(shape, dtype= array.dtype)
+    new_array = np.zeros(shape, dtype=array.dtype)
 
-    for z, idx in  enumerate(zigzag):
-        new_array[z] = array[idx]
+    for idx, z in  enumerate(zigzag):
+        print(idx, z)
+        new_array[z[0], z[1]] = array[idx]
     return new_array
