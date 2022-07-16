@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 
 
-from denoiser.simulation.phantom import mr_shepp_logan_t2_star
+from denoiser.simulation.phantom import g_factor_map, mr_shepp_logan_t2_star
 from denoiser.simulation.noise import add_temporal_gaussian_noise
 from denoiser.simulation.activations import add_activations
 
@@ -17,10 +17,12 @@ def phantom(N_rep=20):
 @pytest.fixture(scope="module")
 def noisy_phantom(phantom, rng):
     m = np.mean(phantom)
+    g_map = g_factor_map(phantom.shape[:-1])
     return add_temporal_gaussian_noise(
         phantom,
         sigma=1,
         rng=rng,
+        g_factor_map=g_map,
     )
 
 
