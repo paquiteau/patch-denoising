@@ -19,6 +19,7 @@ _DENOISER = {
     "raw": RawSVDDenoiser,
 }
 
+
 def mp_pca(
     volume_sequence,
     patch_shape,

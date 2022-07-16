@@ -7,7 +7,7 @@ except ImportError:
     NIBABEL_AVAILABLE = False
 
 
-def load_complex_nifti(mag_file, phase_file, filename=None): # pragma: no cover
+def load_complex_nifti(mag_file, phase_file, filename=None):  # pragma: no cover
     """Load two nifti image (magnitude and phase) to create a complex valued array.
 
     Optionally, the result can be save as a .npy file
@@ -37,19 +37,19 @@ def load_complex_nifti(mag_file, phase_file, filename=None): # pragma: no cover
     return img
 
 
-
 def _zigzag(rows, columns):
     """Return a list of coordinate in zigzag pattern"""
-    pattern=[[] for i in range(rows+columns-1)]
+    pattern = [[] for i in range(rows + columns - 1)]
     for i in range(rows):
         for j in range(columns):
-            s=i+j
-            if(s%2 ==0):
-                pattern[s].insert(0,(i,j))
+            s = i + j
+            if s % 2 == 0:
+                pattern[s].insert(0, (i, j))
             else:
-                pattern[s].append((i,j))
+                pattern[s].append((i, j))
 
     return [p for pp in pattern for p in pp]
+
 
 def array2zigzag(array):
     """Flatten a 2D array with a zigzag pattern.
@@ -75,6 +75,7 @@ def array2zigzag(array):
 
     return array[tuple(zip(*zigzag))]
 
+
 def zigzag2array(array, shape):
     """
     Reshape a 1d array into a 2D shape following a zigzag pattern.
@@ -98,7 +99,7 @@ def zigzag2array(array, shape):
 
     new_array = np.zeros(shape, dtype=array.dtype)
 
-    for idx, z in  enumerate(zigzag):
+    for idx, z in enumerate(zigzag):
         print(idx, z)
         new_array[z[0], z[1]] = array[idx]
     return new_array
