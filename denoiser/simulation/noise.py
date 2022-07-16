@@ -22,7 +22,6 @@ def add_temporal_gaussian_noise(array, sigma=1, g_factor_map=None, rng=None):
         A noisy array
     """
     if rng is None:
-
         rng = default_rng()
     shape = array.shape
 
@@ -35,7 +34,7 @@ def add_temporal_gaussian_noise(array, sigma=1, g_factor_map=None, rng=None):
     return array + (g_noise * g_factor_map[..., None])
 
 
-def add_temporal_rician_noise(array, scale=1):
+def add_temporal_rician_noise(array, scale=1, rng=None):
     """Add center rician noise to array.
 
     Parameters
@@ -56,7 +55,8 @@ def add_temporal_rician_noise(array, scale=1):
     .. [2] https://en.m.wikipedia.org/wiki/Rayleigh_distribution
     """
 
-    rng = default_rng()
+    if rng is None:
+        rng = default_rng()
     noise = rng.rayleigh(scale, array.shape)
 
     return array + noise
