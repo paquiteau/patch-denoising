@@ -1,0 +1,16 @@
+:py:mod:`denoiser.viz`
+======================
+
+.. py:module:: denoiser.viz
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   plots/index.rst
+   utils/index.rst
+
+

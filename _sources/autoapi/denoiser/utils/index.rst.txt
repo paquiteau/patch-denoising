@@ -1,0 +1,52 @@
+:py:mod:`denoiser.utils`
+========================
+
+.. py:module:: denoiser.utils
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   denoiser.utils.load_complex_nifti
+
+
+
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   denoiser.utils.NIBABEL_AVAILABLE
+   denoiser.utils.NIBABEL_AVAILABLE
+
+
+.. py:data:: NIBABEL_AVAILABLE
+   :annotation: = True
+
+   
+
+.. py:data:: NIBABEL_AVAILABLE
+   :annotation: = False
+
+   
+
+.. py:function:: load_complex_nifti(mag_file, phase_file, filename=None)
+
+   Load two nifti image (magnitude and phase) to create a complex valued array.
+
+   Optionally, the result can be save as a .npy file
+
+   :param mag_file: The source magnitude file
+   :type mag_file: str
+   :param phase_file: The source phase file
+   :type phase_file: str
+   :param filename: The output filename
+   :type filename: str, default None
+
+

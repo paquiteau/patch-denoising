@@ -1,0 +1,55 @@
+:py:mod:`denoiser.viz.utils`
+============================
+
+.. py:module:: denoiser.viz.utils
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   denoiser.viz.utils._zigzag
+   denoiser.viz.utils.array2zigzag
+   denoiser.viz.utils.zigzag2array
+
+
+
+.. py:function:: _zigzag(rows, columns)
+
+   Return a list of coordinate in zigzag pattern
+
+
+.. py:function:: array2zigzag(array)
+
+   Flatten a 2D array with a zigzag pattern.
+
+   :param array: a 2 Array to flatten.
+   :type array: numpy.ndarray
+
+   :returns: A flattened 1D array.
+   :rtype: numpy.ndarray
+
+   .. rubric:: Notes
+
+   Flattenning a 2D array with a zigzag pattern preserves a spatial contiguity
+   in the flattened version, unlike the classical row or column-wise stacking.
+
+
+.. py:function:: zigzag2array(array, shape)
+
+   Reshape a 1d array into a 2D shape following a zigzag pattern.
+
+   :param array: A 1D array.
+   :type array: numpy.ndarray
+   :param shape: The row and column size of the new array
+   :type shape: tuple
+
+   :returns: The 2D array
+   :rtype: numpy.ndarray
+
+

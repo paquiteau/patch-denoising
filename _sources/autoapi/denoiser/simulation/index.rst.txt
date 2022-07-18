@@ -1,0 +1,17 @@
+:py:mod:`denoiser.simulation`
+=============================
+
+.. py:module:: denoiser.simulation
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   activations/index.rst
+   noise/index.rst
+   phantom/index.rst
+
+

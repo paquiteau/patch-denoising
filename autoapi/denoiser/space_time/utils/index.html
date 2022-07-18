@@ -1,0 +1,618 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>denoiser.space_time.utils &#8212; patch-denoise  documentation</title>
+<script>
+  document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
+  document.documentElement.dataset.theme = localStorage.getItem("theme") || "light"
+</script>
+
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=92025949c220c2e29695" rel="stylesheet">
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=92025949c220c2e29695" rel="stylesheet">
+
+
+  <link rel="stylesheet"
+    href="../../../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css" />
+
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=92025949c220c2e29695">
+
+    <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+    <script src="../../../../_static/jquery.js"></script>
+    <script src="../../../../_static/underscore.js"></script>
+    <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../../_static/doctools.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="docsearch:language" content="en">
+  </head>
+  
+  
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="180" data-default-mode="light">
+    <div class="bd-header-announcement container-fluid" id="banner">
+      
+
+    </div>
+
+    
+    <nav class="bd-header navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="bd-header__inner container-xl">
+
+  <div id="navbar-start">
+    
+    
+  
+
+
+<a class="navbar-brand logo" href="../../../../index.html">
+  
+  
+  
+  
+  
+    <p class="title logo__title">patch-denoise  documentation</p>
+  
+</a>
+    
+  </div>
+
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapsible" aria-controls="navbar-collapsible" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="fas fa-bars"></span>
+  </button>
+
+  
+  <div id="navbar-collapsible" class="col-lg-9 collapse navbar-collapse">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <ul id="navbar-main-elements" class="navbar-nav">
+    <li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../../../../denoisers.html">
+  Denoiser descriptions
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../../../index.html">
+  API Reference
+ </a>
+</li>
+
+    
+</ul>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+      <div class="navbar-end-item">
+        <span id="theme-switch" class="btn btn-sm btn-outline-primary navbar-btn rounded-circle">
+    <a class="theme-switch" data-mode="light"><i class="fas fa-sun"></i></a>
+    <a class="theme-switch" data-mode="dark"><i class="far fa-moon"></i></a>
+    <a class="theme-switch" data-mode="auto"><i class="fas fa-adjust"></i></a>
+</span>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+</div>
+    </nav>
+    
+
+    <div class="bd-container container-xl">
+      <div class="bd-container__inner row">
+          
+
+<!-- Only show if we have sidebars configured, else just a small margin  -->
+<div class="bd-sidebar-primary col-12 col-md-3 bd-sidebar">
+  <div class="sidebar-start-items"><form class="bd-search d-flex align-items-center" action="../../../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+  <div class="bd-toc-item active">
+    <ul class="current nav bd-sidenav">
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="../../simulation/index.html">
+   <code class="xref py py-mod docutils literal notranslate">
+    <span class="pre">
+     denoiser.simulation
+    </span>
+   </code>
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../simulation/activations/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       denoiser.simulation.activations
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../simulation/noise/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       denoiser.simulation.noise
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../simulation/phantom/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       denoiser.simulation.phantom
+      </span>
+     </code>
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toctree-l1 current active has-children">
+  <a class="reference internal" href="../index.html">
+   <code class="xref py py-mod docutils literal notranslate">
+    <span class="pre">
+     denoiser.space_time
+    </span>
+   </code>
+  </a>
+  <input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
+  <label for="toctree-checkbox-2">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul class="current">
+   <li class="toctree-l2">
+    <a class="reference internal" href="../base/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       denoiser.space_time.base
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../lowrank/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       denoiser.space_time.lowrank
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toctree-l2 current active">
+    <a class="current reference internal" href="#">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       denoiser.space_time.utils
+      </span>
+     </code>
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="../../tests/index.html">
+   <code class="xref py py-mod docutils literal notranslate">
+    <span class="pre">
+     denoiser.tests
+    </span>
+   </code>
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/>
+  <label for="toctree-checkbox-3">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../tests/conftest/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       denoiser.tests.conftest
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../tests/test_denoiser/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       denoiser.tests.test_denoiser
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../tests/test_spacetime_utils/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       denoiser.tests.test_spacetime_utils
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../tests/test_utils/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       denoiser.tests.test_utils
+      </span>
+     </code>
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="../../viz/index.html">
+   <code class="xref py py-mod docutils literal notranslate">
+    <span class="pre">
+     denoiser.viz
+    </span>
+   </code>
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/>
+  <label for="toctree-checkbox-4">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../viz/plots/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       denoiser.viz.plots
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../../viz/utils/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       denoiser.viz.utils
+      </span>
+     </code>
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../denoise/index.html">
+   <code class="xref py py-mod docutils literal notranslate">
+    <span class="pre">
+     denoiser.denoise
+    </span>
+   </code>
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../utils/index.html">
+   <code class="xref py py-mod docutils literal notranslate">
+    <span class="pre">
+     denoiser.utils
+    </span>
+   </code>
+  </a>
+ </li>
+</ul>
+
+  </div>
+</nav>
+  </div>
+  <div class="sidebar-end-items">
+  </div>
+</div>
+
+
+          
+
+
+<div class="bd-sidebar-secondary d-none d-xl-block col-xl-2 bd-toc">
+  
+    
+    <div class="toc-item">
+      
+<div class="tocsection onthispage mt-5 pt-1 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
+
+<nav id="bd-toc-nav">
+    <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#module-contents">
+   Module Contents
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#functions">
+     Functions
+    </a>
+    <ul class="nav section-nav flex-column">
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#denoiser.space_time.utils.svd_analysis">
+       svd_analysis
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#denoiser.space_time.utils.svd_synthesis">
+       svd_synthesis
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#denoiser.space_time.utils.eig_analysis">
+       eig_analysis
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#denoiser.space_time.utils.eig_synthesis">
+       eig_synthesis
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#denoiser.space_time.utils.marshenko_pastur_median">
+       marshenko_pastur_median
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#denoiser.space_time.utils.get_patch_locs">
+       get_patch_locs
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#denoiser.space_time.utils.estimate_noise">
+       estimate_noise
+      </a>
+     </li>
+    </ul>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+</nav>
+    </div>
+    
+    <div class="toc-item">
+      
+    </div>
+    
+  
+</div>
+
+
+          
+          
+          <div class="bd-content col-12 col-md-9 col-xl-7">
+              
+              <article class="bd-article" role="main">
+                
+  <section id="module-denoiser.space_time.utils">
+<span id="denoiser-space-time-utils"></span><h1><a class="reference internal" href="#module-denoiser.space_time.utils" title="denoiser.space_time.utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">denoiser.space_time.utils</span></code></a><a class="headerlink" href="#module-denoiser.space_time.utils" title="Permalink to this heading">#</a></h1>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">#</a></h2>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
+<table class="autosummary longtable table autosummary">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#denoiser.space_time.utils.svd_analysis" title="denoiser.space_time.utils.svd_analysis"><code class="xref py py-obj docutils literal notranslate"><span class="pre">svd_analysis</span></code></a>(input_data)</p></td>
+<td><p>Return the centered SVD decomposition.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#denoiser.space_time.utils.svd_synthesis" title="denoiser.space_time.utils.svd_synthesis"><code class="xref py py-obj docutils literal notranslate"><span class="pre">svd_synthesis</span></code></a>(u_vec, s_vals, v_vec, mean, idx)</p></td>
+<td><p>Reconstruct <code class="docutils literal notranslate"><span class="pre">X</span> <span class="pre">=</span> <span class="pre">(U</span> <span class="pre">&#64;</span> <span class="pre">(S</span> <span class="pre">*</span> <span class="pre">V))</span> <span class="pre">+</span> <span class="pre">M</span></code> with only the max_idx greatest component.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#denoiser.space_time.utils.eig_analysis" title="denoiser.space_time.utils.eig_analysis"><code class="xref py py-obj docutils literal notranslate"><span class="pre">eig_analysis</span></code></a>(input_data, max_eig_val=10)</p></td>
+<td><p>Return the eigen values and vectors of the autocorrelation of the patch.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#denoiser.space_time.utils.eig_synthesis" title="denoiser.space_time.utils.eig_synthesis"><code class="xref py py-obj docutils literal notranslate"><span class="pre">eig_synthesis</span></code></a>(data_centered, eig_vec, mean, max_val)</p></td>
+<td><p>Reconstruction the denoise patch with truncated eigen decomposition.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#denoiser.space_time.utils.marshenko_pastur_median" title="denoiser.space_time.utils.marshenko_pastur_median"><code class="xref py py-obj docutils literal notranslate"><span class="pre">marshenko_pastur_median</span></code></a>(beta, eps=1e-07)</p></td>
+<td><p>Compute the median of the Marchenko-Pastur Distribution.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#denoiser.space_time.utils.get_patch_locs" title="denoiser.space_time.utils.get_patch_locs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_patch_locs</span></code></a>(p_shape, p_ovl, v_shape)</p></td>
+<td><p>Get all the patch top-left corner locations.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#denoiser.space_time.utils.estimate_noise" title="denoiser.space_time.utils.estimate_noise"><code class="xref py py-obj docutils literal notranslate"><span class="pre">estimate_noise</span></code></a>(noise_sequence, block_size=1)</p></td>
+<td><p>Estimate the temporal noise standard deviation of a noise only sequence.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py function">
+<dt class="sig sig-object py" id="denoiser.space_time.utils.svd_analysis">
+<span class="sig-prename descclassname"><span class="pre">denoiser.space_time.utils.</span></span><span class="sig-name descname"><span class="pre">svd_analysis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/denoiser/space_time/utils.html#svd_analysis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#denoiser.space_time.utils.svd_analysis" title="Permalink to this definition">#</a></dt>
+<dd><p>Return the centered SVD decomposition.</p>
+<p>U, S, Vt and M are compute such that:
+<code class="docutils literal notranslate"><span class="pre">X</span> <span class="pre">=</span> <span class="pre">U</span> <span class="pre">&#64;</span> <span class="pre">(S</span> <span class="pre">*</span> <span class="pre">Vt)</span> <span class="pre">+</span> <span class="pre">M.</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>input_data</strong> (<em>numpy.ndarray</em>) – The patch</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>u_vec, s_vals, v_vec, mean</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="denoiser.space_time.utils.svd_synthesis">
+<span class="sig-prename descclassname"><span class="pre">denoiser.space_time.utils.</span></span><span class="sig-name descname"><span class="pre">svd_synthesis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">u_vec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_vals</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_vec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idx</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/denoiser/space_time/utils.html#svd_synthesis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#denoiser.space_time.utils.svd_synthesis" title="Permalink to this definition">#</a></dt>
+<dd><p>Reconstruct <code class="docutils literal notranslate"><span class="pre">X</span> <span class="pre">=</span> <span class="pre">(U</span> <span class="pre">&#64;</span> <span class="pre">(S</span> <span class="pre">*</span> <span class="pre">V))</span> <span class="pre">+</span> <span class="pre">M</span></code> with only the max_idx greatest component.</p>
+<p>U, S, V must be sorted in decreasing order.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>u_vec</strong> (<em>numpy.ndarray</em>) – </p></li>
+<li><p><strong>s_vals</strong> (<em>numpy.ndarray</em>) – </p></li>
+<li><p><strong>v_vec</strong> (<em>numpy.ndarray</em>) – </p></li>
+<li><p><strong>mean</strong> (<em>numpy.ndarray</em>) – </p></li>
+<li><p><strong>idx</strong> (<em>int</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>np.ndarray</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The reconstructed matrix.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="denoiser.space_time.utils.eig_analysis">
+<span class="sig-prename descclassname"><span class="pre">denoiser.space_time.utils.</span></span><span class="sig-name descname"><span class="pre">eig_analysis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_eig_val</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/denoiser/space_time/utils.html#eig_analysis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#denoiser.space_time.utils.eig_analysis" title="Permalink to this definition">#</a></dt>
+<dd><p>Return the eigen values and vectors of the autocorrelation of the patch.</p>
+<p>This method is surprisingly faster than the svd, but the eigen values
+are in increasing order.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_data</strong> (<em>np.ndarray</em>) – A 2D Array</p></li>
+<li><p><strong>max_eig_val</strong> (<em>int</em><em>, </em><em>optional</em>) – For faster results, only the <code class="docutils literal notranslate"><span class="pre">max_eig_val</span></code> biggest eigenvalues are
+computed. default = 10</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>A</strong> (<em>numpy.ndarray</em>) – The centered patch A = X - M</p></li>
+<li><p><strong>d</strong> (<em>numpy.ndarray</em>) – The eigenvalues of A^H A</p></li>
+<li><p><strong>W</strong> (<em>numpy.ndarray</em>) – The eigenvector matrix of A^H A</p></li>
+<li><p><strong>M</strong> (<em>numpy.ndarray</em>) – The mean of the patch along the time axis</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="denoiser.space_time.utils.eig_synthesis">
+<span class="sig-prename descclassname"><span class="pre">denoiser.space_time.utils.</span></span><span class="sig-name descname"><span class="pre">eig_synthesis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_centered</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eig_vec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_val</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/denoiser/space_time/utils.html#eig_synthesis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#denoiser.space_time.utils.eig_synthesis" title="Permalink to this definition">#</a></dt>
+<dd><p>Reconstruction the denoise patch with truncated eigen decomposition.</p>
+<p>This implements equations (1) and (2) of manjon2013</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="denoiser.space_time.utils.marshenko_pastur_median">
+<span class="sig-prename descclassname"><span class="pre">denoiser.space_time.utils.</span></span><span class="sig-name descname"><span class="pre">marshenko_pastur_median</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-07</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/denoiser/space_time/utils.html#marshenko_pastur_median"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#denoiser.space_time.utils.marshenko_pastur_median" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute the median of the Marchenko-Pastur Distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>beta</strong> (<em>float</em>) – aspect ratio of a matrix.</p></li>
+<li><p><strong>eps</strong> (<em>float</em>) – Precision Parameter</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>float</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>the estimated median</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>This method Solve <span class="math notranslate nohighlight">\(F(x) = 1/2\)</span> by dichotomy with
+.. math</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">F</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">=</span> \<span class="n">int_</span><span class="p">{</span>\<span class="n">beta_</span><span class="p">{</span><span class="o">-</span><span class="p">}}</span><span class="o">^</span><span class="p">{</span><span class="n">x</span><span class="p">}</span> \<span class="n">frac</span><span class="p">{</span>\<span class="n">sqrt</span><span class="p">{(</span>\<span class="n">beta_</span><span class="p">{</span><span class="o">+</span><span class="p">}</span><span class="o">-</span><span class="n">t</span><span class="p">)(</span><span class="n">t</span><span class="o">-</span>\<span class="n">beta_</span><span class="p">{</span><span class="o">-</span><span class="p">})}}{</span><span class="mi">2</span>\<span class="n">pi</span>\<span class="n">beta</span> <span class="n">t</span><span class="p">}</span> \<span class="n">mathrm</span><span class="p">{</span><span class="n">d</span><span class="p">}</span><span class="n">t</span>
+</pre></div>
+</div>
+<p>The integral is computed using scipy.integrate.quad</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="denoiser.space_time.utils.get_patch_locs">
+<span class="sig-prename descclassname"><span class="pre">denoiser.space_time.utils.</span></span><span class="sig-name descname"><span class="pre">get_patch_locs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_ovl</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_shape</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/denoiser/space_time/utils.html#get_patch_locs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#denoiser.space_time.utils.get_patch_locs" title="Permalink to this definition">#</a></dt>
+<dd><p>Get all the patch top-left corner locations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vol_shape</strong> (<em>tuple</em>) – The volume shape</p></li>
+<li><p><strong>patch_shape</strong> (<em>tuple</em>) – The patch shape</p></li>
+<li><p><strong>patch_overlap</strong> (<em>tuple</em>) – The overlap of patch for each dimension.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>All the patch top-left corner locations.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="denoiser.space_time.utils.estimate_noise">
+<span class="sig-prename descclassname"><span class="pre">denoiser.space_time.utils.</span></span><span class="sig-name descname"><span class="pre">estimate_noise</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">block_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/denoiser/space_time/utils.html#estimate_noise"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#denoiser.space_time.utils.estimate_noise" title="Permalink to this definition">#</a></dt>
+<dd><p>Estimate the temporal noise standard deviation of a noise only sequence.</p>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+              </article>
+              
+
+              
+              <footer class="bd-footer-article">
+                  <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+</div>
+              </footer>
+              
+          </div>
+          
+      </div>
+    </div>
+
+  
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=92025949c220c2e29695"></script>
+
+<footer class="bd-footer"><div class="bd-footer__inner container">
+  
+  <div class="footer-item">
+    <p class="copyright">
+    &copy; Copyright 2022, Pierre-Antoine Comby.<br>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    <p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.0.2.<br>
+</p>
+  </div>
+  
+</div>
+</footer>
+  </body>
+</html>

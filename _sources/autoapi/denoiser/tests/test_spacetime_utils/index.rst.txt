@@ -1,0 +1,57 @@
+:py:mod:`denoiser.tests.test_spacetime_utils`
+=============================================
+
+.. py:module:: denoiser.tests.test_spacetime_utils
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   denoiser.tests.test_spacetime_utils.medium_random_matrix
+   denoiser.tests.test_spacetime_utils.matrix
+   denoiser.tests.test_spacetime_utils.test_marshenko_pastur_median
+   denoiser.tests.test_spacetime_utils.test_noise_estimation
+   denoiser.tests.test_spacetime_utils.test_svd
+   denoiser.tests.test_spacetime_utils.test_eig
+
+
+
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   denoiser.tests.test_spacetime_utils.parametrize_random_matrix
+
+
+.. py:data:: parametrize_random_matrix
+   
+
+   
+
+.. py:function:: medium_random_matrix(rng)
+
+
+.. py:function:: matrix(request)
+
+
+.. py:function:: test_marshenko_pastur_median(beta, rng, n_runs=10000, n_samples=1000)
+
+   Test the median estimation of Marshenko Pastur law
+
+
+.. py:function:: test_noise_estimation(medium_random_matrix, block_dim)
+
+
+.. py:function:: test_svd(matrix)
+
+
+.. py:function:: test_eig(matrix)
+
+

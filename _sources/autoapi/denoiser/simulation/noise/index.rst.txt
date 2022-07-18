@@ -1,0 +1,56 @@
+:py:mod:`denoiser.simulation.noise`
+===================================
+
+.. py:module:: denoiser.simulation.noise
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   denoiser.simulation.noise.add_temporal_gaussian_noise
+   denoiser.simulation.noise.add_temporal_rician_noise
+
+
+
+.. py:function:: add_temporal_gaussian_noise(array, sigma=1, g_factor_map=None, rng=None)
+
+   Add gaussian noise to array.
+
+   :param array: The noise_free ND-array, where the last dimension is a dynamical one
+                 (e.g. time)
+   :type array: numpy.ndarray
+   :param sigma: gaussian noise variance
+   :type sigma: float
+   :param g_factor_map: Spatial variation of the noise ((N-1)D array). default is identity.
+   :type g_factor_map: numpy.ndarray, optional
+
+   :returns: A noisy array
+   :rtype: numpy.ndarray
+
+
+.. py:function:: add_temporal_rician_noise(array, scale=1, rng=None)
+
+   Add center rician noise to array.
+
+   :param array: The noise-free array
+   :type array: numpy.ndarray
+   :param sigma: The scale of the Rice distribution
+   :type sigma: float
+
+   .. rubric:: Notes
+
+   This function considered centered Rician noise [1]_,
+   and thus the noise generated follows a Rayleigh distribution [2]_.
+
+   .. rubric:: References
+
+   .. [1] https://en.m.wikipedia.org/wiki/Rice_distribution
+   .. [2] https://en.m.wikipedia.org/wiki/Rayleigh_distribution
+
+

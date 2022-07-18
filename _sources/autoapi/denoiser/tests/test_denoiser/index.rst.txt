@@ -1,0 +1,56 @@
+:py:mod:`denoiser.tests.test_denoiser`
+======================================
+
+.. py:module:: denoiser.tests.test_denoiser
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   denoiser.tests.test_denoiser.phantom
+   denoiser.tests.test_denoiser.noisy_phantom
+   denoiser.tests.test_denoiser.test_mppca_denoiser
+   denoiser.tests.test_denoiser.test_hybridpca_denoiser
+   denoiser.tests.test_denoiser.test_nordic_denoiser
+   denoiser.tests.test_denoiser.test_rawsvt_denoiser
+   denoiser.tests.test_denoiser.test_optimal_denoiser
+
+
+
+.. py:function:: phantom(N_rep=20)
+
+
+.. py:function:: noisy_phantom(phantom, rng)
+
+
+.. py:function:: test_mppca_denoiser(phantom, noisy_phantom, recombination)
+
+   Test the MP-PCA denoiser
+
+
+.. py:function:: test_hybridpca_denoiser(phantom, noisy_phantom, recombination)
+
+   Test the Hybrid-PCA denoiser
+
+
+.. py:function:: test_nordic_denoiser(phantom, noisy_phantom, recombination)
+
+   Test the Hybrid-PCA denoiser
+
+
+.. py:function:: test_rawsvt_denoiser(phantom, noisy_phantom, recombination)
+
+   Test the Hybrid-PCA denoiser
+
+
+.. py:function:: test_optimal_denoiser(phantom, noisy_phantom, recombination, loss)
+
+   Test the Hybrid-PCA denoiser
+
+

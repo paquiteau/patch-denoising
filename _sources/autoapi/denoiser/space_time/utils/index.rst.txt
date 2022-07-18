@@ -1,0 +1,127 @@
+:py:mod:`denoiser.space_time.utils`
+===================================
+
+.. py:module:: denoiser.space_time.utils
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   denoiser.space_time.utils.svd_analysis
+   denoiser.space_time.utils.svd_synthesis
+   denoiser.space_time.utils.eig_analysis
+   denoiser.space_time.utils.eig_synthesis
+   denoiser.space_time.utils.marshenko_pastur_median
+   denoiser.space_time.utils.get_patch_locs
+   denoiser.space_time.utils.estimate_noise
+
+
+
+.. py:function:: svd_analysis(input_data)
+
+   Return the centered SVD decomposition.
+
+   U, S, Vt and M are compute such that:
+   ``X = U @ (S * Vt) + M.``
+
+   :param input_data: The patch
+   :type input_data: numpy.ndarray
+
+   :rtype: u_vec, s_vals, v_vec, mean
+
+
+.. py:function:: svd_synthesis(u_vec, s_vals, v_vec, mean, idx)
+
+   Reconstruct ``X = (U @ (S * V)) + M`` with only the max_idx greatest component.
+
+   U, S, V must be sorted in decreasing order.
+
+   :param u_vec:
+   :type u_vec: numpy.ndarray
+   :param s_vals:
+   :type s_vals: numpy.ndarray
+   :param v_vec:
+   :type v_vec: numpy.ndarray
+   :param mean:
+   :type mean: numpy.ndarray
+   :param idx:
+   :type idx: int
+
+   :returns: **np.ndarray**
+   :rtype: The reconstructed matrix.
+
+
+.. py:function:: eig_analysis(input_data, max_eig_val=10)
+
+   Return the eigen values and vectors of the autocorrelation of the patch.
+
+   This method is surprisingly faster than the svd, but the eigen values
+   are in increasing order.
+
+   :param input_data: A 2D Array
+   :type input_data: np.ndarray
+   :param max_eig_val: For faster results, only the ``max_eig_val`` biggest eigenvalues are
+                       computed. default = 10
+   :type max_eig_val: int, optional
+
+   :returns: * **A** (*numpy.ndarray*) -- The centered patch A = X - M
+             * **d** (*numpy.ndarray*) -- The eigenvalues of A^H A
+             * **W** (*numpy.ndarray*) -- The eigenvector matrix of A^H A
+             * **M** (*numpy.ndarray*) -- The mean of the patch along the time axis
+
+
+.. py:function:: eig_synthesis(data_centered, eig_vec, mean, max_val)
+
+   Reconstruction the denoise patch with truncated eigen decomposition.
+
+   This implements equations (1) and (2) of manjon2013
+
+
+.. py:function:: marshenko_pastur_median(beta, eps=1e-07)
+
+   Compute the median of the Marchenko-Pastur Distribution.
+
+   :param beta: aspect ratio of a matrix.
+   :type beta: float
+   :param eps: Precision Parameter
+   :type eps: float
+
+   :returns: **float**
+   :rtype: the estimated median
+
+   .. rubric:: Notes
+
+   This method Solve :math:`F(x) = 1/2` by dichotomy with
+   .. math ::
+
+       F(x) = \int_{\beta_{-}}^{x} \frac{\sqrt{(\beta_{+}-t)(t-\beta_{-})}}{2\pi\beta t} \mathrm{d}t
+
+   The integral is computed using scipy.integrate.quad
+
+
+.. py:function:: get_patch_locs(p_shape, p_ovl, v_shape)
+
+   Get all the patch top-left corner locations.
+
+   :param vol_shape: The volume shape
+   :type vol_shape: tuple
+   :param patch_shape: The patch shape
+   :type patch_shape: tuple
+   :param patch_overlap: The overlap of patch for each dimension.
+   :type patch_overlap: tuple
+
+   :returns: All the patch top-left corner locations.
+   :rtype: numpy.ndarray
+
+
+.. py:function:: estimate_noise(noise_sequence, block_size=1)
+
+   Estimate the temporal noise standard deviation of a noise only sequence.
+
+

@@ -1,0 +1,68 @@
+:py:mod:`denoiser.space_time.base`
+==================================
+
+.. py:module:: denoiser.space_time.base
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   denoiser.space_time.base.BaseSpaceTimeDenoiser
+
+
+
+
+.. py:class:: BaseSpaceTimeDenoiser(patch_shape, patch_overlap, recombination='weighted')
+
+   Base Class for Patch-based denoising methods for dynamical data.
+
+   :param patch_shape: The patch shape
+   :type patch_shape: tuple
+   :param patch_overlap: The amount of overlap between patches in each direction
+   :type patch_overlap: tuple
+   :param recombination: The method of reweighting patches. either "weighed" or "average"
+   :type recombination: str
+
+   .. py:method:: denoise(self, input_data, mask=None)
+
+      Denoise the input_data, according to mask.
+
+      Patches are extracted sequentially and process by the implemented
+      `_patch_processing` function.
+      Only patches which have at least a voxel in the mask ROI are processed.
+
+      :param input_data: The input data to denoise. It should be a ND array, and the last
+                         dimension should a dynamically varying one (eg time).
+      :type input_data: numpy.ndarray
+      :param mask: A boolean array defining a ROI where the patch denoising will be process
+                   It should be a (N-1)D boolean array.
+      :type mask: numpy.ndarray
+      :param denoiser_kwargs: Extra runtime parameters passed to the patch denoising method.
+      :type denoiser_kwargs: dict
+
+      :returns:
+
+                output_data: numpy.ndarray
+                    The denoised data
+                patch_weight: numpy.ndarray
+                    The weight associated to each voxel.
+                noise_std_map: numpy.ndarray
+                    If available, a noise std estimation for each voxel.
+      :rtype: tuple
+
+
+   .. py:method:: _patch_processing(self, patch, patch_slice=None, **kwargs)
+      :abstractmethod:
+
+      Processing of pach
+
+
+   .. py:method:: __get_patch_param(self, data_shape)
+
+
+

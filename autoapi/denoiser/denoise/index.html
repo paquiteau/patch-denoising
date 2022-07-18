@@ -1,0 +1,680 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>denoiser.denoise &#8212; patch-denoise  documentation</title>
+<script>
+  document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
+  document.documentElement.dataset.theme = localStorage.getItem("theme") || "light"
+</script>
+
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=92025949c220c2e29695" rel="stylesheet">
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=92025949c220c2e29695" rel="stylesheet">
+
+
+  <link rel="stylesheet"
+    href="../../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=92025949c220c2e29695">
+
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="docsearch:language" content="en">
+  </head>
+  
+  
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="180" data-default-mode="light">
+    <div class="bd-header-announcement container-fluid" id="banner">
+      
+
+    </div>
+
+    
+    <nav class="bd-header navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="bd-header__inner container-xl">
+
+  <div id="navbar-start">
+    
+    
+  
+
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    <p class="title logo__title">patch-denoise  documentation</p>
+  
+</a>
+    
+  </div>
+
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapsible" aria-controls="navbar-collapsible" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="fas fa-bars"></span>
+  </button>
+
+  
+  <div id="navbar-collapsible" class="col-lg-9 collapse navbar-collapse">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <ul id="navbar-main-elements" class="navbar-nav">
+    <li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../../../denoisers.html">
+  Denoiser descriptions
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../../index.html">
+  API Reference
+ </a>
+</li>
+
+    
+</ul>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+      <div class="navbar-end-item">
+        <span id="theme-switch" class="btn btn-sm btn-outline-primary navbar-btn rounded-circle">
+    <a class="theme-switch" data-mode="light"><i class="fas fa-sun"></i></a>
+    <a class="theme-switch" data-mode="dark"><i class="far fa-moon"></i></a>
+    <a class="theme-switch" data-mode="auto"><i class="fas fa-adjust"></i></a>
+</span>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+</div>
+    </nav>
+    
+
+    <div class="bd-container container-xl">
+      <div class="bd-container__inner row">
+          
+
+<!-- Only show if we have sidebars configured, else just a small margin  -->
+<div class="bd-sidebar-primary col-12 col-md-3 bd-sidebar">
+  <div class="sidebar-start-items"><form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+  <div class="bd-toc-item active">
+    <ul class="nav bd-sidenav">
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="../simulation/index.html">
+   <code class="xref py py-mod docutils literal notranslate">
+    <span class="pre">
+     denoiser.simulation
+    </span>
+   </code>
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../simulation/activations/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       denoiser.simulation.activations
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../simulation/noise/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       denoiser.simulation.noise
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../simulation/phantom/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       denoiser.simulation.phantom
+      </span>
+     </code>
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="../space_time/index.html">
+   <code class="xref py py-mod docutils literal notranslate">
+    <span class="pre">
+     denoiser.space_time
+    </span>
+   </code>
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
+  <label for="toctree-checkbox-2">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../space_time/base/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       denoiser.space_time.base
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../space_time/lowrank/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       denoiser.space_time.lowrank
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../space_time/utils/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       denoiser.space_time.utils
+      </span>
+     </code>
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="../tests/index.html">
+   <code class="xref py py-mod docutils literal notranslate">
+    <span class="pre">
+     denoiser.tests
+    </span>
+   </code>
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/>
+  <label for="toctree-checkbox-3">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../tests/conftest/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       denoiser.tests.conftest
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../tests/test_denoiser/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       denoiser.tests.test_denoiser
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../tests/test_spacetime_utils/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       denoiser.tests.test_spacetime_utils
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../tests/test_utils/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       denoiser.tests.test_utils
+      </span>
+     </code>
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="../viz/index.html">
+   <code class="xref py py-mod docutils literal notranslate">
+    <span class="pre">
+     denoiser.viz
+    </span>
+   </code>
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/>
+  <label for="toctree-checkbox-4">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../viz/plots/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       denoiser.viz.plots
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../viz/utils/index.html">
+     <code class="xref py py-mod docutils literal notranslate">
+      <span class="pre">
+       denoiser.viz.utils
+      </span>
+     </code>
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   <code class="xref py py-mod docutils literal notranslate">
+    <span class="pre">
+     denoiser.denoise
+    </span>
+   </code>
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../utils/index.html">
+   <code class="xref py py-mod docutils literal notranslate">
+    <span class="pre">
+     denoiser.utils
+    </span>
+   </code>
+  </a>
+ </li>
+</ul>
+
+  </div>
+</nav>
+  </div>
+  <div class="sidebar-end-items">
+  </div>
+</div>
+
+
+          
+
+
+<div class="bd-sidebar-secondary d-none d-xl-block col-xl-2 bd-toc">
+  
+    
+    <div class="toc-item">
+      
+<div class="tocsection onthispage mt-5 pt-1 pb-3">
+    <i class="fas fa-list"></i> On this page
+</div>
+
+<nav id="bd-toc-nav">
+    <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#module-contents">
+   Module Contents
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#functions">
+     Functions
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#attributes">
+     Attributes
+    </a>
+    <ul class="nav section-nav flex-column">
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#denoiser.denoise._DENOISER">
+       _DENOISER
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#denoiser.denoise.mp_pca">
+       mp_pca
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#denoiser.denoise.hybrid_pca">
+       hybrid_pca
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#denoiser.denoise.raw_svt">
+       raw_svt
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#denoiser.denoise.nordic">
+       nordic
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#denoiser.denoise.optimal_thresholding">
+       optimal_thresholding
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#denoiser.denoise.volume_denoise">
+       volume_denoise
+      </a>
+     </li>
+    </ul>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+</nav>
+    </div>
+    
+    <div class="toc-item">
+      
+    </div>
+    
+  
+</div>
+
+
+          
+          
+          <div class="bd-content col-12 col-md-9 col-xl-7">
+              
+              <article class="bd-article" role="main">
+                
+  <section id="module-denoiser.denoise">
+<span id="denoiser-denoise"></span><h1><a class="reference internal" href="#module-denoiser.denoise" title="denoiser.denoise"><code class="xref py py-mod docutils literal notranslate"><span class="pre">denoiser.denoise</span></code></a><a class="headerlink" href="#module-denoiser.denoise" title="Permalink to this heading">#</a></h1>
+<p>This module provides a functional entry point for denoising methods.</p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">#</a></h2>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
+<table class="autosummary longtable table autosummary">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#denoiser.denoise.mp_pca" title="denoiser.denoise.mp_pca"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mp_pca</span></code></a>(volume_sequence, patch_shape, patch_overlap, mask=None, recombination='weighted', threshold_scale=1.0)</p></td>
+<td><p>Marshenko-Pastur PCA denoising method</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#denoiser.denoise.hybrid_pca" title="denoiser.denoise.hybrid_pca"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hybrid_pca</span></code></a>(volume_sequence, patch_shape, patch_overlap, mask=None, noise_std=1.0, recombination='weighted')</p></td>
+<td><p>Hybrid PCA denoising method</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#denoiser.denoise.raw_svt" title="denoiser.denoise.raw_svt"><code class="xref py py-obj docutils literal notranslate"><span class="pre">raw_svt</span></code></a>(volume_sequence, patch_shape, patch_overlap, mask=None, noise_std=1.0, recombination='weighted')</p></td>
+<td><p>Raw singular value thresholding</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#denoiser.denoise.nordic" title="denoiser.denoise.nordic"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nordic</span></code></a>(volume_sequence, patch_shape, patch_overlap, mask=None, noise_std=1.0, recombination='weighted', n_iter_threshold=10)</p></td>
+<td><p>NORDIC denoising method</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#denoiser.denoise.optimal_thresholding" title="denoiser.denoise.optimal_thresholding"><code class="xref py py-obj docutils literal notranslate"><span class="pre">optimal_thresholding</span></code></a>(volume_sequence, patch_shape, patch_overlap, mask=None, loss='fro', recombination='weighted', eps_marshenko_pastur=1e-07)</p></td>
+<td><p>Optimal thresholing denoising method</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#denoiser.denoise.volume_denoise" title="denoiser.denoise.volume_denoise"><code class="xref py py-obj docutils literal notranslate"><span class="pre">volume_denoise</span></code></a>(volume_sequence, method)</p></td>
+<td><p>Denoise each volume independently.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="attributes">
+<h3>Attributes<a class="headerlink" href="#attributes" title="Permalink to this heading">#</a></h3>
+<table class="autosummary longtable table autosummary">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#denoiser.denoise._DENOISER" title="denoiser.denoise._DENOISER"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_DENOISER</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py data">
+<dt class="sig sig-object py" id="denoiser.denoise._DENOISER">
+<span class="sig-prename descclassname"><span class="pre">denoiser.denoise.</span></span><span class="sig-name descname"><span class="pre">_DENOISER</span></span><a class="reference internal" href="../../../_modules/denoiser/denoise.html#_DENOISER"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#denoiser.denoise._DENOISER" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="denoiser.denoise.mp_pca">
+<span class="sig-prename descclassname"><span class="pre">denoiser.denoise.</span></span><span class="sig-name descname"><span class="pre">mp_pca</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">volume_sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_overlap</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recombination</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'weighted'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/denoiser/denoise.html#mp_pca"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#denoiser.denoise.mp_pca" title="Permalink to this definition">#</a></dt>
+<dd><p>Marshenko-Pastur PCA denoising method</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>volume_sequence</strong> (<em>numpy.ndarray</em>) – The volume shape to denoise</p></li>
+<li><p><strong>patch_shape</strong> (<em>tuple</em>) – The patch shape</p></li>
+<li><p><strong>patch_overlap</strong> (<em>tuple</em>) – the overlap of each pixel</p></li>
+<li><p><strong>mask</strong> (<em>numpy.ndarray</em>) – A boolean array, defining a ROI in the volume. Only patch with voxels in the ROi will be processed.</p></li>
+<li><p><strong>recombination</strong> (<em>str</em>) – The recombination method of the patch. “weighted” or “mean”</p></li>
+<li><p><strong>threshold_scale</strong> (<em>float</em>) – An extra factor for the patch denoising.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>numpy.ndarray: The denoised sequence of volume
+numpy.ndarray: The weight of each pixel after the processing.
+numpy.ndarray: If possible, the noise variance distribution in the volume.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../space_time/lowrank/index.html#denoiser.space_time.lowrank.MPPCADenoiser" title="denoiser.space_time.lowrank.MPPCADenoiser"><code class="xref py py-obj docutils literal notranslate"><span class="pre">denoiser.space_time.lowrank.MPPCADenoiser</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="denoiser.denoise.hybrid_pca">
+<span class="sig-prename descclassname"><span class="pre">denoiser.denoise.</span></span><span class="sig-name descname"><span class="pre">hybrid_pca</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">volume_sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_overlap</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recombination</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'weighted'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/denoiser/denoise.html#hybrid_pca"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#denoiser.denoise.hybrid_pca" title="Permalink to this definition">#</a></dt>
+<dd><p>Hybrid PCA denoising method</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>volume_sequence</strong> (<em>numpy.ndarray</em>) – The volume shape to denoise</p></li>
+<li><p><strong>patch_shape</strong> (<em>tuple</em>) – The patch shape</p></li>
+<li><p><strong>patch_overlap</strong> (<em>tuple</em>) – the overlap of each pixel</p></li>
+<li><p><strong>mask</strong> (<em>numpy.ndarray</em>) – A boolean array, defining a ROI in the volume. Only patch with voxels in the ROi will be processed.</p></li>
+<li><p><strong>recombination</strong> (<em>str</em>) – The recombination method of the patch. “weighted” or “mean”</p></li>
+<li><p><strong>threshold_scale</strong> (<em>float</em>) – An extra factor for the patch denoising.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>numpy.ndarray: The denoised sequence of volume
+numpy.ndarray: The weight of each pixel after the processing.
+numpy.ndarray: If possible, the noise variance distribution in the volume.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../space_time/lowrank/index.html#denoiser.space_time.lowrank.HybridPCADenoiser" title="denoiser.space_time.lowrank.HybridPCADenoiser"><code class="xref py py-obj docutils literal notranslate"><span class="pre">denoiser.space_time.lowrank.HybridPCADenoiser</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="denoiser.denoise.raw_svt">
+<span class="sig-prename descclassname"><span class="pre">denoiser.denoise.</span></span><span class="sig-name descname"><span class="pre">raw_svt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">volume_sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_overlap</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recombination</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'weighted'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/denoiser/denoise.html#raw_svt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#denoiser.denoise.raw_svt" title="Permalink to this definition">#</a></dt>
+<dd><p>Raw singular value thresholding</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>volume_sequence</strong> (<em>numpy.ndarray</em>) – The volume shape to denoise</p></li>
+<li><p><strong>patch_shape</strong> (<em>tuple</em>) – The patch shape</p></li>
+<li><p><strong>patch_overlap</strong> (<em>tuple</em>) – the overlap of each pixel</p></li>
+<li><p><strong>mask</strong> (<em>numpy.ndarray</em>) – A boolean array, defining a ROI in the volume. Only patch with voxels in the ROi will be processed.</p></li>
+<li><p><strong>recombination</strong> (<em>str</em>) – The recombination method of the patch. “weighted” or “mean”</p></li>
+<li><p><strong>noise_std</strong> (<em>float</em><em> or </em><em>numpy.npdarray</em>) – An estimation of the noise standard deviation.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>numpy.ndarray: The denoised sequence of volume
+numpy.ndarray: The weight of each pixel after the processing.
+numpy.ndarray: If possible, the noise variance distribution in the volume.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../space_time/lowrank/index.html#denoiser.space_time.lowrank.MPPCADenoiser" title="denoiser.space_time.lowrank.MPPCADenoiser"><code class="xref py py-obj docutils literal notranslate"><span class="pre">denoiser.space_time.lowrank.MPPCADenoiser</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="denoiser.denoise.nordic">
+<span class="sig-prename descclassname"><span class="pre">denoiser.denoise.</span></span><span class="sig-name descname"><span class="pre">nordic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">volume_sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_overlap</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recombination</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'weighted'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/denoiser/denoise.html#nordic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#denoiser.denoise.nordic" title="Permalink to this definition">#</a></dt>
+<dd><p>NORDIC denoising method</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>volume_sequence</strong> (<em>numpy.ndarray</em>) – The volume shape to denoise</p></li>
+<li><p><strong>patch_shape</strong> (<em>tuple</em>) – The patch shape</p></li>
+<li><p><strong>patch_overlap</strong> (<em>tuple</em>) – the overlap of each pixel</p></li>
+<li><p><strong>mask</strong> (<em>numpy.ndarray</em>) – A boolean array, defining a ROI in the volume. Only patch with voxels in the ROi will be processed.</p></li>
+<li><p><strong>recombination</strong> (<em>str</em>) – The recombination method of the patch. “weighted” or “mean”</p></li>
+<li><p><strong>threshold_scale</strong> (<em>float</em>) – An extra factor for the patch denoising.</p></li>
+<li><p><strong>n_iter_threshold</strong> (<em>int</em>) – The number of Monte-Carlo Simulation to estimate the global threshold.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>numpy.ndarray: The denoised sequence of volume
+numpy.ndarray: The weight of each pixel after the processing.
+numpy.ndarray: If possible, the noise variance distribution in the volume.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../space_time/lowrank/index.html#denoiser.space_time.lowrank.NordicDenoiser" title="denoiser.space_time.lowrank.NordicDenoiser"><code class="xref py py-obj docutils literal notranslate"><span class="pre">denoiser.space_time.lowrank.NordicDenoiser</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="denoiser.denoise.optimal_thresholding">
+<span class="sig-prename descclassname"><span class="pre">denoiser.denoise.</span></span><span class="sig-name descname"><span class="pre">optimal_thresholding</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">volume_sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_overlap</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'fro'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recombination</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'weighted'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps_marshenko_pastur</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-07</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/denoiser/denoise.html#optimal_thresholding"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#denoiser.denoise.optimal_thresholding" title="Permalink to this definition">#</a></dt>
+<dd><p>Optimal thresholing denoising method</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>volume_sequence</strong> (<em>numpy.ndarray</em>) – The volume shape to denoise</p></li>
+<li><p><strong>patch_shape</strong> (<em>tuple</em>) – The patch shape</p></li>
+<li><p><strong>patch_overlap</strong> (<em>tuple</em>) – the overlap of each pixel</p></li>
+<li><p><strong>mask</strong> (<em>numpy.ndarray</em>) – A boolean array, defining a ROI in the volume. Only patch with voxels in the ROi will be processed.</p></li>
+<li><p><strong>loss</strong> (<em>str</em>) – The loss for which the optimal thresholding is perform.</p></li>
+<li><p><strong>recombination</strong> (<em>str</em>) – The recombination method of the patch. “weighted” or “mean”</p></li>
+<li><p><strong>eps_marshenko_pastur</strong> (<em>float</em>) – The precision with which the optimal threshold is computed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>numpy.ndarray: The denoised sequence of volume
+numpy.ndarray: The weight of each pixel after the processing.
+numpy.ndarray: If possible, the noise variance distribution in the volume.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../space_time/lowrank/index.html#denoiser.space_time.lowrank.OptimalSVDDenoiser" title="denoiser.space_time.lowrank.OptimalSVDDenoiser"><code class="xref py py-obj docutils literal notranslate"><span class="pre">denoiser.space_time.lowrank.OptimalSVDDenoiser</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="denoiser.denoise.volume_denoise">
+<span class="sig-prename descclassname"><span class="pre">denoiser.denoise.</span></span><span class="sig-name descname"><span class="pre">volume_denoise</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">volume_sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/denoiser/denoise.html#volume_denoise"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#denoiser.denoise.volume_denoise" title="Permalink to this definition">#</a></dt>
+<dd><p>Denoise each volume independently.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>volume_sequence</strong> (<em>numpy.ndarray</em>) – a sequence of volume to denoise</p></li>
+<li><p><strong>method</strong> (<em>str</em>) – The denoising method to use. Available are:
+- <cite>“bm3d”</cite>
+- <cite>“dip”</cite></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+              </article>
+              
+
+              
+              <footer class="bd-footer-article">
+                  <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+</div>
+              </footer>
+              
+          </div>
+          
+      </div>
+    </div>
+
+  
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=92025949c220c2e29695"></script>
+
+<footer class="bd-footer"><div class="bd-footer__inner container">
+  
+  <div class="footer-item">
+    <p class="copyright">
+    &copy; Copyright 2022, Pierre-Antoine Comby.<br>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    <p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.0.2.<br>
+</p>
+  </div>
+  
+</div>
+</footer>
+  </body>
+</html>

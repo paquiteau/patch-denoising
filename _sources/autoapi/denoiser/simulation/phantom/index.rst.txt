@@ -1,0 +1,131 @@
+:py:mod:`denoiser.simulation.phantom`
+=====================================
+
+.. py:module:: denoiser.simulation.phantom
+
+.. autoapi-nested-parse::
+
+   Shepp-Logan phantom for use with MR simulations.
+
+   From https://github.com/mckib2/phantominator/blob/master/phantominator/mr_shepp_logan.py
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   denoiser.simulation.phantom.mr_shepp_logan_t2_star
+   denoiser.simulation.phantom.mr_shepp_logan
+   denoiser.simulation.phantom.mr_ellipsoid_parameters
+   denoiser.simulation.phantom._mr_relaxation_parameters
+   denoiser.simulation.phantom._hamming1d
+   denoiser.simulation.phantom.g_factor_map
+
+
+
+.. py:function:: mr_shepp_logan_t2_star(N, B0=3)
+
+
+.. py:function:: mr_shepp_logan(N, E=None, B0=3, T2star=False, zlims=(-1, 1))
+
+   Shepp-Logan phantom with MR tissue parameters.
+
+   :param N: Matrix size, (N, N, N), or (L, M, N).
+   :type N: int or array_like
+   :param E: ex13 numeric matrix defining e ellipses.  The columns of E
+             are:
+
+                 - x-coordinate of the center of the ellipsoid (in [-1, 1])
+                 - y-coordinate of the center of the ellipsoid (in [-1, 1])
+                 - z-coordinate of the center of the ellipsoid (in [-1, 1])
+                 - x principal axis of the ellipsoid
+                 - y principal axis of the ellipsoid
+                 - z principal axis of the ellipsoid
+                 - Angle of the ellipsoid (in rad)
+                 - spin density, M0
+                 - Parameter A for T1 determination
+                 - Parameter C for T1 determination
+                 - Explicit T1 value (in sec, or np.nan if model is used)
+                 - T2 value (in sec)
+                 - chi (change in magnetic susceptibility)
+
+             If spin density is negative, M0, T1, and T2 will be subtracted
+             instead of cummulatively added.
+   :type E: array_like, optional
+   :param B0: Field strength (in Tesla).
+   :type B0: float, optimal
+   :param T2star: Use magnetic susceptibility values to return T2star values
+                  instead of T2. Gyromagnetic ratio is assumed to be that of
+                  hydrogen.
+   :type T2star: bool, optional
+   :param zlims: Only for 3D.  Specify bounds along z.  Often we only want the
+                 middle portion of a 3D phantom, e.g., zlim=(-.5, .5).
+   :type zlims: tuple, optional
+
+   :returns: * **M0** (*array_like*) -- The proton density.
+             * **T1** (*array_like*) -- The T1 values.
+             * **T2** (*array_like*) -- The T2 values. If T2star is True, then these will be T2 star
+               values.
+
+   .. rubric:: Notes
+
+   Implements the phantoms described in [1]_.
+
+   If parameters A, C are given and T1 is None, T1 is determined
+   according to the equation:
+
+       T1 = A*B0^C
+
+   The original source code [2]_
+
+   .. rubric:: References
+
+   .. [1] Gach, H. Michael, Costin Tanase, and Fernando Boada.
+          "2D & 3D Shepp-Logan phantom standards for MRI." 2008 19th
+          International Conference on Systems Engineering. IEEE,
+          2008.
+   .. [2] https://github.com/mckib2/phantominator/blob/master/phantominator/mr_shepp_logan.py
+
+
+.. py:function:: mr_ellipsoid_parameters()
+
+   Returns parameters of ellipsoids.
+
+   :returns: **E** -- Parameters for the ellipsoids used to construct the phantom.
+   :rtype: array_like
+
+
+.. py:function:: _mr_relaxation_parameters()
+
+   Return MR relaxation parameters for certain tissues.
+
+   :returns: **params** -- Gives entries as [A, C, (t1), t2, chi]
+   :rtype: dict
+
+   .. rubric:: Notes
+
+   If t1 is None, the model T1 = A*B0^C will be used.  If t1 is not
+   np.nan, then specified t1 will be used.
+
+
+.. py:function:: _hamming1d(n)
+
+   Compute the 1D Hamming window.
+
+
+.. py:function:: g_factor_map(volume_shape, window_type='hamming')
+
+   Return a g-factor map using a window function.
+
+   :param volume_shape: The volume shape, it should be 2 or 3 element tuple.
+   :type volume_shape: tuple
+   :param window_type: other type not implemented yet.
+   :type window_type: "hamming"
+
+

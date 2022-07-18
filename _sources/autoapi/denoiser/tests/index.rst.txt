@@ -1,0 +1,18 @@
+:py:mod:`denoiser.tests`
+========================
+
+.. py:module:: denoiser.tests
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   conftest/index.rst
+   test_denoiser/index.rst
+   test_spacetime_utils/index.rst
+   test_utils/index.rst
+
+

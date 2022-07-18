@@ -1,0 +1,191 @@
+:py:mod:`denoiser.denoise`
+==========================
+
+.. py:module:: denoiser.denoise
+
+.. autoapi-nested-parse::
+
+   This module provides a functional entry point for denoising methods.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   denoiser.denoise.mp_pca
+   denoiser.denoise.hybrid_pca
+   denoiser.denoise.raw_svt
+   denoiser.denoise.nordic
+   denoiser.denoise.optimal_thresholding
+   denoiser.denoise.volume_denoise
+
+
+
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   denoiser.denoise._DENOISER
+
+
+.. py:data:: _DENOISER
+   
+
+   
+
+.. py:function:: mp_pca(volume_sequence, patch_shape, patch_overlap, mask=None, recombination='weighted', threshold_scale=1.0)
+
+   Marshenko-Pastur PCA denoising method
+
+   :param volume_sequence: The volume shape to denoise
+   :type volume_sequence: numpy.ndarray
+   :param patch_shape: The patch shape
+   :type patch_shape: tuple
+   :param patch_overlap: the overlap of each pixel
+   :type patch_overlap: tuple
+   :param mask: A boolean array, defining a ROI in the volume. Only patch with voxels in the ROi will be processed.
+   :type mask: numpy.ndarray
+   :param recombination: The recombination method of the patch. "weighted" or "mean"
+   :type recombination: str
+   :param threshold_scale: An extra factor for the patch denoising.
+   :type threshold_scale: float
+
+   :returns: numpy.ndarray: The denoised sequence of volume
+             numpy.ndarray: The weight of each pixel after the processing.
+             numpy.ndarray: If possible, the noise variance distribution in the volume.
+   :rtype: tuple
+
+   .. rubric:: Notes
+
+   .. seealso:: :obj:`denoiser.space_time.lowrank.MPPCADenoiser`
+
+
+.. py:function:: hybrid_pca(volume_sequence, patch_shape, patch_overlap, mask=None, noise_std=1.0, recombination='weighted')
+
+   Hybrid PCA denoising method
+
+   :param volume_sequence: The volume shape to denoise
+   :type volume_sequence: numpy.ndarray
+   :param patch_shape: The patch shape
+   :type patch_shape: tuple
+   :param patch_overlap: the overlap of each pixel
+   :type patch_overlap: tuple
+   :param mask: A boolean array, defining a ROI in the volume. Only patch with voxels in the ROi will be processed.
+   :type mask: numpy.ndarray
+   :param recombination: The recombination method of the patch. "weighted" or "mean"
+   :type recombination: str
+   :param threshold_scale: An extra factor for the patch denoising.
+   :type threshold_scale: float
+
+   :returns: numpy.ndarray: The denoised sequence of volume
+             numpy.ndarray: The weight of each pixel after the processing.
+             numpy.ndarray: If possible, the noise variance distribution in the volume.
+   :rtype: tuple
+
+   .. rubric:: Notes
+
+   .. seealso:: :obj:`denoiser.space_time.lowrank.HybridPCADenoiser`
+
+
+.. py:function:: raw_svt(volume_sequence, patch_shape, patch_overlap, mask=None, noise_std=1.0, recombination='weighted')
+
+   Raw singular value thresholding
+
+   :param volume_sequence: The volume shape to denoise
+   :type volume_sequence: numpy.ndarray
+   :param patch_shape: The patch shape
+   :type patch_shape: tuple
+   :param patch_overlap: the overlap of each pixel
+   :type patch_overlap: tuple
+   :param mask: A boolean array, defining a ROI in the volume. Only patch with voxels in the ROi will be processed.
+   :type mask: numpy.ndarray
+   :param recombination: The recombination method of the patch. "weighted" or "mean"
+   :type recombination: str
+   :param noise_std: An estimation of the noise standard deviation.
+   :type noise_std: float or numpy.npdarray
+
+   :returns: numpy.ndarray: The denoised sequence of volume
+             numpy.ndarray: The weight of each pixel after the processing.
+             numpy.ndarray: If possible, the noise variance distribution in the volume.
+   :rtype: tuple
+
+   .. rubric:: Notes
+
+   .. seealso:: :obj:`denoiser.space_time.lowrank.MPPCADenoiser`
+
+
+.. py:function:: nordic(volume_sequence, patch_shape, patch_overlap, mask=None, noise_std=1.0, recombination='weighted', n_iter_threshold=10)
+
+   NORDIC denoising method
+
+   :param volume_sequence: The volume shape to denoise
+   :type volume_sequence: numpy.ndarray
+   :param patch_shape: The patch shape
+   :type patch_shape: tuple
+   :param patch_overlap: the overlap of each pixel
+   :type patch_overlap: tuple
+   :param mask: A boolean array, defining a ROI in the volume. Only patch with voxels in the ROi will be processed.
+   :type mask: numpy.ndarray
+   :param recombination: The recombination method of the patch. "weighted" or "mean"
+   :type recombination: str
+   :param threshold_scale: An extra factor for the patch denoising.
+   :type threshold_scale: float
+   :param n_iter_threshold: The number of Monte-Carlo Simulation to estimate the global threshold.
+   :type n_iter_threshold: int
+
+   :returns: numpy.ndarray: The denoised sequence of volume
+             numpy.ndarray: The weight of each pixel after the processing.
+             numpy.ndarray: If possible, the noise variance distribution in the volume.
+   :rtype: tuple
+
+   .. rubric:: Notes
+
+   .. seealso:: :obj:`denoiser.space_time.lowrank.NordicDenoiser`
+
+
+.. py:function:: optimal_thresholding(volume_sequence, patch_shape, patch_overlap, mask=None, loss='fro', recombination='weighted', eps_marshenko_pastur=1e-07)
+
+   Optimal thresholing denoising method
+
+   :param volume_sequence: The volume shape to denoise
+   :type volume_sequence: numpy.ndarray
+   :param patch_shape: The patch shape
+   :type patch_shape: tuple
+   :param patch_overlap: the overlap of each pixel
+   :type patch_overlap: tuple
+   :param mask: A boolean array, defining a ROI in the volume. Only patch with voxels in the ROi will be processed.
+   :type mask: numpy.ndarray
+   :param loss: The loss for which the optimal thresholding is perform.
+   :type loss: str
+   :param recombination: The recombination method of the patch. "weighted" or "mean"
+   :type recombination: str
+   :param eps_marshenko_pastur: The precision with which the optimal threshold is computed.
+   :type eps_marshenko_pastur: float
+
+   :returns: numpy.ndarray: The denoised sequence of volume
+             numpy.ndarray: The weight of each pixel after the processing.
+             numpy.ndarray: If possible, the noise variance distribution in the volume.
+   :rtype: tuple
+
+   .. seealso:: :obj:`denoiser.space_time.lowrank.OptimalSVDDenoiser`
+
+
+.. py:function:: volume_denoise(volume_sequence, method)
+
+   Denoise each volume independently.
+
+   :param volume_sequence: a sequence of volume to denoise
+   :type volume_sequence: numpy.ndarray
+   :param method: The denoising method to use. Available are:
+                  - `"bm3d"`
+                  - `"dip"`
+   :type method: str
+
+

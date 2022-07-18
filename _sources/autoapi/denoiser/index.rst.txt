@@ -1,0 +1,28 @@
+:py:mod:`denoiser`
+==================
+
+.. py:module:: denoiser
+
+
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   simulation/index.rst
+   space_time/index.rst
+   tests/index.rst
+   viz/index.rst
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   denoise/index.rst
+   utils/index.rst
+
+

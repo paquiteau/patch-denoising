@@ -1,0 +1,41 @@
+:py:mod:`denoiser.viz.plots`
+============================
+
+.. py:module:: denoiser.viz.plots
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   denoiser.viz.plots.carpet_plot
+
+
+
+.. py:function:: carpet_plot(arr, unfold='classic', colorbar=True, transpose=False, figsize=None)
+
+   Carpet Plot of ND array.
+
+   The last dimension if plotted on the horizontal axis,
+   The other are flattened on the vertical one.
+   :param arr: The  ND array to plot.
+   :type arr: numpy.ndarray
+   :param unfold: The method to unfold the (N-1)D first dimensions.
+                  If "classic" the data is simply row-wise unfolded
+                  If "zigzag" (only for 2D spatial dimensions), the data is unfolded following
+                  a diagonal zig-zag pattern starting from top left.
+   :type unfold: str
+   :param colorbar: flag to show a colorbar
+   :type colorbar: bool
+   :param transpose: If true, switch the horizontal and vertical axis.
+   :type transpose: bool
+
+   :returns: The plotted figure.
+   :rtype: matplotlib.pyplot.figure
+
+

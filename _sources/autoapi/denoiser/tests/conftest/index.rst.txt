@@ -1,0 +1,22 @@
+:py:mod:`denoiser.tests.conftest`
+=================================
+
+.. py:module:: denoiser.tests.conftest
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   denoiser.tests.conftest.rng
+
+
+
+.. py:function:: rng()
+
+

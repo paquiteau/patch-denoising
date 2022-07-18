@@ -1,0 +1,37 @@
+:py:mod:`denoiser.simulation.activations`
+=========================================
+
+.. py:module:: denoiser.simulation.activations
+
+.. autoapi-nested-parse::
+
+   Create Dynamical Data from phantom
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   denoiser.simulation.activations.add_activations
+
+
+
+.. py:function:: add_activations(volume, n_frames)
+
+   Add Activation to ground truth volume.
+
+   :param volume: The Static volume to augment
+   :type volume: numpy.ndarray
+   :param n_frames: The number of temporal frames to create
+   :type n_frames: int
+
+   :returns: The temporal sequence of volume with activations.
+   :rtype: numpy.ndarray
+
+

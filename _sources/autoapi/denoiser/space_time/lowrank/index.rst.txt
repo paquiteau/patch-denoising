@@ -1,0 +1,231 @@
+:py:mod:`denoiser.space_time.lowrank`
+=====================================
+
+.. py:module:: denoiser.space_time.lowrank
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   denoiser.space_time.lowrank.MPPCADenoiser
+   denoiser.space_time.lowrank.HybridPCADenoiser
+   denoiser.space_time.lowrank.RawSVDDenoiser
+   denoiser.space_time.lowrank.NordicDenoiser
+   denoiser.space_time.lowrank.OptimalSVDDenoiser
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   denoiser.space_time.lowrank._opt_loss_x
+   denoiser.space_time.lowrank._opt_op_shrink
+   denoiser.space_time.lowrank._opt_nuc_shrink
+   denoiser.space_time.lowrank._opt_fro_shrink
+
+
+
+.. py:class:: MPPCADenoiser(patch_shape, patch_overlap, threshold_scale, **kwargs)
+
+   Bases: :py:obj:`denoiser.space_time.base.BaseSpaceTimeDenoiser`
+
+   Denoising using the MP-PCA threshoding.
+
+   :param patch_shape: The patch shape
+   :type patch_shape: tuple
+   :param patch_overlap: The amount of overlap between patches in each direction
+   :type patch_overlap: tuple
+   :param recombination: The method of reweighting patches. either "weighed" or "average"
+   :type recombination: str
+
+   .. py:method:: _patch_processing(self, patch, patch_slice=None, threshold_scale=1.0)
+
+      Process a pach with the MP-PCA method.
+
+
+
+.. py:class:: HybridPCADenoiser(patch_shape, patch_overlap, recombination='weighted')
+
+   Bases: :py:obj:`denoiser.space_time.base.BaseSpaceTimeDenoiser`
+
+   Denoising using the Hybrid-PCA thresholding method.
+
+   :param patch_shape: The patch shape
+   :type patch_shape: tuple
+   :param patch_overlap: The amount of overlap between patches in each direction
+   :type patch_overlap: tuple
+   :param recombination: The method of reweighting patches. either "weighed" or "average"
+   :type recombination: str
+
+   .. py:method:: denoise(self, input_data, mask=None, noise_std=1.0)
+
+      Denoise using the Hybrid-PCA method.
+
+      Along with the input data a noise std map or value should be provided.
+
+
+   .. py:method:: _patch_processing(self, patch, patch_slice=None)
+
+      Process a pach with the Hybrid-PCA method.
+
+
+
+.. py:class:: RawSVDDenoiser(patch_shape, patch_overlap, threshold_value=1.0, recombination='weighted')
+
+   Bases: :py:obj:`denoiser.space_time.base.BaseSpaceTimeDenoiser`
+
+   Classical Patch wise singular value thresholding denoiser.
+
+   :param patch_shape: The patch shape
+   :type patch_shape: tuple
+   :param patch_overlap: The amount of overlap between patches in each direction
+   :type patch_overlap: tuple
+   :param recombination: The method of reweighting patches. either "weighed" or "average"
+   :type recombination: str
+
+   .. py:method:: denoise(self, input_data, mask=None, threshold_scale=1.0)
+
+      Denoise the input_data, according to mask.
+
+      Patches are extracted sequentially and process by the implemented
+      `_patch_processing` function.
+      Only patches which have at least a voxel in the mask ROI are processed.
+
+      :param input_data: The input data to denoise. It should be a ND array, and the last
+                         dimension should a dynamically varying one (eg time).
+      :type input_data: numpy.ndarray
+      :param mask: A boolean array defining a ROI where the patch denoising will be process
+                   It should be a (N-1)D boolean array.
+      :type mask: numpy.ndarray
+      :param denoiser_kwargs: Extra runtime parameters passed to the patch denoising method.
+      :type denoiser_kwargs: dict
+
+      :returns:
+
+                output_data: numpy.ndarray
+                    The denoised data
+                patch_weight: numpy.ndarray
+                    The weight associated to each voxel.
+                noise_std_map: numpy.ndarray
+                    If available, a noise std estimation for each voxel.
+      :rtype: tuple
+
+
+   .. py:method:: _patch_processing(self, patch, patch_slice=None, **kwargs)
+
+      Denoise a patch using the singular value thresholding.
+
+      :param patch: The patch to process
+      :type patch: numpy.ndarray
+      :param threshold_value: The thresholding value for the patch
+      :type threshold_value: float
+
+      :returns: * **patch_new** (*numpy.ndarray*) -- The processed patch.
+                * **weights** (*numpy.ndarray*) -- The weight associated with the patch.
+
+
+
+.. py:class:: NordicDenoiser(patch_shape, patch_overlap, threshold_value=1.0, recombination='weighted')
+
+   Bases: :py:obj:`RawSVDDenoiser`
+
+   Denoising using the Hybrid-PCA thresholding method.
+
+   :param patch_shape: The patch shape
+   :type patch_shape: tuple
+   :param patch_overlap: The amount of overlap between patches in each direction
+   :type patch_overlap: tuple
+   :param recombination: The method of reweighting patches. either "weighed" or "average"
+   :type recombination: str
+
+   .. py:method:: denoise(self, input_data, mask=None, noise_std=1.0, n_iter_threshold=10)
+
+      Denoise using the NORDIC method.
+
+      Along with the input data a noise stp map or value should be provided.
+
+
+
+.. py:function:: _opt_loss_x(y, beta)
+
+   Compute (8) of donoho2017.
+
+
+.. py:function:: _opt_op_shrink(singvals, beta=1)
+
+   Perform optimal threshold of singular values for operator norm.
+
+
+.. py:function:: _opt_nuc_shrink(singvals, beta=1)
+
+   Perform optimal threshold of singular values for nuclear norm.
+
+
+.. py:function:: _opt_fro_shrink(singvals, beta=1)
+
+   Perform optimal threshold of singular values for frobenius norm.
+
+
+.. py:class:: OptimalSVDDenoiser(patch_shape, patch_overlap, loss='fro', recombination='weighted')
+
+   Bases: :py:obj:`denoiser.space_time.base.BaseSpaceTimeDenoiser`
+
+   Optimal Shrinkage of singular values for a specific norm.
+
+   :param patch_shape: The patch shape
+   :type patch_shape: tuple
+   :param patch_overlap: The amount of overlap between patches in each direction
+   :type patch_overlap: tuple
+   :param loss: The loss determines the choise of the optimal thresholding function associated to it.
+                `"fro"`, `"nuc"` and `"op"` are supported, for the frobenius norm, the nuclear norm and the
+                operator norm, respectively.
+   :type loss: str
+   :param recombination: The method of reweighting patches. either "weighted" or "average"
+   :type recombination: str
+
+   .. py:attribute:: _OPT_LOSS_SHRINK
+      
+
+      
+
+   .. py:method:: denoise(self, input_data, mask=None, eps_marshenko_pastur=1e-07)
+
+      Denoise the input_data, according to mask.
+
+      Patches are extracted sequentially and process by the implemented
+      `_patch_processing` function.
+      Only patches which have at least a voxel in the mask ROI are processed.
+
+      :param input_data: The input data to denoise. It should be a ND array, and the last
+                         dimension should a dynamically varying one (eg time).
+      :type input_data: numpy.ndarray
+      :param mask: A boolean array defining a ROI where the patch denoising will be process
+                   It should be a (N-1)D boolean array.
+      :type mask: numpy.ndarray
+      :param denoiser_kwargs: Extra runtime parameters passed to the patch denoising method.
+      :type denoiser_kwargs: dict
+
+      :returns:
+
+                output_data: numpy.ndarray
+                    The denoised data
+                patch_weight: numpy.ndarray
+                    The weight associated to each voxel.
+                noise_std_map: numpy.ndarray
+                    If available, a noise std estimation for each voxel.
+      :rtype: tuple
+
+
+   .. py:method:: _patch_processing(self, patch, patch_slice=None, **kwargs)
+
+      Processing of pach
+
+
+
