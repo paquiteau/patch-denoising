@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "patch-denoising"
+version = "0.0.0"
+description = "Denoising method for sequence of images or volumes. Primarly targeting fMRI data."
+authors = ["Pierre-antoine Comby <pierre-antoine.comby@crans.org>"]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+
+
+[tool.coverage.run]
+omit = ["*tests*"]
+
+[tool.coverage.report]
+precision = 2
+exclude_lines = ["pragma: no cover", "raise NotImplementedError"]
+
+# Formatting using black.
+[tool.black]
+
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = [
+    "--cov=denoiser",
+    "--cov-report=term-missing",
+]
