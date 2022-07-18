@@ -26,7 +26,7 @@ It includes several local-low-rank based denoising methods:
 4. Optimal Thresholding
 5. Raw Singular Value Thresholding
 
-A mathematical description of theses methods will be available in the documentation.
+A mathematical description of theses methods is available in the documentation.
 
 
 
@@ -39,7 +39,7 @@ Development version
 .. code::
 
    git clone https://github.com/paquiteau/patch-denoising
-   pip install -e patch-denoising[dev, test]
+   pip install -e patch-denoising[dev,doc,test]
 
 
 
