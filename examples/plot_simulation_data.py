@@ -21,9 +21,8 @@ from denoiser.simulation.noise import add_temporal_gaussian_noise
 #%%
 # Setup the parameters for the simulation and noise
 
-DIM = 3
 SHAPE = (64, 64, 64)
-N_FRAMES = 40
+N_FRAMES = 400
 
 NOISE_LEVEL = 2
 
@@ -35,31 +34,20 @@ NOISE_LEVEL = 2
 # ``experimental_data.py`` file.
 
 
-phantom = mr_shepp_logan_t2_star(SHAPE)
+phantom = mr_shepp_logan_t2_star(SHAPE)[32]
 ground_truth = add_activations(phantom, N_FRAMES)
 g_map = g_factor_map(SHAPE)
 print(g_map.shape)
-plt.figure()
-plt.subplot(241)
-plt.imshow(ground_truth[SHAPE[0] // 2, :, :, 0])
-plt.subplot(242)
-plt.imshow(ground_truth[:, SHAPE[1] // 2, :, 0])
-plt.subplot(243)
-plt.imshow(ground_truth[:, :, SHAPE[2] // 2, 0])
-plt.subplot(244)
-plt.imshow(g_map[:, :, SHAPE[2] // 2])
 
 noisy_image = add_temporal_gaussian_noise(ground_truth, sigma=NOISE_LEVEL)
 
-plt.subplot(245)
-plt.imshow(noisy_image[SHAPE[0] // 2, :, :, 0])
-plt.subplot(246)
-plt.imshow(noisy_image[:, SHAPE[1] // 2, :, 0])
-plt.subplot(247)
-plt.imshow(noisy_image[:, :, SHAPE[2] // 2, 0])
-plt.tight_layout()
-plt.show()
-
 #%%
-# Perform denoising
-#
+# An Example of visualizatoin using carpet plot.
+
+from denoiser.viz.plots import carpet_plot
+
+
+carpet_plot(noisy_image, unfold="classic")
+#%%
+
+carpet_plot(noisy_image, unfold="zigzag")
