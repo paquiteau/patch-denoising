@@ -219,7 +219,7 @@ def _opt_loss_x(y, beta):
     )
 
 
-def _opt_op_shrink(singvals, beta=1):
+def _opt_ope_shrink(singvals, beta=1):
     """Perform optimal threshold of singular values for operator norm."""
     return np.maximum(_opt_loss_x(singvals, beta), 0)
 
@@ -266,7 +266,7 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         {
             "fro": _opt_fro_shrink,
             "nuc": _opt_nuc_shrink,
-            "op": _opt_op_shrink,
+            "ope": _opt_ope_shrink,
         }
     )
 
