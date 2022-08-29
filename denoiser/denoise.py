@@ -11,14 +11,6 @@ from denoiser.space_time.lowrank import (
 )
 
 
-_DENOISER = {
-    "mp-pca": MPPCADenoiser,
-    "hybrid-pca": HybridPCADenoiser,
-    "nordic": NordicDenoiser,
-    "optimal": OptimalSVDDenoiser,
-    "raw": RawSVDDenoiser,
-}
-
 
 def mp_pca(
     volume_sequence,
