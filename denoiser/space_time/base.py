@@ -24,7 +24,7 @@ class BaseSpaceTimeDenoiser:
 
         self.input_denoising_kwargs = dict()
 
-    def denoise(self, input_data, mask=None):
+    def denoise(self, input_data, mask=None, mask_threshold=50):
         """Denoise the input_data, according to mask.
 
         Patches are extracted sequentially and process by the implemented
@@ -39,6 +39,10 @@ class BaseSpaceTimeDenoiser:
         mask: numpy.ndarray
             A boolean array defining a ROI where the patch denoising will be process
             It should be a (N-1)D boolean array.
+        mask_threshold: int
+            percentage of the path that need to be in the mask so that the patch is processed.
+            if mask_threshold = -1, all the patch are processed, if mask_threshold=100, all
+            the voxels of the patch needs to be in the mask
         denoiser_kwargs: dict
             Extra runtime parameters passed to the patch denoising method.
 
@@ -54,9 +58,13 @@ class BaseSpaceTimeDenoiser:
         """
         data_shape = input_data.shape
         output_data = np.zeros_like(input_data)
+        patch_size = np.prod(self.patch_shape)
         # Create Default mask
         if mask is None:
-            mask = np.full(data_shape[:-1], True)
+            process_mask = np.full(data_shape[:-1], True)
+        else:
+            process_mask = np.copy(mask)
+
         patch_shape, patch_overlap = self.__get_patch_param(data_shape)
 
         if self.recombination == "center":
@@ -71,8 +79,10 @@ class BaseSpaceTimeDenoiser:
             patch_slice = tuple(
                 slice(tl, tl + ps) for tl, ps in zip(patch_tl, patch_shape)
             )
-            if not np.any(mask[patch_slice]):
-                continue  # patch is outside the mask.
+            if 100 * np.sum(mask[patch_slice]) / patch_size < mask_threshold:
+                continue  # patch is outside the mask
+            # update
+            process_mask[patch_slice] = 1
             # building the casoratti matrix
             patch = np.reshape(input_data[patch_slice], (-1, input_data.shape[-1]))
 
@@ -103,7 +113,7 @@ class BaseSpaceTimeDenoiser:
         output_data /= patchs_weight[..., None]
         noise_std_estimate /= patchs_weight
 
-        output_data[~mask] = 0
+        output_data[~process_mask] = 0
 
         return output_data, patchs_weight, noise_std_estimate
 

@@ -17,6 +17,7 @@ def mp_pca(
     patch_shape,
     patch_overlap,
     mask=None,
+    mask_threshold=50,
     recombination="weighted",
     threshold_scale=1.0,
 ):
@@ -33,6 +34,10 @@ def mp_pca(
         the overlap of each pixel
     mask: numpy.ndarray
         A boolean array, defining a ROI in the volume. Only patch with voxels in the ROi will be processed.
+    mask_threshold: int
+        percentage of the path that need to be in the mask so that the patch is processed.
+        if mask_threshold = -1, all the patch are processed, if mask_threshold=100, all
+        the voxels of the patch needs to be in the mask
     recombination: str
         The recombination method of the patch. "weighted" or "mean"
     threshold_scale: float
@@ -59,7 +64,7 @@ def mp_pca(
         recombination=recombination,
         threshold_scale=threshold_scale,
     )
-    return denoiser.denoise(volume_sequence, mask=mask)
+    return denoiser.denoise(volume_sequence, mask=mask, mask_threshold=mask_threshold)
 
 
 def hybrid_pca(
@@ -67,6 +72,7 @@ def hybrid_pca(
     patch_shape,
     patch_overlap,
     mask=None,
+    mask_threshold=50,
     noise_std=1.0,
     recombination="weighted",
 ):
@@ -83,6 +89,10 @@ def hybrid_pca(
         the overlap of each pixel
     mask: numpy.ndarray
         A boolean array, defining a ROI in the volume. Only patch with voxels in the ROi will be processed.
+    mask_threshold: int
+        percentage of the path that need to be in the mask so that the patch is processed.
+        if mask_threshold = -1, all the patch are processed, if mask_threshold=100, all
+        the voxels of the patch needs to be in the mask
     recombination: str
         The recombination method of the patch. "weighted" or "mean"
     threshold_scale: float
@@ -108,13 +118,14 @@ def hybrid_pca(
         patch_overlap,
         recombination=recombination,
     )
-    return denoiser.denoise(volume_sequence, mask=mask, noise_std=noise_std)
+    return denoiser.denoise(volume_sequence, mask=mask, mask_threshold=mask_threshold, noise_std=noise_std)
 
 
 def raw_svt(
     volume_sequence,
     patch_shape,
     patch_overlap,
+    mask_threshold=50,
     mask=None,
     noise_std=1.0,
     recombination="weighted",
@@ -132,6 +143,10 @@ def raw_svt(
         the overlap of each pixel
     mask: numpy.ndarray
         A boolean array, defining a ROI in the volume. Only patch with voxels in the ROi will be processed.
+    mask_threshold: int
+        percentage of the path that need to be in the mask so that the patch is processed.
+        if mask_threshold = -1, all the patch are processed, if mask_threshold=100, all
+        the voxels of the patch needs to be in the mask
     recombination: str
         The recombination method of the patch. "weighted" or "mean"
     noise_std: float or numpy.npdarray
@@ -157,13 +172,14 @@ def raw_svt(
         patch_overlap,
         recombination=recombination,
     )
-    return denoiser.denoise(volume_sequence, mask=mask, noise_std=noise_std)
+    return denoiser.denoise(volume_sequence, mask=mask, mask_threshold=mask_threshold, noise_std=noise_std)
 
 
 def nordic(
     volume_sequence,
     patch_shape,
     patch_overlap,
+    mask_threshold=50,
     mask=None,
     noise_std=1.0,
     recombination="weighted",
@@ -182,6 +198,10 @@ def nordic(
         the overlap of each pixel
     mask: numpy.ndarray
         A boolean array, defining a ROI in the volume. Only patch with voxels in the ROi will be processed.
+    mask_threshold: int
+        percentage of the path that need to be in the mask so that the patch is processed.
+        if mask_threshold = -1, all the patch are processed, if mask_threshold=100, all
+        the voxels of the patch needs to be in the mask
     recombination: str
         The recombination method of the patch. "weighted" or "mean"
     threshold_scale: float
@@ -211,7 +231,7 @@ def nordic(
     )
     return denoiser.denoise(
         volume_sequence,
-        mask=mask,
+        mask=mask, mask_threshold=mask_threshold,
         noise_std=noise_std,
         n_iter_threshold=n_iter_threshold,
     )
@@ -222,6 +242,7 @@ def optimal_thresholding(
     patch_shape,
     patch_overlap,
     mask=None,
+    mask_threshold=50,
     loss="fro",
     recombination="weighted",
     eps_marshenko_pastur=1e-7,
@@ -239,6 +260,10 @@ def optimal_thresholding(
         the overlap of each pixel
     mask: numpy.ndarray
         A boolean array, defining a ROI in the volume. Only patch with voxels in the ROi will be processed.
+    mask_threshold: int
+        percentage of the path that need to be in the mask so that the patch is processed.
+        if mask_threshold = -1, all the patch are processed, if mask_threshold=100, all
+        the voxels of the patch needs to be in the mask
     loss: str
         The loss for which the optimal thresholding is perform.
     recombination: str
@@ -264,7 +289,7 @@ def optimal_thresholding(
         loss=loss,
     )
     return denoiser.denoise(
-        volume_sequence, mask=mask, eps_marshenko_pastur=eps_marshenko_pastur
+        volume_sequence, mask=mask, mask_threshold=mask_threshold, eps_marshenko_pastur=eps_marshenko_pastur
     )
 
 
