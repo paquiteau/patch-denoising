@@ -58,7 +58,6 @@ class BaseSpaceTimeDenoiser:
         """
         data_shape = input_data.shape
         output_data = np.zeros_like(input_data)
-        patch_size = np.prod(self.patch_shape)
         # Create Default mask
         if mask is None:
             process_mask = np.full(data_shape[:-1], True)
@@ -66,6 +65,7 @@ class BaseSpaceTimeDenoiser:
             process_mask = np.copy(mask)
 
         patch_shape, patch_overlap = self.__get_patch_param(data_shape)
+        patch_size = np.prod(patch_shape)
 
         if self.recombination == "center":
             patch_center = tuple(slice(ps // 2, ps // 2 + 1) for ps in patch_shape)
@@ -79,7 +79,7 @@ class BaseSpaceTimeDenoiser:
             patch_slice = tuple(
                 slice(tl, tl + ps) for tl, ps in zip(patch_tl, patch_shape)
             )
-            if 100 * np.sum(mask[patch_slice]) / patch_size < mask_threshold:
+            if mask and 100 * np.sum(mask[patch_slice]) / patch_size < mask_threshold:
                 continue  # patch is outside the mask
             # update
             process_mask[patch_slice] = 1
