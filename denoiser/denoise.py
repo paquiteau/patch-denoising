@@ -231,7 +231,8 @@ def nordic(
     )
     return denoiser.denoise(
         volume_sequence,
-        mask=mask, mask_threshold=mask_threshold,
+        mask=mask,
+        mask_threshold=mask_threshold,
         noise_std=noise_std,
         n_iter_threshold=n_iter_threshold,
     )

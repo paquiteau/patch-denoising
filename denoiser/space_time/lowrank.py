@@ -179,7 +179,7 @@ class NordicDenoiser(RawSVDDenoiser):
         The method of reweighting patches. either "weighed" or "average"
     """
 
-    def denoise(self, input_data, mask=None, noise_std=1.0, n_iter_threshold=10):
+    def denoise(self, input_data, mask=None, mask_threshold=50, noise_std=1.0, n_iter_threshold=10):
         """Denoise using the NORDIC method.
 
         Along with the input data a noise stp map or value should be provided.
@@ -207,7 +207,7 @@ class NordicDenoiser(RawSVDDenoiser):
 
         self._threshold = noise_std * max_sval
 
-        return super(RawSVDDenoiser, self).denoise(input_data, mask)
+        return super(RawSVDDenoiser, self).denoise(input_data, mask, mask_threshold=mask_threshold)
 
 
 # From MATLAB implementation
