@@ -11,7 +11,6 @@ from denoiser.space_time.lowrank import (
 )
 
 
-
 def mp_pca(
     volume_sequence,
     patch_shape,
@@ -118,7 +117,9 @@ def hybrid_pca(
         patch_overlap,
         recombination=recombination,
     )
-    return denoiser.denoise(volume_sequence, mask=mask, mask_threshold=mask_threshold, noise_std=noise_std)
+    return denoiser.denoise(
+        volume_sequence, mask=mask, mask_threshold=mask_threshold, noise_std=noise_std
+    )
 
 
 def raw_svt(
@@ -172,7 +173,9 @@ def raw_svt(
         patch_overlap,
         recombination=recombination,
     )
-    return denoiser.denoise(volume_sequence, mask=mask, mask_threshold=mask_threshold, noise_std=noise_std)
+    return denoiser.denoise(
+        volume_sequence, mask=mask, mask_threshold=mask_threshold, noise_std=noise_std
+    )
 
 
 def nordic(
@@ -290,7 +293,10 @@ def optimal_thresholding(
         loss=loss,
     )
     return denoiser.denoise(
-        volume_sequence, mask=mask, mask_threshold=mask_threshold, eps_marshenko_pastur=eps_marshenko_pastur
+        volume_sequence,
+        mask=mask,
+        mask_threshold=mask_threshold,
+        eps_marshenko_pastur=eps_marshenko_pastur,
     )
 
 
