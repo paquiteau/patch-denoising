@@ -70,7 +70,7 @@ class HybridPCADenoiser(BaseSpaceTimeDenoiser):
         The method of reweighting patches. either "weighed" or "average"
     """
 
-    def denoise(self, input_data, mask=None, noise_std=1.0):
+    def denoise(self, input_data, mask=None, mask_threshold=50, noise_std=1.0):
         """Denoise using the Hybrid-PCA method.
 
         Along with the input data a noise std map or value should be provided.
@@ -80,7 +80,7 @@ class HybridPCADenoiser(BaseSpaceTimeDenoiser):
         else:
             self._noise_apriori = noise_std**2
 
-        return super().denoise(input_data, mask)
+        return super().denoise(input_data, mask, mask_threshold)
 
     def _patch_processing(self, patch, patch_slice=None):
         """Process a pach with the Hybrid-PCA method."""
@@ -126,9 +126,9 @@ class RawSVDDenoiser(BaseSpaceTimeDenoiser):
 
         super().__init__(patch_shape, patch_overlap, recombination)
 
-    def denoise(self, input_data, mask=None, threshold_scale=1.0):
+    def denoise(self, input_data, mask=None, mask_threshold=50, threshold_scale=1.0):
         self._threshold = self._threshold_val * threshold_scale
-        return super().denoiser(input_data, mask)
+        return super().denoiser(input_data, mask, mask_threshold)
 
     def _patch_processing(self, patch, patch_slice=None, **kwargs):
         """
@@ -277,7 +277,7 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
 
         super().__init__(patch_shape, patch_overlap, recombination=recombination)
 
-    def denoise(self, input_data, mask=None, eps_marshenko_pastur=1e-7):
+    def denoise(self, input_data, mask=None, mask_threshold=50, eps_marshenko_pastur=1e-7):
 
         patch_shape, _ = self._BaseSpaceTimeDenoiser__get_patch_param(input_data.shape)
         self._mp_median = marshenko_pastur_median(
@@ -285,7 +285,7 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
             eps=eps_marshenko_pastur,
         )
 
-        return super().denoise(input_data, mask)
+        return super().denoise(input_data, mask, mask_threshold)
 
     def _patch_processing(self, patch, patch_slice=None, **kwargs):
 

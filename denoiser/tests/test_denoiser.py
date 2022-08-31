@@ -97,7 +97,7 @@ def test_rawsvt_denoiser(phantom, noisy_phantom, recombination):
 
 
 @pytest.mark.parametrize("recombination", ["weighted", "average", "center"])
-@pytest.mark.parametrize("loss", ["fro", "nuc", "op"])
+@pytest.mark.parametrize("loss", ["fro", "nuc", "ope"])
 def test_optimal_denoiser(phantom, noisy_phantom, recombination, loss):
     """Test the Hybrid-PCA denoiser"""
     print(noisy_phantom.shape)
