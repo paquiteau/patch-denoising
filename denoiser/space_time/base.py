@@ -72,16 +72,23 @@ class BaseSpaceTimeDenoiser:
         patchs_weight = np.zeros(data_shape[:-1], np.float32)
         noise_std_estimate = np.zeros(data_shape[:-1], dtype=np.float32)
 
-        for patch_tl in tqdm(
-            get_patch_locs(patch_shape, patch_overlap, data_shape[:-1])
-        ):
+        # discard useless patches
+        patch_locs = get_patch_locs(patch_shape, patch_overlap, data_shape[:-1])
+        get_it = np.zeros(len(patch_locs), dtype=bool)
+
+        for i, patch_tl in enumerate(patch_locs):
+            patch_slice = tuple(
+                slice(tl, tl + ps) for tl, ps in zip(patch_tl, patch_shape)
+            )
+            if 100 * np.sum(process_mask[patch_slice]) / patch_size > mask_threshold:
+                get_it[i] = True
+
+        patch_locs = np.ascontiguousarray(patch_locs[get_it])
+        for patch_tl in tqdm(patch_locs):
 
             patch_slice = tuple(
                 slice(tl, tl + ps) for tl, ps in zip(patch_tl, patch_shape)
             )
-            if mask and 100 * np.sum(mask[patch_slice]) / patch_size < mask_threshold:
-                continue  # patch is outside the mask
-            # update
             process_mask[patch_slice] = 1
             # building the casoratti matrix
             patch = np.reshape(input_data[patch_slice], (-1, input_data.shape[-1]))
@@ -130,7 +137,6 @@ class BaseSpaceTimeDenoiser:
             elif isinstance(p, (int, np.integer)):
                 p = (p,) * (len(data_shape) - 1)
             pp[i] = p
-        print(pp)
         if np.prod(pp[0]) < data_shape[-1]:
             raise ValueError(
                 f"the number of voxel in patch ({np.prod(pp[0])}) is smaller than the"
