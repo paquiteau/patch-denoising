@@ -75,7 +75,7 @@ class BaseSpaceTimeDenoiser:
         # discard useless patches
         patch_locs = get_patch_locs(patch_shape, patch_overlap, data_shape[:-1])
         get_it = np.zeros(len(patch_locs), dtype=bool)
-
+        
         for i, patch_tl in enumerate(patch_locs):
             patch_slice = tuple(
                 slice(tl, tl + ps) for tl, ps in zip(patch_tl, patch_shape)
@@ -83,6 +83,7 @@ class BaseSpaceTimeDenoiser:
             if 100 * np.sum(process_mask[patch_slice]) / patch_size > mask_threshold:
                 get_it[i] = True
 
+        print("compute {:.2f}% of patches".format(100*np.sum(get_it)/len(patch_locs)))
         patch_locs = np.ascontiguousarray(patch_locs[get_it])
         for patch_tl in tqdm(patch_locs):
 
