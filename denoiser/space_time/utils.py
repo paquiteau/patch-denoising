@@ -76,7 +76,7 @@ def eig_analysis(input_data, max_eig_val=10):
     mean = np.mean(input_data, axis=0)
     data_centered = input_data - mean
     eig_vals, eig_vec = eigh(
-        data_centered.conj().T @ data_centered,
+        data_centered.conj().T @ data_centered / (data_centered.shape[0] - 1),
         turbo=True,
         subset_by_index=(len(mean) - max_eig_val, len(mean) - 1),
     )

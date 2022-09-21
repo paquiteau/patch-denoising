@@ -32,7 +32,6 @@ class MPPCADenoiser(BaseSpaceTimeDenoiser):
     def _patch_processing(self, patch, patch_slice=None, threshold_scale=1.0):
         """Process a pach with the MP-PCA method."""
         p_center, eig_vals, eig_vec, p_tmean = eig_analysis(patch)
-        eig_vals /= len(eig_vec)
         maxidx = 0
         meanvar = np.mean(eig_vals)
         meanvar *= 4 * np.sqrt((len(eig_vals) - maxidx + 1) / len(patch))
@@ -86,8 +85,6 @@ class HybridPCADenoiser(BaseSpaceTimeDenoiser):
         """Process a pach with the Hybrid-PCA method."""
         varest = np.mean(self._noise_apriori[patch_slice])
         p_center, eig_vals, eig_vec, p_tmean = eig_analysis(patch)
-        n_sval_max = len(eig_vec)
-        eig_vals /= n_sval_max
         maxidx = 0
         var_noise = np.mean(eig_vals)
         while var_noise > varest and maxidx < len(eig_vals) - 2:
