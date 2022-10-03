@@ -325,3 +325,63 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         weights = theta
 
         return p_new, weights, np.NaN
+
+
+def _sure_atn_cost(X, method, sing_vals, gamma, sigma=None, tau=None):
+    """
+    Compute the SURE cost function.
+
+    Parameters
+    ----------
+    X: np.ndarray
+    sing_vals : singular values of X
+    gamma: float
+    sigma: float
+    tau: float
+    """
+
+
+def _adaptive_trace_norm_shrink(singvals, gamma, tau):
+    """Adaptive trace shrinkage."""
+    return singvals * np.maximum(1 - (tau / singvals) ** gamma, 0)
+
+
+class AdaptiveDenoiser(BaseSpaceTimeDenoiser):
+    """Adaptive Denoiser.
+
+    Parameters
+    ----------
+    patch_shape: tuple
+        The patch shape
+    patch_overlap: tuple
+        The amount of overlap between patches in each direction
+    recombination: str
+        The method of reweighting patches. either "weighted" or "average"
+    """
+
+    def __init__(
+        self,
+        patch_shape,
+        patch_overlap,
+        method="SURE",
+        recombination="weighted",
+    ):
+        if method.lower() == "sure":
+            ...
+        elif method.lower() == "gsure":
+            ...
+        elif method.lower() == "qut":
+            ...
+        else:
+            raise ValueError(f"Unsupported method '{method}'")
+
+    def denoise(
+        self,
+        input_data,
+        mask=None,
+        mask_threshold=50,
+    ):
+
+        patch_shape, _ = self._BaseSpaceTimeDenoiser__get_patch_param(input_data.shape)
+
+        return super().denoise(input_data, mask, mask_threshold)
