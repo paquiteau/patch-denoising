@@ -277,14 +277,23 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
     )
 
     def __init__(
-        self, patch_shape, patch_overlap, loss="fro", recombination="weighted"
+        self,
+        patch_shape,
+        patch_overlap,
+        loss="fro",
+        recombination="weighted",
     ):
+
         self._opt_loss_shrink = OptimalSVDDenoiser._OPT_LOSS_SHRINK[loss]
 
         super().__init__(patch_shape, patch_overlap, recombination=recombination)
 
     def denoise(
-        self, input_data, mask=None, mask_threshold=50, eps_marshenko_pastur=1e-7
+        self,
+        input_data,
+        mask=None,
+        mask_threshold=50,
+        eps_marshenko_pastur=1e-7,
     ):
 
         patch_shape, _ = self._BaseSpaceTimeDenoiser__get_patch_param(input_data.shape)
