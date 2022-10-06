@@ -317,7 +317,7 @@ def volume_denoise(volume_sequence, method):
     volume_sequence: numpy.ndarray
         a sequence of volume to denoise
     method: str
-        The denoising method to use. Available are:
+        The denoising method to use. Available will be
         - `"bm3d"`
         - `"dip"`
 
