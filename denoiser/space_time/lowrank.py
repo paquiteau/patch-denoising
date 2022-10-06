@@ -9,6 +9,7 @@ from .utils import (
     svd_synthesis,
 )
 from scipy.linalg import svd
+from scipy.optimize import minimize
 
 from types import MappingProxyType
 
@@ -340,11 +341,103 @@ def _sure_atn_cost(X, method, sing_vals, gamma, sigma=None, tau=None):
     sigma: float
     tau: float
     """
+    n, p = X.shape
+    if method == "qut":
+        gamma = np.exp(gamma) + 1
+    else:
+        tau = np.exp(tau)
+
+    sing_vals2 = sing_vals**2
+    n_vals = np.size(sing_vals)
+    dhat = _atn_shrink(sing_vals, gamma, tau)
+    tmp = sing_vals * dhat
+    D = np.repeat(tmp[None, :], n_vals, axis=0)
+    for i in range(len(n_vals)):
+        diff2i = sing_vals2[i] - sing_vals2
+        diff2i[i] = np.inf
+        D[i, :] /= diff2i
+
+    gradd = (1 + (gamma - 1) * (tau / sing_vals) ** gamma) * (sing_vals > tau)
+    DIV = np.sum(gradd + abs(n - p) * dhat / sing_vals) + 2 * np.sum(D)
+
+    if method == "gsure":
+        mse_ada = np.sum((dhat - sing_vals) ** 2) / (1 - DIV / n / p) ** 2
+    else:
+        mse_ada = (
+            -n * p * sigma**2 + np.sum((dhat - sing_vals) ** 2) + 2 * sigma**2 * DIV
+        )
+    return mse_ada
 
 
-def _adaptive_trace_norm_shrink(singvals, gamma, tau):
-    """Adaptive trace shrinkage."""
+def _atn_shrink(singvals, gamma, tau):
+    """Adaptive trace norm shrinkage."""
     return singvals * np.maximum(1 - (tau / singvals) ** gamma, 0)
+
+
+def _get_gamma_tau_qut(patch, sing_vals, stdest, gamma0, nbsim):
+    """Estimate gamma and tau using the quantile method."""
+    maxd = np.ones(nbsim)
+    for i in range(nbsim):
+        maxd[i] = np.max(
+            svd(
+                np.random.randn(patch.shape) * stdest,
+                compute_uv=False,
+                overwrite_a=True,
+            )
+        )
+    # auto estimation of tau.
+    tau = np.quantile(maxd, 1 - 1 / np.sqrt(np.log(max(*patch.shape))))
+    # single value for gamma not provided, estimating it.
+    if not isinstance(gamma0, (float, np.floating)):
+        res_opti = minimize(
+            lambda x: _sure_atn_cost(
+                X=patch,
+                method="qut",
+                sing_vals=sing_vals,
+                gamma=x,
+                sigma=stdest,
+                tau=tau,
+            ),
+            0,
+        )
+        gamma = np.exp(res_opti.x) + 1
+    else:
+        gamma = gamma0
+    return gamma, tau
+
+
+def _get_gamma_tau(patch, sing_vals, stdest, method, gamma0, tau0):
+    """Estimate gamma and tau."""
+    # estimation of tau
+    if tau0 is None:
+        tau0 = np.log(np.median(sing_vals))
+    cost_glob = np.Inf
+    for g in gamma0:
+        res_opti = minimize(
+            lambda x: _sure_atn_cost(
+                X=patch,
+                method=method,
+                gamma=g,
+                sing_vals=sing_vals,
+                sigma=stdest,
+                tau=x,
+            ),
+            tau0,
+        )
+        # get cost value.
+        cost = _sure_atn_cost(
+            X=patch,
+            method=method,
+            gamma=g,
+            sing_vals=sing_vals,
+            sigma=stdest,
+            tau=res_opti.x,
+        )
+        if cost < cost_glob:
+            gamma = g
+            tau = np.exp(res_opti.x)
+            cost_glob = cost
+    return gamma, tau
 
 
 class AdaptiveDenoiser(BaseSpaceTimeDenoiser):
@@ -360,29 +453,81 @@ class AdaptiveDenoiser(BaseSpaceTimeDenoiser):
         The method of reweighting patches. either "weighted" or "average"
     """
 
+    _SUPPORTED_METHOD = ["sure", "qut", "gsure"]
+
     def __init__(
         self,
         patch_shape,
         patch_overlap,
         method="SURE",
         recombination="weighted",
+        nbsim=500,
     ):
-        if method.lower() == "sure":
-            ...
-        elif method.lower() == "gsure":
-            ...
-        elif method.lower() == "qut":
-            ...
-        else:
-            raise ValueError(f"Unsupported method '{method}'")
+        super().__init__(patch_shape, patch_overlap, recombination)
+        if method.lower() not in self._SUPPORTED_METHOD:
+            raise ValueError(
+                f"Unsupported method: '{method}', available are {self._SUPPORTED_METHOD}"
+            )
+        self.input_denoising_kwargs["method"] = method.lower()
+        self.input_denoising_kwargs["nbsim"] = nbsim
 
     def denoise(
         self,
         input_data,
         mask=None,
         mask_threshold=50,
+        tau0=None,
+        noise_std=None,
+        gamma0=None,
     ):
+        """
+        Adaptive denoiser.
 
-        patch_shape, _ = self._BaseSpaceTimeDenoiser__get_patch_param(input_data.shape)
+        Perform the denoising using the adaptive trace norm estimator.
+        """
+        self.input_denoising_kwargs["gamma0"] = gamma0
+        self.input_denoising_kwargs["tau0"] = tau0
 
+        if isinstance(noise_std, (float, np.floating)):
+            self.input_denoising_kwargs["var_apriori"] = noise_std**2 * np.ones(
+                input_data.shape[:-1]
+            )
+        else:
+            self.input_denoising_kwargs["var_apriori"] = noise_std**2
         return super().denoise(input_data, mask, mask_threshold)
+
+    def _patch_processing(
+        self,
+        patch,
+        patch_slice=None,
+        gamma0=None,
+        tau0=None,
+        var_apriori=None,
+        method=None,
+        nbsim=None,
+    ):
+        stdest = np.sqrt(np.mean(var_apriori[patch_slice]))
+
+        u_vec, sing_vals, v_vec, p_tmean = svd_analysis(patch)
+
+        if self._method == "qut":
+            gamma, tau = _get_gamma_tau_qut(patch, sing_vals, stdest, gamma0, nbsim)
+        else:
+            gamma, tau = _get_gamma_tau(patch, sing_vals, stdest, gamma0)
+        # end of parameter selection
+        # Perform thresholding
+
+        thresh_s_values = _atn_shrink(sing_vals, gamma=gamma, tau=tau)
+        if np.any(thresh_s_values):
+            maxidx = np.max(np.nonzero(thresh_s_values)) + 1
+            p_new = svd_synthesis(u_vec, thresh_s_values, v_vec, p_tmean, maxidx)
+        else:
+            maxidx = 0
+            p_new = np.zeros_like(patch) + p_tmean
+
+        # Equation (3) in Manjon 2013
+        theta = 1.0 / (1.0 + maxidx)
+        p_new *= theta
+        weights = theta
+
+        return p_new, weights, np.NaN
