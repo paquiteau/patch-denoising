@@ -389,7 +389,7 @@ def _get_gamma_tau_qut(patch, sing_vals, stdest, gamma0, nbsim):
     for i in range(nbsim):
         maxd[i] = np.max(
             svd(
-                np.random.randn(patch.shape) * stdest,
+                np.random.randn(*patch.shape) * stdest,
                 compute_uv=False,
                 overwrite_a=True,
             )
@@ -519,10 +519,10 @@ class AdaptiveDenoiser(BaseSpaceTimeDenoiser):
 
         u_vec, sing_vals, v_vec, p_tmean = svd_analysis(patch)
 
-        if self._method == "qut":
+        if method == "qut":
             gamma, tau = _get_gamma_tau_qut(patch, sing_vals, stdest, gamma0, nbsim)
         else:
-            gamma, tau = _get_gamma_tau(patch, sing_vals, stdest, gamma0)
+            gamma, tau = _get_gamma_tau(patch, sing_vals, stdest, method, gamma0, tau0)
         # end of parameter selection
         # Perform thresholding
 
