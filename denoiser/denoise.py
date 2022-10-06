@@ -22,7 +22,7 @@ def mp_pca(
     threshold_scale=1.0,
 ):
     """
-    Marshenko-Pastur PCA denoising method
+    Marshenko-Pastur PCA denoising method.
 
     Parameters
     ----------
@@ -53,7 +53,15 @@ def mp_pca(
 
     Notes
     -----
+    Follows implementation of [1]_ and the one available in dipy.
 
+    References
+    ----------
+    .. [1] Manjón, José V., Pierrick Coupé, Luis Concha, Antonio Buades,
+           D. Louis Collins, and Montserrat Robles.
+           “Diffusion Weighted Image Denoising Using Overcomplete Local PCA.”
+           PLOS ONE 8, no. 9 (September 3, 2013): e73021.
+           https://doi.org/10.1371/journal.pone.0073021.
 
     See Also
     --------
@@ -78,7 +86,7 @@ def hybrid_pca(
     recombination="weighted",
 ):
     """
-    Hybrid PCA denoising method
+    Hybrid PCA denoising method.
 
     Parameters
     ----------
@@ -109,7 +117,11 @@ def hybrid_pca(
 
     Notes
     -----
+    Follows implementation of [1]_ .
 
+    References
+    ----------
+    .. [1] https://submissions.mirasmart.com/ISMRM2022/Itinerary/Files/PDFFiles/2688.html
 
     See Also
     --------
@@ -154,8 +166,8 @@ def raw_svt(
         the voxels of the patch needs to be in the mask
     recombination: str
         The recombination method of the patch. "weighted", "average" or "center"
-    noise_std: float or numpy.npdarray
-        An estimation of the noise standard deviation.
+    threshold: float
+        threshold use for singular value hard thresholding.
 
     Returns
     -------
@@ -166,7 +178,8 @@ def raw_svt(
 
     Notes
     -----
-
+    Simple raw hard thresholding of singular values.
+    TODO: add support for soft thresholding.
 
     See Also
     --------
@@ -193,7 +206,7 @@ def nordic(
     n_iter_threshold=10,
 ):
     """
-    NORDIC denoising method
+    NORDIC denoising method.
 
     Parameters
     ----------
@@ -226,7 +239,16 @@ def nordic(
 
     Notes
     -----
+    Follows implementation of [1]_
 
+    References
+    ----------
+    .. [1] Moeller, Steen, Pramod Kumar Pisharady, Sudhir Ramanna, Christophe Lenglet,
+           Xiaoping Wu, Logan Dowdle, Essa Yacoub, Kamil Uğurbil, and Mehmet Akçakaya.
+           “NOise Reduction with DIstribution Corrected (NORDIC) PCA in DMRI with
+           Complex-Valued Parameter-Free Locally Low-Rank Processing.”
+           NeuroImage 226 (February 1, 2021): 117539.
+           https://doi.org/10.1016/j.neuroimage.2020.117539.
 
     See Also
     --------
@@ -257,7 +279,7 @@ def optimal_thresholding(
     eps_marshenko_pastur=1e-7,
 ):
     """
-    Optimal thresholing denoising method
+    Optimal thresholing denoising method.
 
     Parameters
     ----------
@@ -290,6 +312,13 @@ def optimal_thresholding(
 
     Notes
     -----
+    Reimplement in python  [1]_
+
+    References
+    ----------
+    .. [1] Gavish, Matan, and David L. Donoho. “Optimal Shrinkage of Singular Values.”
+        IEEE Transactions on Information Theory 63, no. 4 (April 2017): 2137–52.
+        https://doi.org/10.1109/TIT.2017.2653801.
 
 
     See Also
