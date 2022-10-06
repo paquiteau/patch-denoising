@@ -361,7 +361,7 @@ def _sure_atn_cost(X, method, sing_vals, gamma, sigma=None, tau=None):
     dhat = _atn_shrink(sing_vals, gamma, tau)
     tmp = sing_vals * dhat
     D = np.repeat(tmp[None, :], n_vals, axis=0)
-    for i in range(len(n_vals)):
+    for i in range(n_vals):
         diff2i = sing_vals2[i] - sing_vals2
         diff2i[i] = np.inf
         D[i, :] /= diff2i

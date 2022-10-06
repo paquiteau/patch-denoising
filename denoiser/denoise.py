@@ -1,6 +1,4 @@
-"""
-This module provides a functional entry point for denoising methods.
-"""
+"""Provides a functional entry point for denoising methods."""
 
 from denoiser.space_time.lowrank import (
     MPPCADenoiser,
