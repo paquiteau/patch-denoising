@@ -125,7 +125,10 @@ class BaseSpaceTimeDenoiser:
         return output_data, patchs_weight, noise_std_estimate
 
     def _patch_processing(self, patch, patch_slice=None, **kwargs):
-        """Processing of pach"""
+        """Process a patch.
+
+        Implemented by child classes.
+        """
         raise NotImplementedError
 
     def __get_patch_param(self, data_shape):

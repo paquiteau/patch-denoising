@@ -1,3 +1,4 @@
+"""Low Rank Denoising methods."""
 import numpy as np
 from .base import BaseSpaceTimeDenoiser
 from .utils import (
@@ -261,9 +262,9 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
     patch_overlap: tuple
         The amount of overlap between patches in each direction
     loss: str
-        The loss determines the choise of the optimal thresholding function associated to it.
-        `"fro"`, `"nuc"` and `"op"` are supported, for the frobenius norm, the nuclear norm and the
-        operator norm, respectively.
+        The loss determines the choise of the optimal thresholding function
+        associated to it. The losses `"fro"`, `"nuc"` and `"op"` are supported,
+        for the frobenius, nuclear and operator norm, respectively.
     recombination: str
         The method of reweighting patches. either "weighted" or "average"
     """
