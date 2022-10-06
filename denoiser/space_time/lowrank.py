@@ -77,15 +77,17 @@ class HybridPCADenoiser(BaseSpaceTimeDenoiser):
         Along with the input data a noise std map or value should be provided.
         """
         if isinstance(noise_std, (float, np.floating)):
-            self._noise_apriori = noise_std**2 * np.ones(input_data.shape[:-1])
+            self.input_denoising_kwargs["var_apriori"] = noise_std**2 * np.ones(
+                input_data.shape[:-1]
+            )
         else:
-            self._noise_apriori = noise_std**2
+            self.input_denoising_kwargs["var_apriori"] = noise_std**2
 
         return super().denoise(input_data, mask, mask_threshold)
 
-    def _patch_processing(self, patch, patch_slice=None):
+    def _patch_processing(self, patch, patch_slice=None, var_apriori=None):
         """Process a pach with the Hybrid-PCA method."""
-        varest = np.mean(self._noise_apriori[patch_slice])
+        varest = np.mean(var_apriori[patch_slice])
         p_center, eig_vals, eig_vec, p_tmean = eig_analysis(patch)
         maxidx = 0
         var_noise = np.mean(eig_vals)
@@ -127,7 +129,7 @@ class RawSVDDenoiser(BaseSpaceTimeDenoiser):
 
     def denoise(self, input_data, mask=None, mask_threshold=50, threshold_scale=1.0):
         self._threshold = self._threshold_val * threshold_scale
-        return super().denoiser(input_data, mask, mask_threshold)
+        return super().denoise(input_data, mask, mask_threshold)
 
     def _patch_processing(self, patch, patch_slice=None, **kwargs):
         """
@@ -286,9 +288,10 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         recombination="weighted",
     ):
 
-        self._opt_loss_shrink = OptimalSVDDenoiser._OPT_LOSS_SHRINK[loss]
-
         super().__init__(patch_shape, patch_overlap, recombination=recombination)
+        self.input_denoising_kwargs[
+            "shrink_func"
+        ] = OptimalSVDDenoiser._OPT_LOSS_SHRINK[loss]
 
     def denoise(
         self,
@@ -299,20 +302,26 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
     ):
 
         patch_shape, _ = self._BaseSpaceTimeDenoiser__get_patch_param(input_data.shape)
-        self._mp_median = marshenko_pastur_median(
+        self.input_denoising_kwargs["mp_median"] = marshenko_pastur_median(
             beta=input_data.shape[-1] / np.prod(patch_shape),
             eps=eps_marshenko_pastur,
         )
 
         return super().denoise(input_data, mask, mask_threshold)
 
-    def _patch_processing(self, patch, patch_slice=None, **kwargs):
+    def _patch_processing(
+        self,
+        patch,
+        patch_slice=None,
+        shrink_func=None,
+        mp_median=None,
+    ):
 
         u_vec, s_values, v_vec, p_tmean = svd_analysis(patch)
 
-        sigma = np.median(s_values) / self._mp_median
+        sigma = np.median(s_values) / mp_median
 
-        thresh_s_values = sigma * self._opt_loss_shrink(s_values / sigma)
+        thresh_s_values = sigma * shrink_func(s_values / sigma)
 
         if np.any(thresh_s_values):
             maxidx = np.max(np.nonzero(thresh_s_values)) + 1
