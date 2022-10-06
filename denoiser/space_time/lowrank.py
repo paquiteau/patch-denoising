@@ -325,7 +325,7 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
 
         if np.any(thresh_s_values):
             maxidx = np.max(np.nonzero(thresh_s_values)) + 1
-            p_new = svd_synthesis(u_vec, s_values, v_vec, p_tmean, maxidx)
+            p_new = svd_synthesis(u_vec, thresh_s_values, v_vec, p_tmean, maxidx)
         else:
             maxidx = 0
             p_new = np.zeros_like(patch) + p_tmean
