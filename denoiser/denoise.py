@@ -5,9 +5,10 @@ This module provides a functional entry point for denoising methods.
 from denoiser.space_time.lowrank import (
     MPPCADenoiser,
     HybridPCADenoiser,
+    RawSVDDenoiser,
     OptimalSVDDenoiser,
     NordicDenoiser,
-    RawSVDDenoiser,
+    AdaptiveDenoiser,
 )
 
 
@@ -306,6 +307,73 @@ def optimal_thresholding(
         mask=mask,
         mask_threshold=mask_threshold,
         eps_marshenko_pastur=eps_marshenko_pastur,
+    )
+
+
+def adaptive_thresholding(
+    volume_sequence,
+    patch_shape,
+    patch_overlap,
+    mask=None,
+    mask_threshold=50,
+    recombination="weighted",
+    method="SURE",
+    nbsim=500,
+    tau0=None,
+    gamma0=None,
+    noise_std=1.0,
+):
+    """
+    Optimal thresholing denoising method.
+
+    Parameters
+    ----------
+    volume_sequence: numpy.ndarray
+        The volume shape to denoise
+    patch_shape: tuple
+        The patch shape
+    patch_overlap: tuple
+        the overlap of each pixel
+    mask: numpy.ndarray
+        A boolean array, defining a ROI in the volume. Only patch with voxels in the ROI
+        will be processed.
+    mask_threshold: int
+        percentage of the path that has to be in the mask so that the patch is processed.
+        if mask_threshold = -1, all the patch are processed, if mask_threshold=100, all
+        the voxels of the patch needs to be in the mask
+    recombination: str
+        The recombination method of the patch. "weighted", "average" or "center"
+
+    Returns
+    -------
+    tuple
+        numpy.ndarray: The denoised sequence of volume
+        numpy.ndarray: The weight of each pixel after the processing.
+        numpy.ndarray: If possible, the noise variance distribution in the volume.
+
+    Notes
+    -----
+    Adapt the R package presented in  [1]_
+
+    References
+    ----------
+    .. [1] J. Josse and S. Sardy, “Adaptive Shrinkage of singular values.”
+           arXiv, Nov. 22, 2014.
+           doi: 10.48550/arXiv.1310.6602.
+
+    See Also
+    --------
+    denoiser.space_time.lowrank.OptimalSVDDenoiser
+    """
+    denoiser = AdaptiveDenoiser(
+        patch_shape,
+        patch_overlap,
+        recombination=recombination,
+        method=method,
+        nbsim=nbsim,
+    )
+    return denoiser.denoise(
+        volume_sequence, mask, mask_threshold, tau0, noise_std, gamma0
     )
 
 
