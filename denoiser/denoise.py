@@ -143,11 +143,11 @@ def raw_svt(
     patch_overlap,
     mask_threshold=50,
     mask=None,
-    noise_std=1.0,
+    threshold=1.0,
     recombination="weighted",
 ):
     """
-    Raw singular value thresholding
+    Raw singular value thresholding.
 
     Parameters
     ----------
@@ -185,13 +185,14 @@ def raw_svt(
     --------
     denoiser.space_time.lowrank.MPPCADenoiser
     """
-    denoiser = HybridPCADenoiser(
+    denoiser = RawSVDDenoiser(
         patch_shape,
         patch_overlap,
         recombination=recombination,
+        threshold_value=threshold,
     )
     return denoiser.denoise(
-        volume_sequence, mask=mask, mask_threshold=mask_threshold, noise_std=noise_std
+        volume_sequence, mask=mask, mask_threshold=mask_threshold, threshold_scale=1.0
     )
 
 
