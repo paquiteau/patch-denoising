@@ -123,22 +123,22 @@ def test_optimal_denoiser(phantom, noisy_phantom, recombination, loss):
 @pytest.mark.parametrize("recombination", ["weighted", "average", "center"])
 @pytest.mark.parametrize(
     "method, gamma",
-    [("qut", None), ("gsure", np.linspace(1, 5, 20)), ("sure", np.linspace(1, 5, 20))],
+    [("qut", None), ("gsure", np.linspace(1, 5, 10)), ("sure", np.linspace(1, 5, 10))],
 )
 def test_adaptive_denoiser(phantom, noisy_phantom, recombination, method, gamma):
     """Test the Adaptive Thresholding denoiser"""
     print(noisy_phantom.shape)
     denoised, weights, noise = adaptive_thresholding(
         noisy_phantom,
-        patch_shape=6,
-        patch_overlap=5,
+        patch_shape=10,
+        patch_overlap=1,
         recombination=recombination,
         method=method,
         noise_std=1.0,
         gamma0=gamma,
-        nbsim=20,
+        nbsim=500,
     )
 
     noise_std_before = np.sqrt(np.nanmean(np.nanvar(noisy_phantom - phantom, axis=-1)))
     noise_std_after = np.sqrt(np.nanmean(np.nanvar(denoised - phantom, axis=-1)))
-    assert noise_std_after < noise_std_before * 1.1
+    assert noise_std_after < noise_std_before
