@@ -1,10 +1,12 @@
 """Base Structure for patch-based denoising on spatio-temporal dimension."""
+import abc
+
 import numpy as np
 from .utils import get_patch_locs
 from tqdm.auto import tqdm
 
 
-class BaseSpaceTimeDenoiser:
+class BaseSpaceTimeDenoiser(abc.ABC):
     """
     Base Class for Patch-based denoising methods for dynamical data.
 
@@ -126,12 +128,12 @@ class BaseSpaceTimeDenoiser:
 
         return output_data, patchs_weight, noise_std_estimate
 
+    @abc.abstractmethod
     def _patch_processing(self, patch, patch_slice=None, **kwargs):
         """Process a patch.
 
         Implemented by child classes.
         """
-        raise NotImplementedError
 
     def __get_patch_param(self, data_shape):
         pp = [None, None]
