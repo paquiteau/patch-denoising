@@ -111,7 +111,8 @@ def test_optimal_denoiser(phantom, noisy_phantom, recombination, loss):
     assert noise_std_after < noise_std_before
 
 
-@pytest.mark.parametrize("recombination", ["weighted", "average", "center"])
+# center is not tested, it takes too much time.
+@pytest.mark.parametrize("recombination", ["weighted", "average"])
 @pytest.mark.parametrize(
     "method, gamma",
     [("qut", None), ("gsure", np.linspace(1, 5, 10)), ("sure", np.linspace(1, 5, 10))],
@@ -121,7 +122,7 @@ def test_adaptive_denoiser(phantom, noisy_phantom, recombination, method, gamma)
     denoised, weights, noise = adaptive_thresholding(
         noisy_phantom,
         patch_shape=10,
-        patch_overlap=1,
+        patch_overlap=0,
         recombination=recombination,
         method=method,
         noise_std=1.0,
