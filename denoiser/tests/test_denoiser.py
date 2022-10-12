@@ -35,7 +35,6 @@ def noisy_phantom(phantom, rng):
 @pytest.mark.parametrize("recombination", ["weighted", "average", "center"])
 def test_mppca_denoiser(phantom, noisy_phantom, recombination):
     """Test the MP-PCA denoiser"""
-    print(noisy_phantom.shape)
     denoised, weights, noise = mp_pca(
         noisy_phantom,
         patch_shape=6,
@@ -51,7 +50,6 @@ def test_mppca_denoiser(phantom, noisy_phantom, recombination):
 @pytest.mark.parametrize("recombination", ["weighted", "average", "center"])
 def test_hybridpca_denoiser(phantom, noisy_phantom, recombination):
     """Test the Hybrid-PCA denoiser"""
-    print(noisy_phantom.shape)
     denoised, weights, noise = hybrid_pca(
         noisy_phantom,
         patch_shape=6,
@@ -68,7 +66,6 @@ def test_hybridpca_denoiser(phantom, noisy_phantom, recombination):
 @pytest.mark.parametrize("recombination", ["weighted", "average", "center"])
 def test_nordic_denoiser(phantom, noisy_phantom, recombination):
     """Test the Hybrid-PCA denoiser"""
-    print(noisy_phantom.shape)
     denoised, weights, noise = nordic(
         noisy_phantom,
         patch_shape=6,
@@ -85,7 +82,6 @@ def test_nordic_denoiser(phantom, noisy_phantom, recombination):
 @pytest.mark.parametrize("recombination", ["weighted", "average", "center"])
 def test_rawsvt_denoiser(phantom, noisy_phantom, recombination):
     """Test the Hybrid-PCA denoiser"""
-    print(noisy_phantom.shape)
     denoised, weights, noise = raw_svt(
         noisy_phantom,
         patch_shape=6,
@@ -106,7 +102,6 @@ def test_rawsvt_denoiser(phantom, noisy_phantom, recombination):
 @pytest.mark.parametrize("loss", ["fro", "nuc", "ope"])
 def test_optimal_denoiser(phantom, noisy_phantom, recombination, loss):
     """Test the Optimal Thresholding denoiser"""
-    print(noisy_phantom.shape)
     denoised, weights, noise = optimal_thresholding(
         noisy_phantom,
         patch_shape=6,
@@ -127,7 +122,6 @@ def test_optimal_denoiser(phantom, noisy_phantom, recombination, loss):
 )
 def test_adaptive_denoiser(phantom, noisy_phantom, recombination, method, gamma):
     """Test the Adaptive Thresholding denoiser"""
-    print(noisy_phantom.shape)
     denoised, weights, noise = adaptive_thresholding(
         noisy_phantom,
         patch_shape=10,
