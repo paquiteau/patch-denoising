@@ -13,6 +13,14 @@ from scipy.optimize import minimize
 
 from types import MappingProxyType
 
+NUMBA_AVAILABLE = False
+try:
+    import numba as nb
+
+    NUMBA_AVAILABLE = True
+except ImportError:
+    pass
+
 
 class MPPCADenoiser(BaseSpaceTimeDenoiser):
     """Denoising using the MP-PCA threshoding.
@@ -350,32 +358,41 @@ def _sure_atn_cost(X, method, sing_vals, gamma, sigma=None, tau=None):
     sigma: float
     tau: float
     """
-    n, p = X.shape
+    n, p = np.shape(X)
     if method == "qut":
         gamma = np.exp(gamma) + 1
     else:
         tau = np.exp(tau)
 
     sing_vals2 = sing_vals**2
-    n_vals = np.size(sing_vals)
-    dhat = _atn_shrink(sing_vals, gamma, tau)
+    n_vals = len(sing_vals)
+    D = np.zeros((n_vals, n_vals), dtype=np.float32)
+    dhat = sing_vals * np.maximum(1 - ((tau / sing_vals) ** gamma), 0)
     tmp = sing_vals * dhat
-    D = np.repeat(tmp[None, :], n_vals, axis=0)
     for i in range(n_vals):
         diff2i = sing_vals2[i] - sing_vals2
         diff2i[i] = np.inf
-        D[i, :] /= diff2i
+        D[i, :] = tmp[i] / diff2i
 
-    gradd = (1 + (gamma - 1) * (tau / sing_vals) ** gamma) * (sing_vals > tau)
-    DIV = np.sum(gradd + abs(n - p) * dhat / sing_vals) + 2 * np.sum(D)
+    gradd = (1 + (gamma - 1) * (tau / sing_vals) ** gamma) * (sing_vals >= tau)
+    div = np.sum(gradd + abs(n - p) * dhat / sing_vals) + 2 * np.sum(D)
 
+    rss = np.sum((dhat - sing_vals) ** 2)
     if method == "gsure":
-        mse_ada = np.sum((dhat - sing_vals) ** 2) / (1 - DIV / n / p) ** 2
-    else:
-        mse_ada = (
-            -n * p * sigma**2 + np.sum((dhat - sing_vals) ** 2) + 2 * sigma**2 * DIV
-        )
-    return mse_ada
+        return rss / (1 - div / n / p) ** 2
+    return (sigma**2) * ((-n * p) + (2 * div)) + rss
+
+
+if NUMBA_AVAILABLE:
+    s = nb.float32
+    d = nb.float64
+    sure_atn_cost = nb.njit(
+        [
+            s(s[:, :], nb.types.unicode_type, s[:], s, s, s),
+            s(s[:, :], nb.types.unicode_type, s[:], s, d, d),
+        ],
+        fastmath=True,
+    )(_sure_atn_cost)
 
 
 def _atn_shrink(singvals, gamma, tau):
@@ -398,17 +415,18 @@ def _get_gamma_tau_qut(patch, sing_vals, stdest, gamma0, nbsim):
     tau = np.quantile(maxd, 1 - 1 / np.sqrt(np.log(max(*patch.shape))))
     # single value for gamma not provided, estimating it.
     if not isinstance(gamma0, (float, np.floating)):
-        res_opti = minimize(
-            lambda x: _sure_atn_cost(
+
+        def sure_gamma(gamma):
+            return _sure_atn_cost(
                 X=patch,
                 method="qut",
                 sing_vals=sing_vals,
-                gamma=x,
+                gamma=gamma,
                 sigma=stdest,
                 tau=tau,
-            ),
-            0,
-        )
+            )
+
+        res_opti = minimize(sure_gamma, 0)
         gamma = np.exp(res_opti.x) + 1
     else:
         gamma = gamma0
@@ -418,6 +436,9 @@ def _get_gamma_tau_qut(patch, sing_vals, stdest, gamma0, nbsim):
 def _get_gamma_tau(patch, sing_vals, stdest, method, gamma0, tau0):
     """Estimate gamma and tau."""
     # estimation of tau
+    def sure_tau(tau, *args):
+        return _sure_atn_cost(*args, tau[0])
+
     if tau0 is None:
         tau0 = np.log(np.median(sing_vals))
     cost_glob = np.Inf
