@@ -108,7 +108,7 @@ def test_optimal_denoiser(phantom, noisy_phantom, recombination, loss):
 
     noise_std_before = np.sqrt(np.nanmean(np.nanvar(noisy_phantom - phantom, axis=-1)))
     noise_std_after = np.sqrt(np.nanmean(np.nanvar(denoised - phantom, axis=-1)))
-    assert noise_std_after < noise_std_before * 1.1
+    assert noise_std_after < noise_std_before
 
 
 @pytest.mark.parametrize("recombination", ["weighted", "average", "center"])
