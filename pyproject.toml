@@ -1,8 +1,15 @@
-[tool.poetry]
+[project]
 name = "patch-denoising"
-version = "0.0.0"
+version = "1.0"
 description = "Denoising method for sequence of images or volumes. Primarly targeting fMRI data."
-authors = ["Pierre-antoine Comby <pierre-antoine.comby@crans.org>"]
+authors = [{name="Pierre-antoine Comby", email="pierre-antoine.comby@crans.org"}]
+
+dependencies = ["numpy", "scipy", "matplotlib", "tqdm"]
+
+[project.optional-dependencies]
+test = ["pytest", "pytest-cov", "pytest-xdist", "pytest-sugar"]
+doc = ["pydata-sphinx-theme", "numpydoc", "sphinx_gallery", "sphinx", "sphinx-autoapi"]
+dev = ["black", "isort"]
 
 [build-system]
 requires = ["setuptools", "wheel"]
