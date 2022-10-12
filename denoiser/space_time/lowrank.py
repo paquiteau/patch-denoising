@@ -329,7 +329,11 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
 
         sigma = np.median(s_values) / mp_median
 
-        thresh_s_values = sigma * shrink_func(s_values / sigma)
+        thresh_s_values = sigma * shrink_func(
+            s_values / sigma,
+            beta=patch.shape[1] / patch.shape[0],
+        )
+        thresh_s_values[np.isnan(thresh_s_values)] = 0
 
         if np.any(thresh_s_values):
             maxidx = np.max(np.nonzero(thresh_s_values)) + 1
