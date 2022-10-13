@@ -1,3 +1,4 @@
+"""Low Rank Denoising methods."""
 import numpy as np
 from .base import BaseSpaceTimeDenoiser
 from .utils import (
@@ -8,8 +9,17 @@ from .utils import (
     svd_synthesis,
 )
 from scipy.linalg import svd
+from scipy.optimize import minimize
 
 from types import MappingProxyType
+
+NUMBA_AVAILABLE = False
+try:
+    import numba as nb
+
+    NUMBA_AVAILABLE = True
+except ImportError:
+    pass
 
 
 class MPPCADenoiser(BaseSpaceTimeDenoiser):
@@ -75,15 +85,17 @@ class HybridPCADenoiser(BaseSpaceTimeDenoiser):
         Along with the input data a noise std map or value should be provided.
         """
         if isinstance(noise_std, (float, np.floating)):
-            self._noise_apriori = noise_std**2 * np.ones(input_data.shape[:-1])
+            self.input_denoising_kwargs["var_apriori"] = noise_std**2 * np.ones(
+                input_data.shape[:-1]
+            )
         else:
-            self._noise_apriori = noise_std**2
+            self.input_denoising_kwargs["var_apriori"] = noise_std**2
 
         return super().denoise(input_data, mask, mask_threshold)
 
-    def _patch_processing(self, patch, patch_slice=None):
+    def _patch_processing(self, patch, patch_slice=None, var_apriori=None):
         """Process a pach with the Hybrid-PCA method."""
-        varest = np.mean(self._noise_apriori[patch_slice])
+        varest = np.mean(var_apriori[patch_slice])
         p_center, eig_vals, eig_vec, p_tmean = eig_analysis(patch)
         maxidx = 0
         var_noise = np.mean(eig_vals)
@@ -125,7 +137,7 @@ class RawSVDDenoiser(BaseSpaceTimeDenoiser):
 
     def denoise(self, input_data, mask=None, mask_threshold=50, threshold_scale=1.0):
         self._threshold = self._threshold_val * threshold_scale
-        return super().denoiser(input_data, mask, mask_threshold)
+        return super().denoise(input_data, mask, mask_threshold)
 
     def _patch_processing(self, patch, patch_slice=None, **kwargs):
         """
@@ -261,9 +273,9 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
     patch_overlap: tuple
         The amount of overlap between patches in each direction
     loss: str
-        The loss determines the choise of the optimal thresholding function associated to it.
-        `"fro"`, `"nuc"` and `"op"` are supported, for the frobenius norm, the nuclear norm and the
-        operator norm, respectively.
+        The loss determines the choise of the optimal thresholding function
+        associated to it. The losses `"fro"`, `"nuc"` and `"op"` are supported,
+        for the frobenius, nuclear and operator norm, respectively.
     recombination: str
         The method of reweighting patches. either "weighted" or "average"
     """
@@ -277,35 +289,272 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
     )
 
     def __init__(
-        self, patch_shape, patch_overlap, loss="fro", recombination="weighted"
+        self,
+        patch_shape,
+        patch_overlap,
+        loss="fro",
+        recombination="weighted",
     ):
-        self._opt_loss_shrink = OptimalSVDDenoiser._OPT_LOSS_SHRINK[loss]
 
         super().__init__(patch_shape, patch_overlap, recombination=recombination)
+        self.input_denoising_kwargs[
+            "shrink_func"
+        ] = OptimalSVDDenoiser._OPT_LOSS_SHRINK[loss]
 
     def denoise(
-        self, input_data, mask=None, mask_threshold=50, eps_marshenko_pastur=1e-7
+        self,
+        input_data,
+        mask=None,
+        mask_threshold=50,
+        eps_marshenko_pastur=1e-7,
     ):
 
         patch_shape, _ = self._BaseSpaceTimeDenoiser__get_patch_param(input_data.shape)
-        self._mp_median = marshenko_pastur_median(
+        self.input_denoising_kwargs["mp_median"] = marshenko_pastur_median(
             beta=input_data.shape[-1] / np.prod(patch_shape),
             eps=eps_marshenko_pastur,
         )
 
         return super().denoise(input_data, mask, mask_threshold)
 
-    def _patch_processing(self, patch, patch_slice=None, **kwargs):
+    def _patch_processing(
+        self,
+        patch,
+        patch_slice=None,
+        shrink_func=None,
+        mp_median=None,
+    ):
 
         u_vec, s_values, v_vec, p_tmean = svd_analysis(patch)
 
-        sigma = np.median(s_values) / self._mp_median
+        sigma = np.median(s_values) / mp_median
 
-        thresh_s_values = sigma * self._opt_loss_shrink(s_values / sigma)
+        thresh_s_values = sigma * shrink_func(
+            s_values / sigma,
+            beta=patch.shape[1] / patch.shape[0],
+        )
+        thresh_s_values[np.isnan(thresh_s_values)] = 0
 
         if np.any(thresh_s_values):
             maxidx = np.max(np.nonzero(thresh_s_values)) + 1
-            p_new = svd_synthesis(u_vec, s_values, v_vec, p_tmean, maxidx)
+            p_new = svd_synthesis(u_vec, thresh_s_values, v_vec, p_tmean, maxidx)
+        else:
+            maxidx = 0
+            p_new = np.zeros_like(patch) + p_tmean
+
+        # Equation (3) in Manjon 2013
+        theta = 1.0 / (1.0 + maxidx)
+        p_new *= theta
+        weights = theta
+
+        return p_new, weights, np.NaN
+
+
+def _sure_atn_cost(X, method, sing_vals, gamma, sigma=None, tau=None):
+    """
+    Compute the SURE cost function.
+
+    Parameters
+    ----------
+    X: np.ndarray
+    sing_vals : singular values of X
+    gamma: float
+    sigma: float
+    tau: float
+    """
+    n, p = np.shape(X)
+    if method == "qut":
+        gamma = np.exp(gamma) + 1
+    else:
+        tau = np.exp(tau)
+
+    sing_vals2 = sing_vals**2
+    n_vals = len(sing_vals)
+    D = np.zeros((n_vals, n_vals), dtype=np.float32)
+    dhat = sing_vals * np.maximum(1 - ((tau / sing_vals) ** gamma), 0)
+    tmp = sing_vals * dhat
+    for i in range(n_vals):
+        diff2i = sing_vals2[i] - sing_vals2
+        diff2i[i] = np.inf
+        D[i, :] = tmp[i] / diff2i
+
+    gradd = (1 + (gamma - 1) * (tau / sing_vals) ** gamma) * (sing_vals >= tau)
+    div = np.sum(gradd + abs(n - p) * dhat / sing_vals) + 2 * np.sum(D)
+
+    rss = np.sum((dhat - sing_vals) ** 2)
+    if method == "gsure":
+        return rss / (1 - div / n / p) ** 2
+    return (sigma**2) * ((-n * p) + (2 * div)) + rss
+
+
+if NUMBA_AVAILABLE:
+    s = nb.float32
+    d = nb.float64
+    sure_atn_cost = nb.njit(
+        [
+            s(s[:, :], nb.types.unicode_type, s[:], s, s, s),
+            s(s[:, :], nb.types.unicode_type, s[:], s, d, d),
+        ],
+        fastmath=True,
+    )(_sure_atn_cost)
+
+
+def _atn_shrink(singvals, gamma, tau):
+    """Adaptive trace norm shrinkage."""
+    return singvals * np.maximum(1 - (tau / singvals) ** gamma, 0)
+
+
+def _get_gamma_tau_qut(patch, sing_vals, stdest, gamma0, nbsim):
+    """Estimate gamma and tau using the quantile method."""
+    maxd = np.ones(nbsim)
+    for i in range(nbsim):
+        maxd[i] = np.max(
+            svd(
+                np.random.randn(*patch.shape) * stdest,
+                compute_uv=False,
+                overwrite_a=True,
+            )
+        )
+    # auto estimation of tau.
+    tau = np.quantile(maxd, 1 - 1 / np.sqrt(np.log(max(*patch.shape))))
+    # single value for gamma not provided, estimating it.
+    if not isinstance(gamma0, (float, np.floating)):
+
+        def sure_gamma(gamma):
+            return _sure_atn_cost(
+                X=patch,
+                method="qut",
+                sing_vals=sing_vals,
+                gamma=gamma,
+                sigma=stdest,
+                tau=tau,
+            )
+
+        res_opti = minimize(sure_gamma, 0)
+        gamma = np.exp(res_opti.x) + 1
+    else:
+        gamma = gamma0
+    return gamma, tau
+
+
+def _get_gamma_tau(patch, sing_vals, stdest, method, gamma0, tau0):
+    """Estimate gamma and tau."""
+    # estimation of tau
+    def sure_tau(tau, *args):
+        return _sure_atn_cost(*args, tau[0])
+
+    if tau0 is None:
+        tau0 = np.log(np.median(sing_vals))
+    cost_glob = np.Inf
+    for g in gamma0:
+        res_opti = minimize(
+            lambda x: _sure_atn_cost(
+                X=patch,
+                method=method,
+                gamma=g,
+                sing_vals=sing_vals,
+                sigma=stdest,
+                tau=x,
+            ),
+            tau0,
+        )
+        # get cost value.
+        cost = _sure_atn_cost(
+            X=patch,
+            method=method,
+            gamma=g,
+            sing_vals=sing_vals,
+            sigma=stdest,
+            tau=res_opti.x,
+        )
+        if cost < cost_glob:
+            gamma = g
+            tau = np.exp(res_opti.x)
+            cost_glob = cost
+    return gamma, tau
+
+
+class AdaptiveDenoiser(BaseSpaceTimeDenoiser):
+    """Adaptive Denoiser.
+
+    Parameters
+    ----------
+    patch_shape: tuple
+        The patch shape
+    patch_overlap: tuple
+        The amount of overlap between patches in each direction
+    recombination: str
+        The method of reweighting patches. either "weighted" or "average"
+    """
+
+    _SUPPORTED_METHOD = ["sure", "qut", "gsure"]
+
+    def __init__(
+        self,
+        patch_shape,
+        patch_overlap,
+        method="SURE",
+        recombination="weighted",
+        nbsim=500,
+    ):
+        super().__init__(patch_shape, patch_overlap, recombination)
+        if method.lower() not in self._SUPPORTED_METHOD:
+            raise ValueError(
+                f"Unsupported method: '{method}', available are {self._SUPPORTED_METHOD}"
+            )
+        self.input_denoising_kwargs["method"] = method.lower()
+        self.input_denoising_kwargs["nbsim"] = nbsim
+
+    def denoise(
+        self,
+        input_data,
+        mask=None,
+        mask_threshold=50,
+        tau0=None,
+        noise_std=None,
+        gamma0=None,
+    ):
+        """
+        Adaptive denoiser.
+
+        Perform the denoising using the adaptive trace norm estimator.
+        """
+        self.input_denoising_kwargs["gamma0"] = gamma0
+        self.input_denoising_kwargs["tau0"] = tau0
+
+        if isinstance(noise_std, (float, np.floating)):
+            self.input_denoising_kwargs["var_apriori"] = noise_std**2 * np.ones(
+                input_data.shape[:-1]
+            )
+        else:
+            self.input_denoising_kwargs["var_apriori"] = noise_std**2
+        return super().denoise(input_data, mask, mask_threshold)
+
+    def _patch_processing(
+        self,
+        patch,
+        patch_slice=None,
+        gamma0=None,
+        tau0=None,
+        var_apriori=None,
+        method=None,
+        nbsim=None,
+    ):
+        stdest = np.sqrt(np.mean(var_apriori[patch_slice]))
+
+        u_vec, sing_vals, v_vec, p_tmean = svd_analysis(patch)
+
+        if method == "qut":
+            gamma, tau = _get_gamma_tau_qut(patch, sing_vals, stdest, gamma0, nbsim)
+        else:
+            gamma, tau = _get_gamma_tau(patch, sing_vals, stdest, method, gamma0, tau0)
+        # end of parameter selection
+        # Perform thresholding
+
+        thresh_s_values = _atn_shrink(sing_vals, gamma=gamma, tau=tau)
+        if np.any(thresh_s_values):
+            maxidx = np.max(np.nonzero(thresh_s_values)) + 1
+            p_new = svd_synthesis(u_vec, thresh_s_values, v_vec, p_tmean, maxidx)
         else:
             maxidx = 0
             p_new = np.zeros_like(patch) + p_tmean

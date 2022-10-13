@@ -14,6 +14,7 @@ It includes the current denoising methods.
     3. Hybrid-PCA
     4. NORDIC
     5. Optimal Thresholding
+    6. Adaptive Trace Norm Thresholding
 
 - Image domain methods (TBA):
 
@@ -133,6 +134,15 @@ An optimal thresholding of the singular values [5]_ is also possible associated 
 .. seealso::
    :class:`~denoiser.space_time.lowrank.OptimalSVDDenoiser`
 
+Adaptive Thresholding
+~~~~~~~~~~~~~~~~~~~~~
+
+Extending the possibility of optimal thresholding using SURE in presence of noise variance estimation [6]_.
+
+.. seealso::
+   :class:`~denoiser.space_time.lowrank.AdaptiveDenoiser`
+
+
 
 References
 ----------
@@ -144,3 +154,4 @@ References
 
 .. [4] Moeller, Steen, Pramod Kumar Pisharady, Sudhir Ramanna, Christophe Lenglet, Xiaoping Wu, Logan Dowdle, Essa Yacoub, Kamil Uğurbil, and Mehmet Akçakaya. “NOise Reduction with DIstribution Corrected (NORDIC) PCA in DMRI with Complex-Valued Parameter-Free Locally Low-Rank Processing.” NeuroImage 226 (February 1, 2021): 117539. https://doi.org/10.1016/j.neuroimage.2020.117539.
 .. [5] Gavish, Matan, and David L. Donoho. “Optimal Shrinkage of Singular Values.” IEEE Transactions on Information Theory 63, no. 4 (April 2017): 2137–52. https://doi.org/10.1109/TIT.2017.2653801.
+.. [6] J. Josse and S. Sardy, “Adaptive Shrinkage of singular values.” arXiv, Nov. 22, 2014. doi: 10.48550/arXiv.1310.6602.

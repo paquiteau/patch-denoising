@@ -1,9 +1,12 @@
+"""Base Structure for patch-based denoising on spatio-temporal dimension."""
+import abc
+
 import numpy as np
 from .utils import get_patch_locs
 from tqdm.auto import tqdm
 
 
-class BaseSpaceTimeDenoiser:
+class BaseSpaceTimeDenoiser(abc.ABC):
     """
     Base Class for Patch-based denoising methods for dynamical data.
 
@@ -40,9 +43,10 @@ class BaseSpaceTimeDenoiser:
             A boolean array defining a ROI where the patch denoising will be process
             It should be a (N-1)D boolean array.
         mask_threshold: int
-            percentage of the path that need to be in the mask so that the patch is processed.
-            if mask_threshold = -1, all the patch are processed, if mask_threshold=100, all
-            the voxels of the patch needs to be in the mask
+            percentage of the path that need to be in the mask so that the patch is
+            processed.
+            If mask_threshold = -1, all the patch are processed,
+            If mask_threshold=100, all the voxels of the patch needs to be in the mask
         denoiser_kwargs: dict
             Extra runtime parameters passed to the patch denoising method.
 
@@ -125,9 +129,12 @@ class BaseSpaceTimeDenoiser:
 
         return output_data, patchs_weight, noise_std_estimate
 
+    @abc.abstractmethod
     def _patch_processing(self, patch, patch_slice=None, **kwargs):
-        """Processing of pach"""
-        raise NotImplementedError
+        """Process a patch.
+
+        Implemented by child classes.
+        """
 
     def __get_patch_param(self, data_shape):
         pp = [None, None]
