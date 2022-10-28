@@ -19,9 +19,9 @@ def svd_analysis(input_data):
     u_vec, s_vals, v_vec, mean
     """
     mean = np.mean(input_data, axis=0)
-    input_data -= mean
+    data_centered = input_data - mean
     # TODO  benchmark svd vs svds and order of data.
-    u_vec, s_vals, v_vec = svd(input_data, full_matrices=False)
+    u_vec, s_vals, v_vec = svd(data_centered, full_matrices=False)
 
     return u_vec, s_vals, v_vec, mean
 
