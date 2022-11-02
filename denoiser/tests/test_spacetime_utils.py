@@ -69,14 +69,14 @@ def test_marshenko_pastur_median(beta, rng, n_runs=10000, n_samples=1000):
     assert np.std(samples) <= 0.1 * integral_median
 
 
-@pytest.mark.parametrize("block_dim", range(1, 6))
+@pytest.mark.parametrize("block_dim", range(5, 10))
 def test_noise_estimation(medium_random_matrix, block_dim):
 
     noise_map = estimate_noise(medium_random_matrix, block_dim)
 
     real_std = np.nanstd(medium_random_matrix)
-
-    assert np.nanstd(noise_map) <= 0.2 * real_std
+    err = np.mean(noise_map - real_std)
+    assert err <= 0.1 * real_std
 
 
 @parametrize_random_matrix
