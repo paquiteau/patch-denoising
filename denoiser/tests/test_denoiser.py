@@ -111,6 +111,23 @@ def test_optimal_denoiser(phantom, noisy_phantom, recombination, loss):
     assert noise_std_after < noise_std_before
 
 
+@pytest.mark.parametrize("recombination", ["weighted", "average", "center"])
+@pytest.mark.parametrize("loss", ["fro", "nuc", "ope"])
+def test_optimal_denoiser2(phantom, noisy_phantom, recombination, loss):
+    """Test the Optimal Thresholding denoiser with noise apriori provided."""
+    denoised, weights, noise = optimal_thresholding(
+        noisy_phantom,
+        patch_shape=10,
+        patch_overlap=9,
+        noise_std=1.414 * g_factor_map(phantom.shape[:-1]),
+        recombination=recombination,
+        loss=loss,
+    )
+    noise_std_before = np.sqrt(np.nanmean(np.nanvar(noisy_phantom - phantom, axis=-1)))
+    noise_std_after = np.sqrt(np.nanmean(np.nanvar(denoised - phantom, axis=-1)))
+    assert noise_std_after < noise_std_before
+
+
 # center is not tested, it takes too much time.
 @pytest.mark.parametrize("recombination", ["weighted", "average"])
 @pytest.mark.parametrize(
