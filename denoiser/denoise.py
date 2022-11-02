@@ -274,6 +274,7 @@ def optimal_thresholding(
     mask=None,
     mask_threshold=50,
     loss="fro",
+    noise_std=None,
     recombination="weighted",
     eps_marshenko_pastur=1e-7,
 ):
@@ -297,6 +298,8 @@ def optimal_thresholding(
         the voxels of the patch needs to be in the mask
     loss: str
         The loss for which the optimal thresholding is perform.
+    noise_std: an estimation of the spatial noise map standard deviation.
+        If None, the noise map is estimated using the Marcenko-Pastur distribution.
     recombination: str
         The recombination method of the patch. "weighted", "average" or "center"
     eps_marshenko_pastur: float
@@ -333,6 +336,7 @@ def optimal_thresholding(
     return denoiser.denoise(
         volume_sequence,
         mask=mask,
+        noise_std=noise_std,
         mask_threshold=mask_threshold,
         eps_marshenko_pastur=eps_marshenko_pastur,
     )

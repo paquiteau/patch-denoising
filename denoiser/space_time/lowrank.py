@@ -306,14 +306,22 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         input_data,
         mask=None,
         mask_threshold=50,
+        noise_std=None,
         eps_marshenko_pastur=1e-7,
     ):
 
         patch_shape, _ = self._BaseSpaceTimeDenoiser__get_patch_param(input_data.shape)
+
         self.input_denoising_kwargs["mp_median"] = marshenko_pastur_median(
             beta=input_data.shape[-1] / np.prod(patch_shape),
             eps=eps_marshenko_pastur,
         )
+        if isinstance(noise_std, (float, np.floating)):
+            self.input_denoising_kwargs["var_apriori"] = noise_std**2 * np.ones(
+                input_data.shape[:-1]
+            )
+        else:
+            self.input_denoising_kwargs["var_apriori"] = noise_std**2
 
         return super().denoise(input_data, mask, mask_threshold)
 
@@ -323,11 +331,15 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         patch_slice=None,
         shrink_func=None,
         mp_median=None,
+        var_apriori=None,
     ):
 
         u_vec, s_values, v_vec, p_tmean = svd_analysis(patch)
+        if var_apriori is not None:
+            sigma = np.sqrt(np.mean(var_apriori[patch_slice]))
+        else:
+            sigma = np.median(s_values) / mp_median
 
-        sigma = np.median(s_values) / mp_median
 
         thresh_s_values = sigma * shrink_func(
             s_values / sigma,
