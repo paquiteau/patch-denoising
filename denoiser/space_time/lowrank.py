@@ -340,9 +340,9 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         else:
             sigma = np.median(s_values) / mp_median
 
-
-        thresh_s_values = sigma * shrink_func(
-            s_values / sigma,
+        scale_factor = np.sqrt(patch.shape[1]) * sigma
+        thresh_s_values = scale_factor * shrink_func(
+            s_values / scale_factor,
             beta=patch.shape[1] / patch.shape[0],
         )
         thresh_s_values[np.isnan(thresh_s_values)] = 0
