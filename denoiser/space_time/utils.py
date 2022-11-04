@@ -51,7 +51,7 @@ def eig_analysis(input_data, max_eig_val=10):
     """
     Return the eigen values and vectors of the autocorrelation of the patch.
 
-    This method is surprisingly faster than the svd, but the eigen values
+    This method is faster than the svd, but the eigen values
     are in increasing order.
 
     Parameters
