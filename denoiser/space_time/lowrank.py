@@ -339,8 +339,6 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         u_vec, s_values, v_vec, p_tmean = svd_analysis(patch)
         if var_apriori is not None:
             sigma = np.mean(np.sqrt(var_apriori[patch_slice]))
-            sigma2 = np.median(s_values) / np.sqrt(patch.shape[1] * mp_median)
-            print(sigma, sigma2)
         else:
             sigma = np.median(s_values) / np.sqrt(patch.shape[1] * mp_median)
 
