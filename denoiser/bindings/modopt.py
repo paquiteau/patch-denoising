@@ -1,18 +1,12 @@
 """Binding for ModOpt Package."""
 
-from .utils import requires, DENOISER_MAP
+from .utils import DENOISER_MAP
 import numpy as np
 
-MODOPT_AVAILABLE = True
-MODOPT_MSG = "`modopt` package not avaible. did you install it ?"
-try:
-    import modopt
-except ImportError:
-    MODOPT_AVAILABLE = False
+from modopt.opt.proximity import ProximityParent
 
 
-@requires(MODOPT_AVAILABLE, MODOPT_MSG)
-class LLRDenoiserOperator(modopt.opt.proximity.ProximityParent):
+class LLRDenoiserOperator(ProximityParent):
     """Proximal Operator drop-in replacement using local low rank denoising.
 
     Parameters
@@ -55,4 +49,4 @@ class LLRDenoiserOperator(modopt.opt.proximity.ProximityParent):
     def _op_method(self, data, **kwargs):
         run_kwargs = self._params.copy()
         run_kwargs.update(kwargs)
-        return self._denoiser(data, **kwargs)[0]
+        return self._denoiser(data, **run_kwargs)[0]

@@ -31,11 +31,3 @@ DENOISER_MAP = {
         *args, method="qut", **kwargs
     ),
 }
-
-
-def requires(obj, condition, msg):
-    """Raise error is optional dependencies are not available."""
-    if condition:
-        return obj
-    else:
-        raise RuntimeError(msg)
