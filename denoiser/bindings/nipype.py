@@ -3,21 +3,21 @@
 import os
 from dataclasses import dataclass
 
-import numpy as np
-
-from denoiser.space_time.utils import estimate_noise
-from .utils import DENOISER_MAP
-
 import nibabel as nib
+import numpy as np
 from nipype.interfaces.base import (
-    SimpleInterface,
     BaseInterfaceInputSpec,
     File,
+    SimpleInterface,
     TraitedSpec,
-    traits,
     isdefined,
+    traits,
 )
 from nipype.utils.filemanip import split_filename
+
+from denoiser.space_time.utils import estimate_noise
+
+from .utils import DENOISER_MAP
 
 
 @dataclass
