@@ -15,9 +15,8 @@ from nipype.interfaces.base import (
 )
 from nipype.utils.filemanip import split_filename
 
+from denoiser.bindings.utils import DENOISER_MAP
 from denoiser.space_time.utils import estimate_noise
-
-from .utils import DENOISER_MAP
 
 
 @dataclass
