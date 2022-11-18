@@ -1,9 +1,9 @@
 """Binding for ModOpt Package."""
 
-from .utils import DENOISER_MAP
 import numpy as np
-
 from modopt.opt.proximity import ProximityParent
+
+from .utils import DENOISER_MAP
 
 
 class LLRDenoiserOperator(ProximityParent):
