@@ -1,19 +1,17 @@
-import pytest
 import numpy as np
-
-
-from denoiser.simulation.phantom import g_factor_map, mr_shepp_logan_t2_star
-from denoiser.simulation.noise import add_temporal_gaussian_noise
-from denoiser.simulation.activations import add_activations
+import pytest
 
 from denoiser.denoise import (
-    mp_pca,
+    adaptive_thresholding,
     hybrid_pca,
+    mp_pca,
     nordic,
     optimal_thresholding,
     raw_svt,
-    adaptive_thresholding,
 )
+from denoiser.simulation.activations import add_activations
+from denoiser.simulation.noise import add_temporal_gaussian_noise
+from denoiser.simulation.phantom import g_factor_map, mr_shepp_logan_t2_star
 
 
 @pytest.fixture(scope="module")
