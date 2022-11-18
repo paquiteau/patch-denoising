@@ -1,6 +1,7 @@
+"""Utilities for space-time denoising."""
 import numpy as np
-from scipy.linalg import svd, eigh
 from scipy.integrate import quad
+from scipy.linalg import eigh, svd
 
 
 def svd_analysis(input_data):
@@ -97,7 +98,7 @@ def marshenko_pastur_median(beta, eps=1e-7):
     r"""Compute the median of the Marchenko-Pastur Distribution.
 
     Parameters
-    ---------
+    ----------
     beta: float
         aspect ratio of a matrix.
     eps: float
@@ -111,7 +112,7 @@ def marshenko_pastur_median(beta, eps=1e-7):
     This method Solve :math:`F(x) = 1/2` by dichotomy with
     .. math ::
 
-        F(x) = \int_{\beta_{-}}^{x} \frac{\sqrt{(\beta_{+}-t)(t-\beta_{-})}}{2\pi\beta t} \mathrm{d}t
+        F(x) = \int_{\beta_-}^{x} \frac{\sqrt{(\beta_+-t)(t-\beta_-)}}{2\pi\beta t} dt
 
     The integral is computed using scipy.integrate.quad
     """
@@ -122,7 +123,7 @@ def marshenko_pastur_median(beta, eps=1e-7):
     beta_m = (1 - np.sqrt(beta)) ** 2
 
     def mp_pdf(x):
-        """Marchenko Pastur Probability density function"""
+        """Marchenko Pastur Probability density function."""
         if beta_p >= x >= beta_m:
             return np.sqrt((beta_p - x) * (x - beta_m)) / (2 * np.pi * x * beta)
         else:
@@ -133,13 +134,14 @@ def marshenko_pastur_median(beta, eps=1e-7):
     lobnd = beta_m
     # quad return (value, upperbound_error).
     # We only need the integral value
-    func = lambda xx: quad(lambda x: mp_pdf(x), beta_m, xx)[0]
 
     n = 0
     while change and (hibnd - lobnd) > eps and n < 20:
         change = False
         midpoints = np.linspace(lobnd, hibnd, 5)
-        int_estimates = np.array(list(map(func, midpoints)))
+        int_estimates = np.array(
+            list(map(lambda xx: quad(lambda x: mp_pdf(x), beta_m, xx)[0], midpoints))
+        )
         if np.any(int_estimates < 0.5):
             lobnd = np.max(midpoints[int_estimates < 0.5])
             change = True
@@ -151,7 +153,6 @@ def marshenko_pastur_median(beta, eps=1e-7):
 
 
 def get_patch_locs(p_shape, p_ovl, v_shape):
-
     """
     Get all the patch top-left corner locations.
 
@@ -197,7 +198,6 @@ def get_patch_locs(p_shape, p_ovl, v_shape):
 
 def estimate_noise(noise_sequence, block_size=1):
     """Estimate the temporal noise standard deviation of a noise only sequence."""
-
     volume_shape = noise_sequence.shape[:-1]
     noise_map = np.empty(volume_shape)
     patch_shape = (block_size,) * len(volume_shape)

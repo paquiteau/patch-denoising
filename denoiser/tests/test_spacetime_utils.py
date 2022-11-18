@@ -1,19 +1,17 @@
-import pytest
-import numpy as np
-
-from numpy.testing import assert_allclose, assert_almost_equal
-
-from denoiser.space_time.utils import (
-    svd_analysis,
-    svd_synthesis,
-    eig_analysis,
-    eig_synthesis,
-    marshenko_pastur_median,
-    estimate_noise,
-)
-
+"""Test space-times utilities."""
 from itertools import product
 
+import numpy as np
+import pytest
+
+from denoiser.space_time.utils import (
+    eig_analysis,
+    eig_synthesis,
+    estimate_noise,
+    marshenko_pastur_median,
+    svd_analysis,
+    svd_synthesis,
+)
 
 parametrize_random_matrix = pytest.mark.parametrize(
     "matrix",
@@ -27,12 +25,14 @@ parametrize_random_matrix = pytest.mark.parametrize(
 
 @pytest.fixture(scope="function")
 def medium_random_matrix(rng):
+    """Create random 3D array. with size (200, 200, 100)."""
     shape = (200, 200, 100)
     return rng.randn(*shape)
 
 
 @pytest.fixture()
 def matrix(request):
+    """Create random matrix on command with shape and noise level."""
     rng = np.random.RandomState(42)
     sigma = request.param["sigma"]
     M, N = request.param["shape"]
@@ -43,13 +43,13 @@ def matrix(request):
 
 @pytest.mark.parametrize("beta", np.arange(1, 10) * 0.1)
 def test_marshenko_pastur_median(beta, rng, n_runs=10000, n_samples=1000):
-    """Test the median estimation of Marshenko Pastur law"""
+    """Test the median estimation of Marshenko Pastur law."""
     print(beta)
     beta_p = (1 + np.sqrt(beta)) ** 2
     beta_m = (1 - np.sqrt(beta)) ** 2
 
     def f(x):
-        """Marchenko Pastur Probability density function"""
+        """Marchenko Pastur Probability density function."""
         if beta_p >= x >= beta_m:
             return np.sqrt((beta_p - x) * (x - beta_m)) / (2 * np.pi * x * beta)
         else:
@@ -71,16 +71,17 @@ def test_marshenko_pastur_median(beta, rng, n_runs=10000, n_samples=1000):
 
 @pytest.mark.parametrize("block_dim", range(5, 10))
 def test_noise_estimation(medium_random_matrix, block_dim):
-
+    """Test noise estimation."""
     noise_map = estimate_noise(medium_random_matrix, block_dim)
 
     real_std = np.nanstd(medium_random_matrix)
-    err = np.mean(noise_map - real_std)
+    err = np.nanmean(noise_map - real_std)
     assert err <= 0.1 * real_std
 
 
 @parametrize_random_matrix
 def test_svd(matrix):
+    """Test SVD functions."""
     U, S, V, M = svd_analysis(matrix)
     new_matrix = svd_synthesis(U, S, V, M, idx=len(S))
 
@@ -90,6 +91,7 @@ def test_svd(matrix):
 
 @parametrize_random_matrix
 def test_eig(matrix):
+    """Test SVD via eigenvalue decomposition."""
     A, d, W, M = eig_analysis(matrix)
     new_matrix = eig_synthesis(A, W, M, max_val=len(M))
     # TODO Refine the precision criteria
