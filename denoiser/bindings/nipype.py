@@ -30,23 +30,9 @@ class DenoiseParameters:
     recombination: str = "weighted"  # "center" is also available
     mask_threshold: int = 10
 
-    @property
-    def pretty_name(self):
-        if self.method:
-            name = self.method
-            name += f"_{self.patch_shape}_{self.patch_overlap}_{self.recombination[0]}"
-        else:
-            name = "noisy"
-        return name
-
-    @property
-    def pretty_par(self):
-        name = f"{self.patch_shape}_{self.patch_overlap}{self.recombination[0]}"
-        return name
-
     @classmethod
     def from_str(self, config_str):
-
+        """Parse config string to create data structure."""
         if "noisy" in config_str:
             return DenoiseParameters(
                 method=None,
