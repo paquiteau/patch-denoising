@@ -1,3 +1,4 @@
+"""Test for the different denoising methods."""
 import numpy as np
 import pytest
 
@@ -16,11 +17,13 @@ from denoiser.simulation.phantom import g_factor_map, mr_shepp_logan_t2_star
 
 @pytest.fixture(scope="module")
 def phantom(N_rep=20):
+    """Create a dummy phantom with fake activations."""
     return add_activations(mr_shepp_logan_t2_star(64)[32], N_rep)
 
 
 @pytest.fixture(scope="module")
 def noisy_phantom(phantom, rng):
+    """Create noisy version of phantom."""
     g_map = g_factor_map(phantom.shape[:-1])
     return add_temporal_gaussian_noise(
         phantom,
@@ -32,7 +35,7 @@ def noisy_phantom(phantom, rng):
 
 @pytest.mark.parametrize("recombination", ["weighted", "average", "center"])
 def test_mppca_denoiser(phantom, noisy_phantom, recombination):
-    """Test the MP-PCA denoiser"""
+    """Test the MP-PCA denoiser."""
     denoised, weights, noise = mp_pca(
         noisy_phantom,
         patch_shape=6,
@@ -47,7 +50,7 @@ def test_mppca_denoiser(phantom, noisy_phantom, recombination):
 
 @pytest.mark.parametrize("recombination", ["weighted", "average", "center"])
 def test_hybridpca_denoiser(phantom, noisy_phantom, recombination):
-    """Test the Hybrid-PCA denoiser"""
+    """Test the Hybrid-PCA denoiser."""
     denoised, weights, noise = hybrid_pca(
         noisy_phantom,
         patch_shape=6,
@@ -63,7 +66,7 @@ def test_hybridpca_denoiser(phantom, noisy_phantom, recombination):
 
 @pytest.mark.parametrize("recombination", ["weighted", "average", "center"])
 def test_nordic_denoiser(phantom, noisy_phantom, recombination):
-    """Test the Hybrid-PCA denoiser"""
+    """Test the Hybrid-PCA denoiser."""
     denoised, weights, noise = nordic(
         noisy_phantom,
         patch_shape=6,
@@ -79,7 +82,7 @@ def test_nordic_denoiser(phantom, noisy_phantom, recombination):
 
 @pytest.mark.parametrize("recombination", ["weighted", "average", "center"])
 def test_rawsvt_denoiser(phantom, noisy_phantom, recombination):
-    """Test the Hybrid-PCA denoiser"""
+    """Test the Hybrid-PCA denoiser."""
     denoised, weights, noise = raw_svt(
         noisy_phantom,
         patch_shape=6,
@@ -96,7 +99,7 @@ def test_rawsvt_denoiser(phantom, noisy_phantom, recombination):
 @pytest.mark.parametrize("recombination", ["weighted", "average", "center"])
 @pytest.mark.parametrize("loss", ["fro", "nuc", "ope"])
 def test_optimal_denoiser(phantom, noisy_phantom, recombination, loss):
-    """Test the Optimal Thresholding denoiser"""
+    """Test the Optimal Thresholding denoiser."""
     denoised, weights, noise = optimal_thresholding(
         noisy_phantom,
         patch_shape=6,
@@ -134,7 +137,7 @@ def test_optimal_denoiser2(phantom, noisy_phantom, recombination, loss):
     [("qut", None), ("gsure", np.linspace(1, 5, 10)), ("sure", np.linspace(1, 5, 10))],
 )
 def test_adaptive_denoiser(phantom, noisy_phantom, recombination, method, gamma):
-    """Test the Adaptive Thresholding denoiser"""
+    """Test the Adaptive Thresholding denoiser."""
     denoised, weights, noise = adaptive_thresholding(
         noisy_phantom,
         patch_shape=10,
