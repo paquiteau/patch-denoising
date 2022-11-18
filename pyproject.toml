@@ -25,6 +25,8 @@ exclude_lines = ["pragma: no cover", "raise NotImplementedError"]
 # Formatting using black.
 [tool.black]
 
+[tool.isort]
+profile="black"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
