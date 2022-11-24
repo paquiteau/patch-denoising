@@ -69,13 +69,13 @@ class PatchDenoiseInputSpec(BaseInterfaceInputSpec):
         exists=True,
         xor=["in_mag"],
         require=["in_imag"],
-        desc="phase input file to denoise.",
+        desc="Real-part of input file to denoise.",
     )
     in_imag = File(
         exists=True,
         xor=["in_mag"],
         require=["in_real"],
-        desc="phase input file to denoise.",
+        desc="imaginary part of input file to denoise.",
     )
 
     mask = File(exists=True)
