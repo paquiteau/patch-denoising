@@ -33,16 +33,17 @@ class LLRDenoiserOperator(ProximityParent):
         patch_overlap,
         mask=None,
         mask_threshold=-1,
+        progbar=None,
         **kwargs,
     ):
-        self._denoiser = DENOISER_MAP["denoiser"]
+        self._denoiser = DENOISER_MAP[denoiser]
         self._params = dict(
             patch_shape=patch_shape,
             patch_overlap=patch_overlap,
             mask=mask,
             mask_threshold=mask_threshold,
+            progbar=progbar,
         )
-
         self.op = self._op_method
         self.cost = lambda *args, **kwargs: np.NaN
 
