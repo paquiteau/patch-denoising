@@ -16,7 +16,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
 
     Parameters
     ----------
-    %(patch_config)
+    $patch_config
     """
 
     def __init__(self, patch_shape, patch_overlap, recombination="weighted"):
@@ -39,7 +39,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         input_data: numpy.ndarray
             The input data to denoise. It should be a ND array, and the last
             dimension should a dynamically varying one (eg time).
-        %(mask_config)
+        $mask_config
         denoiser_kwargs: dict
             Extra runtime parameters passed to the patch denoising method.
 

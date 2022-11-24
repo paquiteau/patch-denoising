@@ -25,13 +25,13 @@ def mp_pca(
 
     Parameters
     ----------
-    %(standard_config)s
+    $standard_config
     threshold_scale: float
         An extra factor for the patch denoising.
 
     Returns
     -------
-    %(denoise_return)
+    $denoise_return
 
     Notes
     -----
@@ -73,13 +73,13 @@ def hybrid_pca(
 
     Parameters
     ----------
-    %(standard_config)s
+    $standard_config
     noise_std: float or ndarray
         Noise level spatial estimation.
 
     Returns
     -------
-    %(denoise_return)s
+    $denoise_return
 
     Notes
     -----
@@ -118,7 +118,7 @@ def raw_svt(
 
     Parameters
     ----------
-    %(standard_config)
+    $standard_config
     threshold: float
         threshold use for singular value hard thresholding.
 
@@ -165,15 +165,14 @@ def nordic(
 
     Parameters
     ----------
-    %(standard_config)
-    %(noise_std)
-    noise_std:
+    $standard_config
+    $noise_std
     n_iter_threshold: int
         The number of Monte-Carlo Simulation to estimate the global threshold.
 
     Returns
     -------
-    %(denoise_return)
+    $denoise_return
 
     Notes
     -----
@@ -223,8 +222,8 @@ def optimal_thresholding(
 
     Parameters
     ----------
-    %(standard_config)s
-    %(noise_std)s
+    $standard_config
+    $noise_std
         If None, the noise map is estimated using the Marcenko-Pastur distribution.
     loss: str
         The loss for which the optimal thresholding is perform.
@@ -233,7 +232,7 @@ def optimal_thresholding(
 
     Returns
     -------
-    %(denoise_return)s
+    $denoise_return
 
     Notes
     -----
@@ -284,8 +283,8 @@ def adaptive_thresholding(
 
     Parameters
     ----------
-    %(standard_config)s
-    %(noise_std).
+    $standard_config
+    $noise_std
         Default: 1.0
     method: str
         The adaptive method to use "SURE" or "GSURE"
@@ -296,7 +295,7 @@ def adaptive_thresholding(
 
     Returns
     -------
-    %(denoiser_return)s
+    $denoise_return
 
     Notes
     -----
