@@ -58,6 +58,7 @@ def mp_pca(
     return denoiser.denoise(input_data, mask=mask, mask_threshold=mask_threshold)
 
 
+@fill_doc
 def hybrid_pca(
     input_data,
     patch_shape,
@@ -102,6 +103,7 @@ def hybrid_pca(
     )
 
 
+@fill_doc
 def raw_svt(
     input_data,
     patch_shape,
@@ -263,6 +265,7 @@ def optimal_thresholding(
     )
 
 
+@fill_doc
 def adaptive_thresholding(
     input_data,
     patch_shape,

@@ -9,18 +9,14 @@ from denoiser._docs import fill_doc
 from .utils import get_patch_locs
 
 
+@fill_doc
 class BaseSpaceTimeDenoiser(abc.ABC):
     """
     Base Class for Patch-based denoising methods for dynamical data.
 
     Parameters
     ----------
-    patch_shape : tuple
-        The patch shape
-    patch_overlap : tuple
-        The amount of overlap between patches in each direction
-    recombination : str
-        The method of reweighting patches. either "weighed" or "average"
+    %(patch_config)
     """
 
     def __init__(self, patch_shape, patch_overlap, recombination="weighted"):
