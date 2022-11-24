@@ -1,4 +1,4 @@
-Denoiser descriptions
+LLR Denosing methods
 =====================
 
 
@@ -9,17 +9,17 @@ It includes the current denoising methods.
 
 - Singular Value Thresholding methods:
 
-    1. Raw singular Value Thresholding
-    2. MP-PCA
-    3. Hybrid-PCA
-    4. NORDIC
-    5. Optimal Thresholding
-    6. Adaptive Trace Norm Thresholding
+1. Raw singular Value Thresholding
+2. MP-PCA
+3. Hybrid-PCA
+4. NORDIC
+5. Optimal Thresholding
+6. Adaptive Trace Norm Thresholding
 
 - Image domain methods (TBA):
 
-    1. BM4D
-    2. Non-Local Mean
+1. BM4D
+2. Non-Local Mean
 
 
 Singular Value thresholding methods
@@ -32,52 +32,50 @@ Consider a sequence of image or volume. From this image, patches are extracted, 
 
 1. Extraction
 ^^^^^^^^^^^^^
-   The extraction of the patch consist of selecting a spatial region of the image, and take all the time information associated to this region.
-   The patch is then flatten in a 2D Matrix (so called Casorati matrix). A row represents the temporal evolution of a single voxel, and a column is the flatten image at a specific time point.
-   Moreover, a mask, defining a Region of Interest (ROI) can be used to determined is a patch should be processed or not (and save computations).
 
-   .. warning::
-      The size of the patch and the overlapping are the main factor for computational cost. Moreover for the SVD-based process to work well, it is required to have a "tall" matrix , i.e. that the number of row is greater than the number of column.
+The extraction of the patch consist of selecting a spatial region of the image, and take all the time information associated to this region.
+The patch is then flatten in a 2D Matrix (so called Casorati matrix). A row represents the temporal evolution of a single voxel, and a column is the flatten image at a specific time point.
+Moreover, a mask, defining a Region of Interest (ROI) can be used to determined is a patch should be processed or not (and save computations).
+
+.. warning::
+    The size of the patch and the overlapping are the main factor for computational cost. Moreover for the SVD-based process to work well, it is required to have a "tall" matrix , i.e. that the number of row is greater than the number of column.
 
 2. Processing
 ^^^^^^^^^^^^^
 
-   Each patch is processed, by applying a threshold function on the centered singular value decomposition of the :math:`M \times N` patch:
+Each patch is processed, by applying a threshold function on the centered singular value decomposition of the :math:`M \times N` patch:
 
-   .. math::
+.. math::
 
-      X = U S V^T + M
+    X = U S V^T + M
 
-   Where :math:`M = \langle X \rangle` is the mean of each row of :math:`X`, and :math:`U,S,V^T` is the SVD decomposition of :math:`X-M`.
-   In particular, :math:`S=\mathrm{diag}(\sigma_1, \dots, \sigma_n)`
+Where :math:`M = \langle X \rangle` is the mean of each row of :math:`X`, and :math:`U,S,V^T` is the SVD decomposition of :math:`X-M`.
+In particular, :math:`S=\mathrm{diag}(\sigma_1, \dots, \sigma_n)`
 
-   The processing of the singular values by a threshold function :math:`\eta(\sigma_i) = \sigma_i'` yields  new (typically sparser) singular values :math:`S'`
+The processing of the singular values by a threshold function :math:`\eta(\sigma_i) = \sigma_i'` yields  new (typically sparser) singular values :math:`S'`
 
-   Then the processed patch is defined as:
+Then the processed patch is defined as:
 
-   .. math::
+.. math::
 
-      \hat{X} = U \mathcal{T}(S) V^T + M
+    \hat{X} = U \mathcal{T}(S) V^T + M
 
 3. Recombination
 ^^^^^^^^^^^^^^^^
 
-   The recombination of processed patches uses weights associated to each patch after its processing to determine the final value in case of patch overlapping.
-   Currently three recombination are considered:
+The recombination of processed patches uses weights associated to each patch after its processing to determine the final value in case of patch overlapping.
+Currently three recombination are considered:
 
-   - Identical weights. The patches values for a pixel are averaged together (available with ``recombination='average'``)
+- Identical weights. The patches values for a pixel are averaged together (available with ``recombination='average'``)
 
-   - Sparse Patch promotion. The patches values are for a pixel are average with weights :math:`\theta`. This Weighted method comes from [1]_ (available with ``recombination='weighted'``), let :math:`P` the number of patch overlapping for voxel :math:`x_i`, and :math:`\hat{x_i}(p)` the value  associated to each patch. the final value of pixel :math:`\hat{x_i}` is
+- Sparse Patch promotion. The patches values are for a pixel are average with weights :math:`\theta`. This Weighted method comes from [1]_ (available with ``recombination='weighted'``), let :math:`P` the number of patch overlapping for voxel :math:`x_i`, and :math:`\hat{x_i}(p)` the value  associated to each patch. the final value of pixel :math:`\hat{x_i}` is
 
-     .. math::
+.. math::
+   \hat{x_i} = \frac{\sum_{p=1}^P\theta_p\hat{x_j}(p)}{\sum_{p=1}^P\theta_p} \quad \text{where } \theta_p = \frac{1}{1+\|S'_p\|_0}
 
-        \hat{x_i} = \frac{\sum_{p=1}^P\theta_p\hat{x_j}(p)}{\sum_{p=1}^P\theta_p}
+The more the processed patch :math:`S'_p` is sparse, the bigger the weight associated to it.
 
-        \quad \text{where } \theta_p = \frac{1}{1+\|S'_p\|_0}
-
-    The more the processed patch :math:`S'_p` is sparse, the bigger the weight associated to it.
-
-  - Use the center of patch. In the case of maximally overlapping patches, the patch center value is use for the corresponding pixel.
+- Use the center of patch. In the case of maximally overlapping patches, the patch center value is use for the corresponding pixel.
 
 .. seealso::
    :class:`~denoiser.space_time.base.BaseSpaceTimeDenoiser`
@@ -89,7 +87,6 @@ Raw Singular Value Thresholding
 For raw singular value thresholding, the threshold function is simply a hard threshold on the singular value, according to a provided threshold.
 
 .. math::
-
    \eta_\tau(\sigma_i) = \begin{cases}
    \sigma_i & \text{if}\quad \sigma_i > \tau \\
    0 & \text{otherwise}

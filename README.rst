@@ -1,6 +1,6 @@
-===============================
+========================
 Patch Denoising Methods
-===============================
+========================
 .. list-table:: 
    :widths: 25 25 25
    :header-rows: 0
@@ -31,7 +31,7 @@ A mathematical description of theses methods is available in the documentation.
 
 
 Installation
-================
+============
 
 Development version
 -------------------
@@ -44,7 +44,7 @@ Development version
 
 
 Quickstart
-==============
+==========
 
 To check if everything worked fine you can run:
 
@@ -56,6 +56,6 @@ To check if everything worked fine you can run:
 
 
 Documentation and Examples
-==========
+==========================
 
 Documentation and examples are available at `https://paquiteau.github.io/patch-denoising/`
