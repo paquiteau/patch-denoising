@@ -2,8 +2,11 @@
 import abc
 
 import numpy as np
-from .utils import get_patch_locs
 from tqdm.auto import tqdm
+
+from denoiser._docs import fill_doc
+
+from .utils import get_patch_locs
 
 
 class BaseSpaceTimeDenoiser(abc.ABC):
@@ -27,7 +30,8 @@ class BaseSpaceTimeDenoiser(abc.ABC):
 
         self.input_denoising_kwargs = dict()
 
-    def denoise(self, input_data, mask=None, mask_threshold=50):
+    @fill_doc
+    def denoise(self, input_data, mask=None, mask_threshold=50, progbar=None):
         """Denoise the input_data, according to mask.
 
         Patches are extracted sequentially and process by the implemented
@@ -39,14 +43,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         input_data: numpy.ndarray
             The input data to denoise. It should be a ND array, and the last
             dimension should a dynamically varying one (eg time).
-        mask: numpy.ndarray
-            A boolean array defining a ROI where the patch denoising will be process
-            It should be a (N-1)D boolean array.
-        mask_threshold: int
-            percentage of the path that need to be in the mask so that the patch is
-            processed.
-            If mask_threshold = -1, all the patch are processed,
-            If mask_threshold=100, all the voxels of the patch needs to be in the mask
+        %(mask_config)
         denoiser_kwargs: dict
             Extra runtime parameters passed to the patch denoising method.
 
