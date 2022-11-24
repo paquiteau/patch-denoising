@@ -1,5 +1,4 @@
 """Provides a functional entry point for denoising methods."""
-
 from denoiser._docs import fill_doc
 from denoiser.space_time.lowrank import (
     AdaptiveDenoiser,
@@ -11,8 +10,9 @@ from denoiser.space_time.lowrank import (
 )
 
 
+@fill_doc
 def mp_pca(
-    volume_sequence,
+    input_data,
     patch_shape,
     patch_overlap,
     mask=None,
@@ -25,30 +25,13 @@ def mp_pca(
 
     Parameters
     ----------
-    volume_sequence: numpy.ndarray
-        The volume shape to denoise
-    patch_shape: tuple
-        The patch shape
-    patch_overlap: tuple
-        the overlap of each pixel
-    mask: numpy.ndarray
-        A boolean array, defining a ROI in the volume. Only patch with voxels in the ROI
-        will be processed.
-    mask_threshold: int
-        percentage of the path that has to be in the mask so that the patch is processed.
-        if mask_threshold = -1, all the patch are processed, if mask_threshold=100, all
-        the voxels of the patch needs to be in the mask
-    recombination: str
-        The recombination method of the patch. "weighted", "average" or "center"
+    %(standard_config)s
     threshold_scale: float
         An extra factor for the patch denoising.
 
     Returns
     -------
-    tuple
-        numpy.ndarray: The denoised sequence of volume
-        numpy.ndarray: The weight of each pixel after the processing.
-        numpy.ndarray: If possible, the noise variance distribution in the volume.
+    %(denoise_return)
 
     Notes
     -----
@@ -72,11 +55,11 @@ def mp_pca(
         recombination=recombination,
         threshold_scale=threshold_scale,
     )
-    return denoiser.denoise(volume_sequence, mask=mask, mask_threshold=mask_threshold)
+    return denoiser.denoise(input_data, mask=mask, mask_threshold=mask_threshold)
 
 
 def hybrid_pca(
-    volume_sequence,
+    input_data,
     patch_shape,
     patch_overlap,
     mask=None,
@@ -89,30 +72,13 @@ def hybrid_pca(
 
     Parameters
     ----------
-    volume_sequence: numpy.ndarray
-        The volume shape to denoise
-    patch_shape: tuple
-        The patch shape
-    patch_overlap: tuple
-        the overlap of each pixel
-    mask: numpy.ndarray
-        A boolean array, defining a ROI in the volume. Only patch with voxels in the ROI
-        will be processed.
-    mask_threshold: int
-        percentage of the path that has to be in the mask so that the patch is processed.
-        if mask_threshold = -1, all the patch are processed, if mask_threshold=100, all
-        the voxels of the patch needs to be in the mask
-    recombination: str
-        The recombination method of the patch. "weighted", "average" or "center"
-    threshold_scale: float
-        An extra factor for the patch denoising.
+    %(standard_config)s
+    noise_std: float or ndarray
+        Noise level spatial estimation.
 
     Returns
     -------
-    tuple
-        numpy.ndarray: The denoised sequence of volume
-        numpy.ndarray: The weight of each pixel after the processing.
-        numpy.ndarray: If possible, the noise variance distribution in the volume.
+    %(denoise_return)s
 
     Notes
     -----
@@ -132,12 +98,12 @@ def hybrid_pca(
         recombination=recombination,
     )
     return denoiser.denoise(
-        volume_sequence, mask=mask, mask_threshold=mask_threshold, noise_std=noise_std
+        input_data, mask=mask, mask_threshold=mask_threshold, noise_std=noise_std
     )
 
 
 def raw_svt(
-    volume_sequence,
+    input_data,
     patch_shape,
     patch_overlap,
     mask_threshold=50,
@@ -150,21 +116,7 @@ def raw_svt(
 
     Parameters
     ----------
-    volume_sequence: numpy.ndarray
-        The volume shape to denoise
-    patch_shape: tuple
-        The patch shape
-    patch_overlap: tuple
-        the overlap of each pixel
-    mask: numpy.ndarray
-        A boolean array, defining a ROI in the volume. Only patch with voxels in the ROI
-        will be processed.
-    mask_threshold: int
-        percentage of the path that has to be in the mask so that the patch is processed.
-        if mask_threshold = -1, all the patch are processed, if mask_threshold=100, all
-        the voxels of the patch needs to be in the mask
-    recombination: str
-        The recombination method of the patch. "weighted", "average" or "center"
+    %(standard_config)
     threshold: float
         threshold use for singular value hard thresholding.
 
@@ -191,12 +143,13 @@ def raw_svt(
         threshold_value=threshold,
     )
     return denoiser.denoise(
-        volume_sequence, mask=mask, mask_threshold=mask_threshold, threshold_scale=1.0
+        input_data, mask=mask, mask_threshold=mask_threshold, threshold_scale=1.0
     )
 
 
+@fill_doc
 def nordic(
-    volume_sequence,
+    input_data,
     patch_shape,
     patch_overlap,
     mask_threshold=50,
@@ -210,32 +163,15 @@ def nordic(
 
     Parameters
     ----------
-    volume_sequence: numpy.ndarray
-        The volume shape to denoise
-    patch_shape: tuple
-        The patch shape
-    patch_overlap: tuple
-        the overlap of each pixel
-    mask: numpy.ndarray
-        A boolean array, defining a ROI in the volume. Only patch with voxels in the ROI
-        will be processed.
-    mask_threshold: int
-        percentage of the path that has to be in the mask so that the patch is processed.
-        if mask_threshold = -1, all the patch are processed, if mask_threshold=100, all
-        the voxels of the patch needs to be in the mask
-    recombination: str
-        The recombination method of the patch. "weighted", "average" or "center"
-    threshold_scale: float
-        An extra factor for the patch denoising.
+    %(standard_config)
+    %(noise_std)
+    noise_std:
     n_iter_threshold: int
         The number of Monte-Carlo Simulation to estimate the global threshold.
 
     Returns
     -------
-    tuple
-        numpy.ndarray: The denoised sequence of volume
-        numpy.ndarray: The weight of each pixel after the processing.
-        numpy.ndarray: If possible, the noise variance distribution in the volume.
+    %(denoise_return)
 
     Notes
     -----
@@ -260,7 +196,7 @@ def nordic(
         recombination=recombination,
     )
     return denoiser.denoise(
-        volume_sequence,
+        input_data,
         mask=mask,
         mask_threshold=mask_threshold,
         noise_std=noise_std,
@@ -268,8 +204,9 @@ def nordic(
     )
 
 
+@fill_doc
 def optimal_thresholding(
-    volume_sequence,
+    input_data,
     patch_shape,
     patch_overlap,
     mask=None,
@@ -284,38 +221,21 @@ def optimal_thresholding(
 
     Parameters
     ----------
-    volume_sequence: numpy.ndarray
-        The volume shape to denoise
-    patch_shape: tuple
-        The patch shape
-    patch_overlap: tuple
-        the overlap of each pixel
-    mask: numpy.ndarray
-        A boolean array, defining a ROI in the volume. Only patch with voxels in the ROI
-        will be processed.
-    mask_threshold: int
-        percentage of the path that has to be in the mask so that the patch is processed.
-        if mask_threshold = -1, all the patch are processed, if mask_threshold=100, all
-        the voxels of the patch needs to be in the mask
+    %(standard_config)s
+    %(noise_std)s
+        If None, the noise map is estimated using the Marcenko-Pastur distribution.
     loss: str
         The loss for which the optimal thresholding is perform.
-    noise_std: an estimation of the spatial noise map standard deviation.
-        If None, the noise map is estimated using the Marcenko-Pastur distribution.
-    recombination: str
-        The recombination method of the patch. "weighted", "average" or "center"
     eps_marshenko_pastur: float
         The precision with which the optimal threshold is computed.
 
     Returns
     -------
-    tuple
-        numpy.ndarray: The denoised sequence of volume
-        numpy.ndarray: The weight of each pixel after the processing.
-        numpy.ndarray: If possible, the noise variance distribution in the volume.
+    %(denoise_return)s
 
     Notes
     -----
-    Reimplement in python  [1]_
+    Reimplement of the original Matlab code [1]_ in python.
 
     References
     ----------
@@ -335,7 +255,7 @@ def optimal_thresholding(
         loss=loss,
     )
     return denoiser.denoise(
-        volume_sequence,
+        input_data,
         mask=mask,
         noise_std=noise_std,
         mask_threshold=mask_threshold,
@@ -344,7 +264,7 @@ def optimal_thresholding(
 
 
 def adaptive_thresholding(
-    volume_sequence,
+    input_data,
     patch_shape,
     patch_overlap,
     mask=None,
@@ -361,32 +281,23 @@ def adaptive_thresholding(
 
     Parameters
     ----------
-    volume_sequence: numpy.ndarray
-        The volume shape to denoise
-    patch_shape: tuple
-        The patch shape
-    patch_overlap: tuple
-        the overlap of each pixel
-    mask: numpy.ndarray
-        A boolean array, defining a ROI in the volume. Only patch with voxels in the ROI
-        will be processed.
-    mask_threshold: int
-        percentage of the path that has to be in the mask so that the patch is processed.
-        if mask_threshold = -1, all the patch are processed, if mask_threshold=100, all
-        the voxels of the patch needs to be in the mask
-    recombination: str
-        The recombination method of the patch. "weighted", "average" or "center"
+    %(standard_config)s
+    %(noise_std).
+        Default: 1.0
+    method: str
+        The adaptive method to use "SURE" or "GSURE"
+    nbsim:
+    tau:
+    gamma0:
+
 
     Returns
     -------
-    tuple
-        numpy.ndarray: The denoised sequence of volume
-        numpy.ndarray: The weight of each pixel after the processing.
-        numpy.ndarray: If possible, the noise variance distribution in the volume.
+    %(denoiser_return)s
 
     Notes
     -----
-    Adapt the R package presented in  [1]_
+    Reimplements the R package [1]_ in python.
 
     References
     ----------
@@ -405,22 +316,4 @@ def adaptive_thresholding(
         method=method,
         nbsim=nbsim,
     )
-    return denoiser.denoise(
-        volume_sequence, mask, mask_threshold, tau0, noise_std, gamma0
-    )
-
-
-def volume_denoise(volume_sequence, method):
-    """Denoise each volume independently.
-
-    Parameters
-    ----------
-    volume_sequence: numpy.ndarray
-        a sequence of volume to denoise
-    method: str
-        The denoising method to use. Available will be
-        - `"bm3d"`
-        - `"dip"`
-
-    """
-    ...
+    return denoiser.denoise(input_data, mask, mask_threshold, tau0, noise_std, gamma0)
