@@ -8,7 +8,7 @@ dependencies = ["numpy", "scipy", "matplotlib", "tqdm"]
 
 [project.optional-dependencies]
 test = ["pytest", "pytest-cov", "pytest-xdist", "pytest-sugar"]
-doc = ["pydata-sphinx-theme", "numpydoc", "sphinx_gallery", "sphinx", "sphinx-autoapi"]
+doc = ["pydata-sphinx-theme", "numpydoc", "sphinx_gallery", "sphinx"]
 dev = ["black", "isort"]
 
 [build-system]
