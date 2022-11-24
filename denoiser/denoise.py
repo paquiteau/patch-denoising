@@ -19,6 +19,7 @@ def mp_pca(
     mask_threshold=50,
     recombination="weighted",
     threshold_scale=1.0,
+    progbar=None,
 ):
     """
     Marshenko-Pastur PCA denoising method.
@@ -67,6 +68,7 @@ def hybrid_pca(
     mask_threshold=50,
     noise_std=1.0,
     recombination="weighted",
+    progbar=None,
 ):
     """
     Hybrid PCA denoising method.
@@ -99,7 +101,11 @@ def hybrid_pca(
         recombination=recombination,
     )
     return denoiser.denoise(
-        input_data, mask=mask, mask_threshold=mask_threshold, noise_std=noise_std
+        input_data,
+        mask=mask,
+        mask_threshold=mask_threshold,
+        noise_std=noise_std,
+        progbar=progbar,
     )
 
 
@@ -112,6 +118,7 @@ def raw_svt(
     mask=None,
     threshold=1.0,
     recombination="weighted",
+    progbar=None,
 ):
     """
     Raw singular value thresholding.
@@ -145,7 +152,11 @@ def raw_svt(
         threshold_value=threshold,
     )
     return denoiser.denoise(
-        input_data, mask=mask, mask_threshold=mask_threshold, threshold_scale=1.0
+        input_data,
+        mask=mask,
+        mask_threshold=mask_threshold,
+        threshold_scale=1.0,
+        progbar=progbar,
     )
 
 
@@ -159,6 +170,7 @@ def nordic(
     noise_std=1.0,
     recombination="weighted",
     n_iter_threshold=10,
+    progbar=None,
 ):
     """
     NORDIC denoising method.
@@ -202,6 +214,7 @@ def nordic(
         mask_threshold=mask_threshold,
         noise_std=noise_std,
         n_iter_threshold=n_iter_threshold,
+        progbar=progbar,
     )
 
 
@@ -216,6 +229,7 @@ def optimal_thresholding(
     noise_std=None,
     recombination="weighted",
     eps_marshenko_pastur=1e-7,
+    progbar=None,
 ):
     """
     Optimal thresholing denoising method.
@@ -261,6 +275,7 @@ def optimal_thresholding(
         noise_std=noise_std,
         mask_threshold=mask_threshold,
         eps_marshenko_pastur=eps_marshenko_pastur,
+        progbar=progbar,
     )
 
 
@@ -277,6 +292,7 @@ def adaptive_thresholding(
     tau0=None,
     gamma0=None,
     noise_std=1.0,
+    progbar=None,
 ):
     """
     Optimal thresholing denoising method.
@@ -318,4 +334,12 @@ def adaptive_thresholding(
         method=method,
         nbsim=nbsim,
     )
-    return denoiser.denoise(input_data, mask, mask_threshold, tau0, noise_std, gamma0)
+    return denoiser.denoise(
+        input_data,
+        mask,
+        mask_threshold,
+        tau0,
+        noise_std,
+        gamma0,
+        progbar=progbar,
+    )

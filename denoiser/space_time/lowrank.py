@@ -79,7 +79,9 @@ class HybridPCADenoiser(BaseSpaceTimeDenoiser):
         The method of reweighting patches. either "weighed" or "average"
     """
 
-    def denoise(self, input_data, mask=None, mask_threshold=50, noise_std=1.0):
+    def denoise(
+        self, input_data, mask=None, mask_threshold=50, noise_std=1.0, progbar=None
+    ):
         """Denoise using the Hybrid-PCA method.
 
         Along with the input data a noise std map or value should be provided.
@@ -91,7 +93,7 @@ class HybridPCADenoiser(BaseSpaceTimeDenoiser):
         else:
             self.input_denoising_kwargs["var_apriori"] = noise_std**2
 
-        return super().denoise(input_data, mask, mask_threshold)
+        return super().denoise(input_data, mask, mask_threshold, progbar=progbar)
 
     def _patch_processing(self, patch, patch_slice=None, var_apriori=None):
         """Process a pach with the Hybrid-PCA method."""
@@ -135,9 +137,16 @@ class RawSVDDenoiser(BaseSpaceTimeDenoiser):
 
         super().__init__(patch_shape, patch_overlap, recombination)
 
-    def denoise(self, input_data, mask=None, mask_threshold=50, threshold_scale=1.0):
+    def denoise(
+        self,
+        input_data,
+        mask=None,
+        mask_threshold=50,
+        threshold_scale=1.0,
+        progbar=None,
+    ):
         self._threshold = self._threshold_val * threshold_scale
-        return super().denoise(input_data, mask, mask_threshold)
+        return super().denoise(input_data, mask, mask_threshold, progbar=progbar)
 
     def _patch_processing(self, patch, patch_slice=None, **kwargs):
         """
@@ -195,6 +204,7 @@ class NordicDenoiser(RawSVDDenoiser):
         mask_threshold=50,
         noise_std=1.0,
         n_iter_threshold=10,
+        progbar=None,
     ):
         """Denoise using the NORDIC method.
 
@@ -224,7 +234,7 @@ class NordicDenoiser(RawSVDDenoiser):
         self._threshold = noise_std * max_sval
 
         return super(RawSVDDenoiser, self).denoise(
-            input_data, mask, mask_threshold=mask_threshold
+            input_data, mask, mask_threshold=mask_threshold, progbar=progbar
         )
 
 
@@ -308,6 +318,7 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         mask_threshold=50,
         noise_std=None,
         eps_marshenko_pastur=1e-7,
+        progbar=None,
     ):
 
         patch_shape, _ = self._BaseSpaceTimeDenoiser__get_patch_param(input_data.shape)
@@ -325,7 +336,7 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         else:
             self.input_denoising_kwargs["var_apriori"] = noise_std**2
 
-        return super().denoise(input_data, mask, mask_threshold)
+        return super().denoise(input_data, mask, mask_threshold, progbar=progbar)
 
     def _patch_processing(
         self,
@@ -527,6 +538,7 @@ class AdaptiveDenoiser(BaseSpaceTimeDenoiser):
         tau0=None,
         noise_std=None,
         gamma0=None,
+        progbar=None,
     ):
         """
         Adaptive denoiser.
@@ -542,7 +554,7 @@ class AdaptiveDenoiser(BaseSpaceTimeDenoiser):
             )
         else:
             self.input_denoising_kwargs["var_apriori"] = noise_std**2
-        return super().denoise(input_data, mask, mask_threshold)
+        return super().denoise(input_data, mask, mask_threshold, progbar=progbar)
 
     def _patch_processing(
         self,
