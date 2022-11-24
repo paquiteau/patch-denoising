@@ -11,4 +11,4 @@
    :hidden:
 
    denoisers
-   auto_examples/index
+   modules/index
