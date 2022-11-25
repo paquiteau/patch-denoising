@@ -85,7 +85,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
 
         if progbar is None:
             progbar = tqdm(total=len(patch_locs))
-        else:
+        elif progbar is not False:
             progbar.reset(total=len(patch_locs))
 
         for patch_tl in patch_locs:
@@ -120,7 +120,8 @@ class BaseSpaceTimeDenoiser(abc.ABC):
                     patchs_weight[patch_slice] += 1
             if len(extras) > 1:
                 noise_std_estimate[patch_slice] += extras[1]
-            progbar.update()
+            if progbar:
+                progbar.update()
         # Averaging the overlapping pixels.
         output_data /= patchs_weight[..., None]
         noise_std_estimate /= patchs_weight
