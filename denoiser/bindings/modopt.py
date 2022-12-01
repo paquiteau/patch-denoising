@@ -34,6 +34,7 @@ class LLRDenoiserOperator(ProximityParent):
         mask=None,
         mask_threshold=-1,
         progbar=None,
+        time_dimension=-1,
         **kwargs,
     ):
         self._denoiser = DENOISER_MAP[denoiser]
@@ -46,8 +47,16 @@ class LLRDenoiserOperator(ProximityParent):
         )
         self.op = self._op_method
         self.cost = lambda *args, **kwargs: np.NaN
+        self.time_dimension = time_dimension
 
     def _op_method(self, data, **kwargs):
         run_kwargs = self._params.copy()
         run_kwargs.update(kwargs)
-        return self._denoiser(data, **run_kwargs)[0]
+        if self.time_dimension == -1 or self.time_dimension == data.ndim - 1:
+            return self._denoiser(data, **run_kwargs)[0]
+        elif self.time_dimension == 0:
+            return np.moveaxis(
+                self._denoiser(np.moveaxis(data, 0, -1), **run_kwargs)[0],
+                -1,
+                0,
+            )
