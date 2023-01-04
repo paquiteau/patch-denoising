@@ -44,9 +44,10 @@ class LLRDenoiserOperator(ProximityParent):
             mask=mask,
             mask_threshold=mask_threshold,
             progbar=progbar,
+            **kwargs,
         )
         self.op = self._op_method
-        self.cost = lambda *args, **kwargs: np.NaN
+        self.cost = lambda *args, **kw: np.NaN
         self.time_dimension = time_dimension
 
     def _op_method(self, data, **kwargs):
