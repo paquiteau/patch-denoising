@@ -13,12 +13,11 @@ from scipy.optimize import minimize
 
 from types import MappingProxyType
 
-NUMBA_AVAILABLE = False
+NUMBA_AVAILABLE = True
 try:
     import numba as nb
-
-    NUMBA_AVAILABLE = True
 except ImportError:
+    NUMBA_AVAILABLE = False
     pass
 
 

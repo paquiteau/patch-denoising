@@ -116,7 +116,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
                     slice(ptl + ps // 2, ptl + ps // 2 + 1)
                     for ptl, ps in zip(patch_tl, patch_shape)
                 )
-                output_data[patch_center_img, :] = p_denoise[patch_center]
+                output_data[patch_center_img] = p_denoise[patch_center]
                 patchs_weight[patch_center_img] += extras[0]
                 noise_std_estimate[patch_center_img] += extras[1]
             else:

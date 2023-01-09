@@ -42,7 +42,7 @@ jobs:
         shell: bash
         run: |
           python --version
-          python -m pip install .[test]
+          python -m pip install .[test] numba
       - name: Run Tests
         shell: bash
         run: | 

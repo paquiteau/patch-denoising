@@ -1,5 +1,6 @@
 """Test for the different denoising methods."""
 import numpy as np
+import numpy.testing as npt
 import pytest
 
 from denoiser.denoise import (
@@ -152,3 +153,15 @@ def test_adaptive_denoiser(phantom, noisy_phantom, recombination, method, gamma)
     noise_std_before = np.sqrt(np.nanmean(np.nanvar(noisy_phantom - phantom, axis=-1)))
     noise_std_after = np.sqrt(np.nanmean(np.nanvar(denoised - phantom, axis=-1)))
     assert noise_std_after < noise_std_before
+
+
+def test_raise_nordic(phantom, noisy_phantom):
+    """Test raise error for nordic."""
+    npt.assert_raises(
+        ValueError,
+        nordic,
+        noisy_phantom,
+        patch_shape=6,
+        patch_overlap=5,
+        noise_std="not_a_float_or_array",
+    )

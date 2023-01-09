@@ -40,4 +40,5 @@ minversion = "6.0"
 addopts = [
     "--cov=denoiser",
     "--cov-report=term-missing",
+    "--cov-report=xml"
 ]
