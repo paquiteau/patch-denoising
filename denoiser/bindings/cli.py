@@ -62,7 +62,6 @@ def main():
 
     input_data = load_as_array(args.input)
 
-    denoiser =
 
 if __name__ == "__main__":
     main()
