@@ -1,7 +1,6 @@
 """Nipype Bindings, Provide bindings To apply patch based denoising."""
 
 import os
-from dataclasses import dataclass
 
 import nibabel as nib
 import numpy as np
@@ -15,46 +14,8 @@ from nipype.interfaces.base import (
 )
 from nipype.utils.filemanip import split_filename
 
-from denoiser.bindings.utils import DENOISER_MAP
+from denoiser.bindings.utils import DENOISER_MAP, DenoiseParameters
 from denoiser.space_time.utils import estimate_noise
-
-
-@dataclass
-class DenoiseParameters:
-    """Denoise Parameters data structure."""
-
-    method: str = None
-    patch_shape: int = 11
-    patch_overlap: int = 0
-    recombination: str = "weighted"  # "center" is also available
-    mask_threshold: int = 10
-
-    @classmethod
-    def from_str(self, config_str):
-        """Parse config string to create data structure."""
-        if "noisy" in config_str:
-            return DenoiseParameters(
-                method=None,
-                patch_shape=None,
-                patch_overlap=None,
-                recombination=None,
-                mask_threshold=None,
-            )
-        else:
-            conf = config_str.split("_")
-            d = DenoiseParameters()
-            if conf:
-                d.method = conf.pop(0)
-            if conf:
-                d.patch_shape = int(conf.pop(0))
-            if conf:
-                d.patch_overlap = int(conf.pop(0))
-            if conf:
-                c = conf.pop(0)
-                d.recombination = "weighted" if c == "w" else "center"
-            if conf:
-                d.mask_threshold = conf.pop(0)
-            return d
 
 
 class PatchDenoiseInputSpec(BaseInterfaceInputSpec):
