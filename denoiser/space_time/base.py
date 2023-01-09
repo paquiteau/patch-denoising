@@ -100,6 +100,10 @@ class BaseSpaceTimeDenoiser(abc.ABC):
             # building the casoratti matrix
             patch = np.reshape(input_data[patch_slice], (-1, input_data.shape[-1]))
 
+            # FIXME this behaviour should be documented
+            # And ideally choosen by the user.
+
+            patch[np.isnan(patch)] = np.mean(patch)
             p_denoise, *extras = self._patch_processing(
                 patch,
                 patch_slice=patch_slice,
