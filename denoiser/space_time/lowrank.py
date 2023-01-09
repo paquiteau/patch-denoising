@@ -525,7 +525,7 @@ class AdaptiveDenoiser(BaseSpaceTimeDenoiser):
         super().__init__(patch_shape, patch_overlap, recombination)
         if method.lower() not in self._SUPPORTED_METHOD:
             raise ValueError(
-                f"Unsupported method: '{method}', available are {self._SUPPORTED_METHOD}"
+                f"Unsupported method: '{method}', use any of {self._SUPPORTED_METHOD}"
             )
         self.input_denoising_kwargs["method"] = method.lower()
         self.input_denoising_kwargs["nbsim"] = nbsim

@@ -89,7 +89,8 @@ def hybrid_pca(
 
     References
     ----------
-    .. [1] https://submissions.mirasmart.com/ISMRM2022/Itinerary/Files/PDFFiles/2688.html
+    .. [1]
+    https://submissions.mirasmart.com/ISMRM2022/Itinerary/Files/PDFFiles/2688.html
 
     See Also
     --------
