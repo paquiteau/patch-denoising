@@ -9,7 +9,7 @@ dependencies = ["numpy", "scipy", "matplotlib", "tqdm"]
 [project.optional-dependencies]
 test = ["pytest", "pytest-cov", "pytest-xdist", "pytest-sugar"]
 doc = ["pydata-sphinx-theme", "numpydoc", "sphinx_gallery", "sphinx"]
-dev = ["black", "isort"]
+dev = ["black", "isort", "ruff"]
 
 [project.scripts]
 patch-denoise = "denoiser.bindings.cli:main"
@@ -25,12 +25,16 @@ omit = ["*tests*", "denoiser/bindings/*"]
 precision = 2
 exclude_lines = ["pragma: no cover", "raise NotImplementedError"]
 
-[tool.flake8]
-docstring-convention = "numpy"
-ignore = ["D105"]
 
 # Formatting using black.
 [tool.black]
+
+#linting using ruff
+[tool.ruff]
+src = ["src", "tests"]
+select = ["E", "F", "B", "Q", "UP", "D"]
+[tool.ruff.pydocstyle]
+convention="numpy"
 
 [tool.isort]
 profile="black"

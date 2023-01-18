@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Shepp-Logan phantom for use with MR simulations.
 
 From https://github.com/mckib2/phantominator/blob/master/phantominator/mr_shepp_logan.py
@@ -78,7 +77,6 @@ def mr_shepp_logan(N, E=None, B0=3, T2star=False, zlims=(-1, 1)):
     .. [2] https://github.com/mckib2/phantominator/blob/master/phantominator \
     /mr_shepp_logan.py
     """
-
     # Determine size of phantom
     if np.isscalar(N):
         L, M, N = N, N, N
@@ -256,7 +254,6 @@ def _mr_relaxation_parameters():
     If t1 is None, the model T1 = A*B0^C will be used.  If t1 is not
     np.nan, then specified t1 will be used.
     """
-
     # params['tissue-name'] = [A, C, (t1 value if explicit), t2, chi]
     params = dict()
     params["scalp"] = [0.324, 0.137, np.nan, 0.07, -7.5e-6]
@@ -271,7 +268,6 @@ def _mr_relaxation_parameters():
 
 def _hamming1d(n):
     """Compute the 1D Hamming window."""
-
     return 0.54 - (0.46 * np.cos(np.arange(n) * 2 * np.pi / (n - 1)))
 
 

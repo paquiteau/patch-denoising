@@ -2,7 +2,7 @@ import numpy as np
 
 
 def _zigzag(rows, columns):
-    """Return a list of coordinate in zigzag pattern"""
+    """Return a list of coordinate in zigzag pattern."""
     pattern = [[] for _ in range(rows + columns - 1)]
     for i in range(rows):
         for j in range(columns):
@@ -53,7 +53,6 @@ def zigzag2array(array, shape):
     numpy.ndarray
         The 2D array
     """
-
     if len(shape) != 2:
         raise ValueError("The shape of the new array should be 2-dimensional")
     zigzag = _zigzag(*shape)

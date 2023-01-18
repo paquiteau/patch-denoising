@@ -1,4 +1,4 @@
-"""Create Dynamical Data from phantom"""
+"""Create Dynamical Data from phantom."""
 
 import numpy as np
 
@@ -18,5 +18,4 @@ def add_activations(volume, n_frames):
     numpy.ndarray
         The temporal sequence of volume with activations.
     """
-
     return np.repeat(volume[..., np.newaxis], n_frames, axis=-1)

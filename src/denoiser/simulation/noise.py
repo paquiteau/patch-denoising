@@ -54,7 +54,6 @@ def add_temporal_rician_noise(array, scale=1, rng=None):
     .. [1] https://en.m.wikipedia.org/wiki/Rice_distribution
     .. [2] https://en.m.wikipedia.org/wiki/Rayleigh_distribution
     """
-
     if rng is None:
         rng = default_rng()
     noise = rng.rayleigh(scale, array.shape)

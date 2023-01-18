@@ -15,6 +15,7 @@ def carpet_plot(
 
     The last dimension if plotted on the horizontal axis,
     The other are flattened on the vertical one.
+
     Parameters
     ----------
     arr: numpy.ndarray
@@ -34,7 +35,6 @@ def carpet_plot(
     matplotlib.pyplot.figure:
         The plotted figure.
     """
-
     if unfold == "classic":
         unfolded_arr = np.reshape(arr, (-1, arr.shape[-1]))
     elif unfold == "zigzag":

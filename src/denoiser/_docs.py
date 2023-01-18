@@ -1,4 +1,4 @@
-"""Docstring utils
+"""Docstring utils.
 
 docdict contains the standard argument documentation found across the package.
 
