@@ -52,5 +52,4 @@ jobs:
       - name: Run Tests
         shell: bash
         run: | 
-          cd denoiser
           pytest -n auto -x
