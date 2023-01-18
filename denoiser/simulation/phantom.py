@@ -75,7 +75,8 @@ def mr_shepp_logan(N, E=None, B0=3, T2star=False, zlims=(-1, 1)):
            "2D & 3D Shepp-Logan phantom standards for MRI." 2008 19th
            International Conference on Systems Engineering. IEEE,
            2008.
-    .. [2] https://github.com/mckib2/phantominator/blob/master/phantominator/mr_shepp_logan.py
+    .. [2] https://github.com/mckib2/phantominator/blob/master/phantominator \
+    /mr_shepp_logan.py
     """
 
     # Determine size of phantom

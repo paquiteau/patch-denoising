@@ -21,8 +21,8 @@ class LLRDenoiserOperator(ProximityParent):
         A boolean array, defining a ROI in the volume. Only patch with voxels in the ROI
         will be processed.
     mask_threshold: int
-        percentage of the path that has to be in the mask so that the patch is processed.
-        if mask_threshold = -1, all the patch are processed, if mask_threshold=100, all
+        percentage of the path that should be in the mask in order to be processed.
+        If mask_threshold = -1, all the patch are processed, if mask_threshold=100, all
         the voxels of the patch needs to be in the mask
     """
 
