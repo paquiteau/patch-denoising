@@ -120,7 +120,7 @@ class PatchDenoise(SimpleInterface):
             raise ValueError(
                 f"unknown denoising denoise_method '{self.inputs.denoise_method}', "
                 f"available are {list(DENOISER_MAP.keys())}"
-            )
+            ) from None
 
         if isdefined(self.inputs.extra_kwargs) and self.inputs.extra_kwargs:
             extra_kwargs = self.inputs.extra_kwargs

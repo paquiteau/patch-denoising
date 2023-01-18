@@ -475,7 +475,7 @@ def _get_gamma_tau(patch, sing_vals, stdest, method, gamma0, tau0):
             lambda x: _sure_atn_cost(
                 X=patch,
                 method=method,
-                gamma=g,
+                gamma=g,  # noqa: B023
                 sing_vals=sing_vals,
                 sigma=stdest,
                 tau=x,
