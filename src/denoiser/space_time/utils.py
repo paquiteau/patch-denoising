@@ -175,7 +175,7 @@ def get_patch_locs(p_shape, p_ovl, v_shape):
         raise ValueError("Dimension mismatch between the arguments.")
 
     ranges = []
-    for v_s, p_s, p_o in zip(v_shape, p_shape, p_ovl):
+    for v_s, p_s, p_o in zip(v_shape, p_shape, p_ovl, strict=True):
         if p_o >= p_s:
             raise ValueError(
                 "Overlap should be a non-negative integer smaller than patch_size",
@@ -205,11 +205,11 @@ def estimate_noise(noise_sequence, block_size=1):
 
     for patch_tl in get_patch_locs(patch_shape, patch_overlap, volume_shape):
         patch_slice = tuple(
-            slice(ptl, ptl + ps) for ptl, ps in zip(patch_tl, patch_shape)
+            slice(ptl, ptl + ps) for ptl, ps in zip(patch_tl, patch_shape, strict=True)
         )
         patch_center_img = tuple(
             slice(ptl + ps // 2, ptl + ps // 2 + 1)
-            for ptl, ps in zip(patch_tl, patch_shape)
+            for ptl, ps in zip(patch_tl, patch_shape, strict=True)
         )
         noise_map[patch_center_img] = np.std(noise_sequence[patch_slice])
     return noise_map
