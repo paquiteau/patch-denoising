@@ -11,7 +11,7 @@ from denoiser.denoise import (
     optimal_thresholding,
     raw_svt,
 )
-from denoiser.simulation.activations import add_activations
+from denoiser.simulation.activations import add_frames
 from denoiser.simulation.noise import add_temporal_gaussian_noise
 from denoiser.simulation.phantom import g_factor_map, mr_shepp_logan_t2_star
 
@@ -19,7 +19,7 @@ from denoiser.simulation.phantom import g_factor_map, mr_shepp_logan_t2_star
 @pytest.fixture(scope="module")
 def phantom(N_rep=20):
     """Create a dummy phantom with fake activations."""
-    return add_activations(mr_shepp_logan_t2_star(64)[32], N_rep)
+    return add_frames(mr_shepp_logan_t2_star(64)[32], N_rep)
 
 
 @pytest.fixture(scope="module")

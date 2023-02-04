@@ -3,7 +3,7 @@
 import numpy as np
 
 
-def add_activations(volume, n_frames):
+def add_frames(volume, n_frames):
     """Add Activation to ground truth volume.
 
     Parameters
