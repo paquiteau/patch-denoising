@@ -55,15 +55,17 @@ jobs:
         shell: bash -l {0}
         run: |
           python -m pip install --upgrade pip
-          python -m pip install .[doc]
+          python -m pip install .[optional,doc]
+
       - name: Build API documentation
-        shell: bash -l {0}
         run: |
-          cd docs
-          make html
-      - name: Deploy API documentation
-        uses: peaceiris/actions-gh-pages@v3.5.9
+          python -m sphinx docs docs_build
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: docs/build/html
-          force_orphan: true
+          # Upload entire repository
+          path: 'docs_build'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1

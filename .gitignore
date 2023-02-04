@@ -10,3 +10,5 @@ htmlcov
 *.egg-info
 
 docs/source/auto_examples/
+docs/_autosummary
+docs/auto_examples/

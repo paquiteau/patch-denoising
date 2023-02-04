@@ -7,6 +7,7 @@ authors = [{name="Pierre-antoine Comby", email="pierre-antoine.comby@crans.org"}
 dependencies = ["numpy", "scipy", "matplotlib", "tqdm"]
 
 [project.optional-dependencies]
+optional = ["modopt", "nipype", "numba"]
 test = ["pytest", "pytest-cov", "pytest-xdist", "pytest-sugar"]
 doc = ["pydata-sphinx-theme", "numpydoc", "sphinx_gallery", "sphinx"]
 dev = ["black", "isort", "ruff"]
