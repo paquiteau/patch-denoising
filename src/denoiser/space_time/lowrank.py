@@ -304,7 +304,6 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         loss="fro",
         recombination="weighted",
     ):
-
         super().__init__(patch_shape, patch_overlap, recombination=recombination)
         self.input_denoising_kwargs[
             "shrink_func"
@@ -319,7 +318,6 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         eps_marshenko_pastur=1e-7,
         progbar=None,
     ):
-
         patch_shape, _ = self._BaseSpaceTimeDenoiser__get_patch_param(input_data.shape)
 
         self.input_denoising_kwargs["mp_median"] = marshenko_pastur_median(
@@ -345,7 +343,6 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         mp_median=None,
         var_apriori=None,
     ):
-
         u_vec, s_values, v_vec, p_tmean = svd_analysis(patch)
         if var_apriori is not None:
             sigma = np.mean(np.sqrt(var_apriori[patch_slice]))
@@ -463,6 +460,7 @@ def _get_gamma_tau_qut(patch, sing_vals, stdest, gamma0, nbsim):
 
 def _get_gamma_tau(patch, sing_vals, stdest, method, gamma0, tau0):
     """Estimate gamma and tau."""
+
     # estimation of tau
     def sure_tau(tau, *args):
         return _sure_atn_cost(*args, tau[0])

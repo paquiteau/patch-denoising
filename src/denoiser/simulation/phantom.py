@@ -215,7 +215,6 @@ def mr_ellipsoid_parameters():
     # Need to subtract some ellipses here...
     Eneg = np.zeros(E.shape)
     for ii in range(E.shape[0]):
-
         # Ellipsoid geometry
         Eneg[ii, :7] = E[ii, :7]
 

@@ -195,7 +195,6 @@ class NoiseStdMap(SimpleInterface):
     output_spec = NoiseStdMapOutputSpec
 
     def _run_interface(self, runtime):
-
         noise_map = nib.load(self.inputs.noise_map_file)
         noise_std_map = estimate_noise(
             noise_map.get_fdata() / self.inputs.fft_scale, self.inputs.block_size

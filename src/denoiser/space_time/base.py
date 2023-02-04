@@ -92,7 +92,6 @@ class BaseSpaceTimeDenoiser(abc.ABC):
             progbar.reset(total=len(patch_locs))
 
         for patch_tl in patch_locs:
-
             patch_slice = tuple(
                 slice(tl, tl + ps) for tl, ps in zip(patch_tl, patch_shape, strict=True)
             )
