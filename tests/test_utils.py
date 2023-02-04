@@ -11,6 +11,6 @@ def test_zigzag(rows, columns):
 
     zigzag = _zigzag(*arr.shape)
     print(tuple(zip(*zigzag)))
-    arr_new = zigzag2array(array2zigzag((arr)), (rows, columns))
+    arr_new = zigzag2array(array2zigzag(arr), (rows, columns))
 
     assert_equal(arr_new, arr)

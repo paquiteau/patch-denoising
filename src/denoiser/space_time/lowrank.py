@@ -460,7 +460,6 @@ def _get_gamma_tau_qut(patch, sing_vals, stdest, gamma0, nbsim):
 
 def _get_gamma_tau(patch, sing_vals, stdest, method, gamma0, tau0):
     """Estimate gamma and tau."""
-
     # estimation of tau
     def sure_tau(tau, *args):
         return _sure_atn_cost(*args, tau[0])

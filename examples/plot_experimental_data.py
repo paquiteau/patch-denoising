@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Experimental Data denoising
 ===========================
@@ -10,5 +9,3 @@ Source data should a sequence of 2D or 3D data, the temporal dimension being the
 The available denoising methods are "nordic", "mp-pca", "hybrid-pca", "opt-fro", "opt-nuc" and "opt-op".
 
 """
-import numpy as np
-import matplotlib.pyplot as plt
