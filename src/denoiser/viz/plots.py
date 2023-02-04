@@ -62,6 +62,4 @@ def carpet_plot(
         ax.set_xlabel("voxel")
     if colorbar:
         fig.colorbar(im)
-    fig.show()
-
     return fig

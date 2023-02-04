@@ -8,7 +8,6 @@ Source data should a sequence of 2D or 3D data, the temporal dimension being the
 
 """
 
-
 from denoiser.simulation.phantom import mr_shepp_logan_t2_star, g_factor_map
 from denoiser.simulation.activations import add_frames
 from denoiser.simulation.noise import add_temporal_gaussian_noise
@@ -20,7 +19,6 @@ SHAPE = (64, 64, 64)
 N_FRAMES = 200
 
 NOISE_LEVEL = 2
-
 
 # %%
 # Simulate data for the reconstruction. We use a classical Shepp-Logan phantom, on
@@ -44,8 +42,10 @@ noisy_image = add_temporal_gaussian_noise(ground_truth, sigma=NOISE_LEVEL)
 
 from denoiser.viz.plots import carpet_plot
 
+fig = carpet_plot(noisy_image, unfold="classic")
+fig.show()
 
-carpet_plot(noisy_image, unfold="classic")
 # %%
 # In case of 2D data the voxels can be unfolded using a zig-zag pattern.
-carpet_plot(noisy_image, unfold="zigzag")
+fig = carpet_plot(noisy_image, unfold="zigzag")
+fig.show()
