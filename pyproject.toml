@@ -9,8 +9,8 @@ dependencies = ["numpy", "scipy", "matplotlib", "tqdm"]
 [project.optional-dependencies]
 optional = ["modopt", "nipype", "numba"]
 test = ["pytest", "pytest-cov", "pytest-xdist", "pytest-sugar"]
-# sphinx>=6 yields bug because of missing logo.
-doc = ["pydata-sphinx-theme", "numpydoc", "sphinx_gallery", "sphinx<6"]
+# sphinx 6 failes with pydata, sphinx 5 with sphinx gallery...
+doc = ["pydata-sphinx-theme", "numpydoc", "sphinx_gallery", "sphinx<5"]
 dev = ["black", "isort", "ruff"]
 
 [project.scripts]
