@@ -1,29 +1,11 @@
 LLR Denosing methods
 =====================
 
-
-Patch-denoiser is a python implementation of different local low rank method for denoising, targeting fMRI thermal noise removal (ie 4D data)
-
-
-It includes the current denoising methods.
-
-- Singular Value Thresholding methods:
-
-1. Raw singular Value Thresholding
-2. MP-PCA
-3. Hybrid-PCA
-4. NORDIC
-5. Optimal Thresholding
-6. Adaptive Trace Norm Thresholding
-
-- Image domain methods (TBA):
-
-1. BM4D
-2. Non-Local Mean
+Patch-denoise implemement several local-low-rank methods, based on singular values thresholding.
 
 
-Singular Value thresholding methods
------------------------------------
+Singular Value thresholding
+---------------------------
 
 General Procedure
 ~~~~~~~~~~~~~~~~~
