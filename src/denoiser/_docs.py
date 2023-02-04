@@ -69,5 +69,5 @@ def fill_doc(f):
         f.__doc__ = docstring.replace("---\n\n", "---\n")
     except (TypeError, ValueError, KeyError) as exp:
         funcname = f.__name__
-        raise RuntimeError("Error documenting %s:\n%s" % (funcname, str(exp))) from exp
+        raise RuntimeError(f"Error documenting {funcname}s:\n{str(exp)}") exp
     return f

@@ -155,7 +155,7 @@ def mr_shepp_logan(N, E=None, B0=3, T2star=False, zlims=(-1, 1)):
 
 
 def mr_ellipsoid_parameters():
-    """Returns parameters of ellipsoids.
+    """Return parameters of ellipsoids.
 
     Returns
     -------
