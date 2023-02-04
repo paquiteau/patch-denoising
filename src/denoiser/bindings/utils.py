@@ -46,7 +46,12 @@ class DenoiseParameters:
 
     @classmethod
     def from_str(self, config_str):
-        """Parse config string to create data structure."""
+        """Parse config string to create data structure.
+
+        The full format is ::
+
+            <method>_<patch_shape>_<patch_overlap>_<recombination>_<mask_threshold>
+        """
         if "noisy" in config_str:
             return DenoiseParameters(
                 method=None,
