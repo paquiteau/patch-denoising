@@ -3,12 +3,14 @@
 *.log
 tmp/
 
+*_cache/
 *.py[cod]
 *.egg
 build
 htmlcov
 *.egg-info
+*coverage*
 
-docs/source/auto_examples/
 docs/_autosummary
 docs/auto_examples/
+docs_build/
