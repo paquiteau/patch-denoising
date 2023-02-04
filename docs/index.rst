@@ -8,7 +8,8 @@
 
 .. toctree::
    :maxdepth: 2
-   :hidden:
+   :caption: Contents
 
+   api
    denoisers
-   modules/index
+   auto_examples/index
