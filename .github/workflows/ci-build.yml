@@ -26,7 +26,7 @@ jobs:
         run: black . --check
       - name: ruff Check
         shell: bash
-        run: ruff denoiser
+        run: ruff src
         
   test-suite:
     runs-on: ${{ matrix.os }}
