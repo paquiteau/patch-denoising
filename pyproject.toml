@@ -14,14 +14,14 @@ doc = ["pydata-sphinx-theme", "numpydoc", "sphinx_gallery", "sphinx<5"]
 dev = ["black", "isort", "ruff"]
 
 [project.scripts]
-patch-denoise = "denoiser.bindings.cli:main"
+patch-denoise = "patch_denoise.bindings.cli:main"
 
 [build-system]
 requires = ["setuptools", "wheel"]
 
 
 [tool.coverage.run]
-omit = ["*tests*", "denoiser/bindings/*"]
+omit = ["*tests*", "patch_denoise/bindings/*"]
 
 [tool.coverage.report]
 precision = 2
