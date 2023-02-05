@@ -1,4 +1,7 @@
-from denoiser.denoise import (
+"""
+Collection of patch-based denoising methods.
+"""
+from patch_denoise.denoise import (
     mp_pca,
     hybrid_pca,
     optimal_thresholding,
@@ -7,7 +10,7 @@ from denoiser.denoise import (
     nordic,
 )
 
-from denoiser.space_time.lowrank import (
+from patch_denoise.space_time.lowrank import (
     AdaptiveDenoiser,
     HybridPCADenoiser,
     MPPCADenoiser,

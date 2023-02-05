@@ -14,8 +14,8 @@ from nipype.interfaces.base import (
 )
 from nipype.utils.filemanip import split_filename
 
-from denoiser.bindings.utils import DENOISER_MAP, DenoiseParameters
-from denoiser.space_time.utils import estimate_noise
+from .utils import DENOISER_MAP, DenoiseParameters
+from ..space_time.utils import estimate_noise
 
 
 class PatchDenoiseInputSpec(BaseInterfaceInputSpec):

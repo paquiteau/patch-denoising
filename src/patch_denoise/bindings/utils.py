@@ -1,7 +1,7 @@
 """Common utilities for bindings."""
 from dataclasses import dataclass
 
-from denoiser.denoise import (
+from patch_denoise.denoise import (
     hybrid_pca,
     mp_pca,
     nordic,

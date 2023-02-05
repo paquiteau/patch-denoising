@@ -4,7 +4,7 @@ import abc
 import numpy as np
 from tqdm.auto import tqdm
 
-from denoiser._docs import fill_doc
+from .._docs import fill_doc
 
 from .utils import get_patch_locs
 

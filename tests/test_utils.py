@@ -1,6 +1,6 @@
 import pytest
 
-from denoiser.viz.utils import zigzag2array, array2zigzag, _zigzag
+from patch_denoise.viz.utils import zigzag2array, array2zigzag, _zigzag
 import numpy as np
 from numpy.testing import assert_equal
 

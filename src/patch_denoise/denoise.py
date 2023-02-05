@@ -1,6 +1,6 @@
 """Provides a functional entry point for denoising methods."""
-from denoiser._docs import fill_doc
-from denoiser.space_time.lowrank import (
+from ._docs import fill_doc
+from .space_time.lowrank import (
     AdaptiveDenoiser,
     HybridPCADenoiser,
     MPPCADenoiser,
@@ -48,7 +48,7 @@ def mp_pca(
 
     See Also
     --------
-    denoiser.space_time.lowrank.MPPCADenoiser
+    patch_denoise.space_time.lowrank.MPPCADenoiser
     """
     denoiser = MPPCADenoiser(
         patch_shape,
@@ -94,7 +94,7 @@ def hybrid_pca(
 
     See Also
     --------
-    denoiser.space_time.lowrank.HybridPCADenoiser
+    patch_denoise.space_time.lowrank.HybridPCADenoiser
     """
     denoiser = HybridPCADenoiser(
         patch_shape,
@@ -144,7 +144,7 @@ def raw_svt(
 
     See Also
     --------
-    denoiser.space_time.lowrank.MPPCADenoiser
+    patch_denoise.space_time.lowrank.MPPCADenoiser
     """
     denoiser = RawSVDDenoiser(
         patch_shape,
@@ -202,7 +202,7 @@ def nordic(
 
     See Also
     --------
-    denoiser.space_time.lowrank.NordicDenoiser
+    patch_denoise.space_time.lowrank.NordicDenoiser
     """
     denoiser = NordicDenoiser(
         patch_shape,
@@ -262,7 +262,7 @@ def optimal_thresholding(
 
     See Also
     --------
-    denoiser.space_time.lowrank.OptimalSVDDenoiser
+    patch_denoise.space_time.lowrank.OptimalSVDDenoiser
     """
     denoiser = OptimalSVDDenoiser(
         patch_shape,
@@ -326,7 +326,7 @@ def adaptive_thresholding(
 
     See Also
     --------
-    denoiser.space_time.lowrank.OptimalSVDDenoiser
+    patch_denoise.space_time.lowrank.OptimalSVDDenoiser
     """
     denoiser = AdaptiveDenoiser(
         patch_shape,

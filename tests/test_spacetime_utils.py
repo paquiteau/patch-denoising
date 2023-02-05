@@ -4,7 +4,7 @@ from itertools import product
 import numpy as np
 import pytest
 
-from denoiser.space_time.utils import (
+from patch_denoise.space_time.utils import (
     eig_analysis,
     eig_synthesis,
     estimate_noise,

@@ -50,7 +50,7 @@ To check if everything worked fine you can run:
 
 .. code::
 
-   python -c 'import denoiser'
+   python -c 'import patch_denoise'
 
 
 

@@ -51,7 +51,7 @@ profile="black"
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = [
-    "--cov=denoiser",
+    "--cov=patch_denoise",
     "--cov-report=term-missing",
     "--cov-report=xml"
 ]

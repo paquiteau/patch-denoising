@@ -8,9 +8,9 @@ Source data should a sequence of 2D or 3D data, the temporal dimension being the
 
 """
 
-from denoiser.simulation.phantom import mr_shepp_logan_t2_star, g_factor_map
-from denoiser.simulation.activations import add_frames
-from denoiser.simulation.noise import add_temporal_gaussian_noise
+from patch_denoise.simulation.phantom import mr_shepp_logan_t2_star, g_factor_map
+from patch_denoise.simulation.activations import add_frames
+from patch_denoise.simulation.noise import add_temporal_gaussian_noise
 
 # %%
 # Setup the parameters for the simulation and noise

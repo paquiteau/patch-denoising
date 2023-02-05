@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from denoiser.viz.utils import array2zigzag
+from .utils import array2zigzag
 
 
 def carpet_plot(

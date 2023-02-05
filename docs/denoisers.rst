@@ -60,7 +60,7 @@ The more the processed patch :math:`S'_p` is sparse, the bigger the weight assoc
 - Use the center of patch. In the case of maximally overlapping patches, the patch center value is use for the corresponding pixel.
 
 .. seealso::
-   :class:`~denoiser.space_time.base.BaseSpaceTimeDenoiser`
+   :class:`~patch_denoise.space_time.base.BaseSpaceTimeDenoiser`
         For the generic patch processing algorithm.
 
 Raw Singular Value Thresholding
@@ -75,7 +75,7 @@ For raw singular value thresholding, the threshold function is simply a hard thr
    \end{cases}
 
 .. seealso::
-   :class:`~denoiser.space_time.lowrank.RawSVDDenoiser`
+   :class:`~patch_denoise.space_time.lowrank.RawSVDDenoiser`
         For the implementation.
 
 MP-PCA Thresholding
@@ -85,7 +85,7 @@ MP-PCA [2]_ uses the Marshenko-Pastur distribution to find a threshold for each 
 
 
 .. seealso::
-   :class:`~denoiser.space_time.lowrank.MPPCADenoiser`
+   :class:`~patch_denoise.space_time.lowrank.MPPCADenoiser`
 
 Hybrid PCA
 ~~~~~~~~~~
@@ -93,7 +93,7 @@ Hybrid PCA
 Hybrid-PCA [3]_ uses an a priori spatial distribution of the noise variance, and the singular values are selected such that the discarded one have a mean less or equal to this a priori.
 
 .. seealso::
-    :class:`~denoiser.space_time.lowrank.HybridPCADenoiser`
+    :class:`~patch_denoise.space_time.lowrank.HybridPCADenoiser`
 
 
 NORDIC
@@ -103,7 +103,7 @@ NORDIC [4]_ makes the assumptions that the image noise level is uniform (for ins
 
 
 .. seealso::
-    :class:`~denoiser.space_time.lowrank.NordicDenoiser`
+    :class:`~patch_denoise.space_time.lowrank.NordicDenoiser`
 
 Optimal Thresholding
 ~~~~~~~~~~~~~~~~~~~~
@@ -111,7 +111,7 @@ Optimal Thresholding
 An optimal thresholding of the singular values [5]_ is also possible associated with a specific norm (Frobenius, nuclear norm or operator norm).
 
 .. seealso::
-   :class:`~denoiser.space_time.lowrank.OptimalSVDDenoiser`
+   :class:`~patch_denoise.space_time.lowrank.OptimalSVDDenoiser`
 
 Adaptive Thresholding
 ~~~~~~~~~~~~~~~~~~~~~
@@ -119,7 +119,7 @@ Adaptive Thresholding
 Extending the possibility of optimal thresholding using SURE in presence of noise variance estimation [6]_.
 
 .. seealso::
-   :class:`~denoiser.space_time.lowrank.AdaptiveDenoiser`
+   :class:`~patch_denoise.space_time.lowrank.AdaptiveDenoiser`
 
 
 
