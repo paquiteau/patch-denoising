@@ -1,6 +1,6 @@
 [project]
-name = "patch-denoising"
 version = "1.0"
+name = "patch-denoise"
 description = "Denoising method for sequence of images or volumes. Primarly targeting fMRI data."
 authors = [{name="Pierre-antoine Comby", email="pierre-antoine.comby@crans.org"}]
 

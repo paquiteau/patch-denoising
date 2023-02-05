@@ -3,7 +3,7 @@ import numpy as np
 import numpy.testing as npt
 import pytest
 
-from denoiser.denoise import (
+from patch_denoise.denoise import (
     adaptive_thresholding,
     hybrid_pca,
     mp_pca,
@@ -11,9 +11,9 @@ from denoiser.denoise import (
     optimal_thresholding,
     raw_svt,
 )
-from denoiser.simulation.activations import add_frames
-from denoiser.simulation.noise import add_temporal_gaussian_noise
-from denoiser.simulation.phantom import g_factor_map, mr_shepp_logan_t2_star
+from patch_denoise.simulation.activations import add_frames
+from patch_denoise.simulation.noise import add_temporal_gaussian_noise
+from patch_denoise.simulation.phantom import g_factor_map, mr_shepp_logan_t2_star
 
 
 @pytest.fixture(scope="module")
