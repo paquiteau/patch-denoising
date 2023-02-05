@@ -1,10 +1,11 @@
 [project]
-version = "1.0"
 name = "patch-denoise"
 description = "Denoising method for sequence of images or volumes. Primarly targeting fMRI data."
 authors = [{name="Pierre-antoine Comby", email="pierre-antoine.comby@crans.org"}]
 
 dependencies = ["numpy", "scipy", "matplotlib", "tqdm"]
+
+dynamic = ["version"]
 
 [project.optional-dependencies]
 optional = ["modopt", "nipype", "numba"]
@@ -17,8 +18,10 @@ dev = ["black", "isort", "ruff"]
 patch-denoise = "patch_denoise.bindings.cli:main"
 
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools", "setuptools-scm[toml]", "wheel"]
 
+[tool.setuptools_scm]
+write_to = "src/patch_denoise/_version.py"
 
 [tool.coverage.run]
 omit = ["*tests*", "patch_denoise/bindings/*"]
