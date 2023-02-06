@@ -20,6 +20,7 @@ This repository implements patch-denoising methods, with a particular focus on l
 The target application is functional MRI thermal noise removal, but this methods can be applied to a wide range of image modalities.
 
 It includes several local-low-rank based denoising methods:
+
 1. MP-PCA
 2. Hybrid-PCA
 3. NORDIC
@@ -33,29 +34,30 @@ A mathematical description of theses methods is available in the documentation.
 Installation
 ============
 
-Development version
--------------------
-
-.. code::
-
-   git clone https://github.com/paquiteau/patch-denoising
-   pip install -e patch-denoising[dev,doc,test]
-
+patch-denoise requires Python>=3.8
 
 
 Quickstart
 ==========
 
-To check if everything worked fine you can run:
+After installing you can use the ``patch-denoise`` command-line.
 
 .. code::
 
-   python -c 'import patch_denoise'
+   $ patch-denoise input_file.nii output_file.nii --mask="auto"
 
-
-
+See ``patch-denoise --help`` for detailled options.
 
 Documentation and Examples
 ==========================
 
-Documentation and examples are available at `https://paquiteau.github.io/patch-denoising/`
+Documentation and examples are available at ``https://paquiteau.github.io/patch-denoising/`
+
+
+Development version
+===================
+
+.. code::
+
+   git clone https://github.com/paquiteau/patch-denoising
+   pip install -e patch-denoising[dev,doc,test,optional]
