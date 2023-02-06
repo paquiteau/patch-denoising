@@ -5,15 +5,16 @@ Patch Denoising Methods
    :widths: 25 25 25
    :header-rows: 0
 
-   * -  .. image:: https://img.shields.io/codecov/c/github/paquiteau/patch-denoising
-         :target: https://app.codecov.io/gh/paquiteau/patch-denoising
+   * - .. image:: https://img.shields.io/codecov/c/github/paquiteau/patch-denoising
+        :target: https://app.codecov.io/gh/paquiteau/patch-denoising
      - .. image:: https://github.com/paquiteau/patch-denoising/workflows/CI/badge.svg
-     -  .. image:: https://github.com/paquiteau/patch-denoising/workflows/CD/badge.svg
-   * -  .. image:: https://img.shields.io/badge/style-black-black
-     -  .. image:: https://img.shields.io/badge/docs-Sphinx-blue
-         :target: https://paquiteau.github.io/patch-denoising
-     -  Release (TBA)
-     
+     - .. image:: https://github.com/paquiteau/patch-denoising/workflows/CD/badge.svg
+   * - .. image:: https://img.shields.io/badge/style-black-black
+     - .. image:: https://img.shields.io/badge/docs-Sphinx-blue
+        :target: https://paquiteau.github.io/patch-denoising
+     - .. image:: https://img.shields.io/pypi/v/patch-denoise
+        :target: https://pypi.org/project/patch-denoise/
+
 
 This repository implements patch-denoising methods, with a particular focus on local-low rank methods.
 
