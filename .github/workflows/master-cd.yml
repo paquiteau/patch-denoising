@@ -108,4 +108,4 @@ jobs:
         python -m twine check dist/*
     - name: Upload to Test PyPI
       run: |
-        python -m twine upload -u __token__ -p ${{ secrets.TEST_PYPI_API }} dist/*
+        python -m twine upload -r testpypi -u __token__ -p ${{ secrets.TEST_PYPI_API }} dist/*
