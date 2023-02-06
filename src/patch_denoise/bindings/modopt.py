@@ -31,6 +31,7 @@ class LLRDenoiserOperator(ProximityParent):
         denoiser,
         patch_shape,
         patch_overlap,
+        recombination="weighted",
         mask=None,
         mask_threshold=-1,
         progbar=None,
@@ -53,11 +54,11 @@ class LLRDenoiserOperator(ProximityParent):
     def _op_method(self, data, **kwargs):
         run_kwargs = self._params.copy()
         run_kwargs.update(kwargs)
-        if self.time_dimension == -1 or self.time_dimension == data.ndim - 1:
-            return self._denoiser(data, **run_kwargs)[0]
-        elif self.time_dimension == 0:
-            return np.moveaxis(
-                self._denoiser(np.moveaxis(data, 0, -1), **run_kwargs)[0],
-                -1,
-                0,
-            )
+        return np.moveaxis(
+            self._denoiser(
+                np.moveaxis(data, self.time_dimension, -1),
+                **run_kwargs,
+            )[0],
+            -1,
+            self.time_dimension,
+        )
