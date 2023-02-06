@@ -36,22 +36,12 @@ class BaseSpaceTimeDenoiser(abc.ABC):
 
         Parameters
         ----------
-        input_data: numpy.ndarray
-            The input data to denoise. It should be a ND array, and the last
-            dimension should a dynamically varying one (eg time).
+        $input_config
         $mask_config
-        denoiser_kwargs: dict
-            Extra runtime parameters passed to the patch denoising method.
 
         Returns
         -------
-        tuple:
-            output_data: numpy.ndarray
-                The denoised data
-            patch_weight: numpy.ndarray
-                The weight associated to each voxel.
-            noise_std_map: numpy.ndarray
-                If available, a noise std estimation for each voxel.
+        $denoise_return
         """
         data_shape = input_data.shape
         output_data = np.zeros_like(input_data)
@@ -99,6 +89,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
             # building the casoratti matrix
             patch = np.reshape(input_data[patch_slice], (-1, input_data.shape[-1]))
 
+            # Replace all nan by mean value of patch.
             # FIXME this behaviour should be documented
             # And ideally choosen by the user.
 
@@ -143,6 +134,11 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         """
 
     def __get_patch_param(self, data_shape):
+        """Return tuple for patch_shape and patch_overlap.
+
+        It works from whatever the  input format was (int or list).
+        This method also ensure that the patch will provide tall and skinny matrices.
+        """
         pp = [None, None]
         for i, attr in enumerate(["p_shape", "p_ovl"]):
             p = getattr(self, attr)

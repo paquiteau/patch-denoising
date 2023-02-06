@@ -1,3 +1,4 @@
+"""Plottings function for Spatio-temporal data."""
 import matplotlib.pyplot as plt
 import numpy as np
 

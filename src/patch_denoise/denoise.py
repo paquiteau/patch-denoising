@@ -305,7 +305,7 @@ def adaptive_thresholding(
     nbsim:
         Number of simulation for computing sure estimator
     tau:
-        Simulation parameter
+        Simulation parameter.
     gamma0:
         Simulation parameter.
 
