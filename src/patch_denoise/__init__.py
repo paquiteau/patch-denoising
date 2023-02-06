@@ -1,6 +1,4 @@
-"""
-Collection of patch-based denoising methods.
-"""
+"""Collection of patch-based denoising methods."""
 from patch_denoise.denoise import (
     mp_pca,
     hybrid_pca,
