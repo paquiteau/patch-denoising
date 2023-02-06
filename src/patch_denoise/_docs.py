@@ -34,17 +34,22 @@ tuple
     numpy.ndarray: The denoised sequence of volume
     numpy.ndarray: The weight of each pixel after the processing.
     numpy.ndarray: If possible, the noise variance distribution in the volume.""",
-    standard_config="""
+    input_config="""
 input_data: numpy.ndarray
     The input data to denoise. It should be a ND array, and the last
-    dimension should a dynamically varying one (eg time).""",
+    dimension should a dynamically varying one (eg time).
+progbar: tqdm.tqdm Progress bar, optiononal
+    An existing Progressbar, default (None) will create a new one.
+    """,
     noise_std="""
 noise_std: float or numpy.ndarray
     An estimation of the spatial noise map standard deviation.""",
 )
 
 # complete the standard config with patch and mask configuration.
-docdict["standard_config"] += docdict["patch_config"] + docdict["mask_config"]
+docdict["standard_config"] = (
+    docdict["input_config"] + docdict["patch_config"] + docdict["mask_config"]
+)
 
 
 def fill_doc(f):

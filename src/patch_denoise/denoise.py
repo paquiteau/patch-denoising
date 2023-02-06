@@ -36,11 +36,11 @@ def mp_pca(
 
     Notes
     -----
-    Follows implementation of [1]_ and the one available in dipy.
+    Follows implementation of [#]_ and the one available in dipy.
 
     References
     ----------
-    .. [1] Manjón, José V., Pierrick Coupé, Luis Concha, Antonio Buades,
+    .. [#] Manjón, José V., Pierrick Coupé, Luis Concha, Antonio Buades,
            D. Louis Collins, and Montserrat Robles.
            “Diffusion Weighted Image Denoising Using Overcomplete Local PCA.”
            PLOS ONE 8, no. 9 (September 3, 2013): e73021.
@@ -76,8 +76,7 @@ def hybrid_pca(
     Parameters
     ----------
     $standard_config
-    noise_std: float or ndarray
-        Noise level spatial estimation.
+    $noise_std
 
     Returns
     -------
@@ -85,11 +84,11 @@ def hybrid_pca(
 
     Notes
     -----
-    Follows implementation of [1]_ .
+    Follows implementation of [#]_ .
 
     References
     ----------
-    .. [1]
+    .. [#]
     https://submissions.mirasmart.com/ISMRM2022/Itinerary/Files/PDFFiles/2688.html
 
     See Also
@@ -189,11 +188,11 @@ def nordic(
 
     Notes
     -----
-    Follows implementation of [1]_
+    Follows implementation of [#]_
 
     References
     ----------
-    .. [1] Moeller, Steen, Pramod Kumar Pisharady, Sudhir Ramanna, Christophe Lenglet,
+    .. [#] Moeller, Steen, Pramod Kumar Pisharady, Sudhir Ramanna, Christophe Lenglet,
            Xiaoping Wu, Logan Dowdle, Essa Yacoub, Kamil Uğurbil, and Mehmet Akçakaya.
            “NOise Reduction with DIstribution Corrected (NORDIC) PCA in DMRI with
            Complex-Valued Parameter-Free Locally Low-Rank Processing.”
@@ -239,7 +238,6 @@ def optimal_thresholding(
     ----------
     $standard_config
     $noise_std
-        If None, the noise map is estimated using the Marcenko-Pastur distribution.
     loss: str
         The loss for which the optimal thresholding is perform.
     eps_marshenko_pastur: float
@@ -251,11 +249,11 @@ def optimal_thresholding(
 
     Notes
     -----
-    Reimplement of the original Matlab code [1]_ in python.
+    Reimplement of the original Matlab code [#]_ in python.
 
     References
     ----------
-    .. [1] Gavish, Matan, and David L. Donoho. “Optimal Shrinkage of Singular Values.”
+    .. [#] Gavish, Matan, and David L. Donoho. “Optimal Shrinkage of Singular Values.”
         IEEE Transactions on Information Theory 63, no. 4 (April 2017): 2137–52.
         https://doi.org/10.1109/TIT.2017.2653801.
 
@@ -300,15 +298,16 @@ def adaptive_thresholding(
 
     Parameters
     ----------
-    $standard_config
+    $input_config
     $noise_std
-        Default: 1.0
     method: str
         The adaptive method to use "SURE" or "GSURE"
     nbsim:
+        Number of simulation for computing sure estimator
     tau:
+        Simulation parameter
     gamma0:
-
+        Simulation parameter.
 
     Returns
     -------
@@ -316,17 +315,17 @@ def adaptive_thresholding(
 
     Notes
     -----
-    Reimplements the R package [1]_ in python.
+    Reimplements the R package [#]_ in python.
 
     References
     ----------
-    .. [1] J. Josse and S. Sardy, “Adaptive Shrinkage of singular values.”
+    .. [#] J. Josse and S. Sardy, “Adaptive Shrinkage of singular values.”
            arXiv, Nov. 22, 2014.
            doi: 10.48550/arXiv.1310.6602.
 
     See Also
     --------
-    patch_denoise.space_time.lowrank.OptimalSVDDenoiser
+    patch_denoise.space_time.AdaptiveDenoiser
     """
     denoiser = AdaptiveDenoiser(
         patch_shape,
