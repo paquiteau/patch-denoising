@@ -7,6 +7,7 @@ import numpy as np
 
 
 def mr_shepp_logan_t2_star(N, B0=3):
+    """Return a 3D T2*-weighted Shepp-Logan phantom."""
     return mr_shepp_logan(N, E=None, B0=B0, T2star=True)[-1]
 
 

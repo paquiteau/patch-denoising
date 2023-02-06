@@ -1,3 +1,4 @@
+"""Utility function for vizualisation."""
 import numpy as np
 
 

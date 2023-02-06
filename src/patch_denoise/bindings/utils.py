@@ -82,6 +82,7 @@ class DenoiseParameters:
             return d
 
     def __str__(self):
+        """Return string reprensation."""
         ret_str = f"{self.method}_{self.patch_shape}_{self.patch_overlap}_"
         ret_str += self.recombination[0]
         if self.mask_threshold:

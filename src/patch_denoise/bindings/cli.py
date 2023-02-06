@@ -20,6 +20,7 @@ DENOISER_NAMES = ", ".join(d for d in DENOISER_MAP if d)
 
 
 def parse_args():
+    """Parse input arguments."""
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("input_file", help="Input (noisy) file.")
     parser.add_argument(
@@ -65,6 +66,7 @@ def parse_args():
 
 
 def load_as_array(input):
+    """Load a file as a numpy array, and return affine matrix if avaiable."""
     if input is None:
         return None
     if input.endswith(".npy"):
@@ -76,6 +78,7 @@ def load_as_array(input):
 
 
 def save_array(data, affine, filename):
+    """Save array to file, with affine matrix if required."""
     if filename is None:
         return None
 
@@ -91,6 +94,7 @@ def save_array(data, affine, filename):
 
 
 def main():
+    """Command line entry point."""
     args = parse_args()
     print(args)
 

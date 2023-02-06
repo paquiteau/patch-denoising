@@ -1,3 +1,4 @@
+"""Denoising Operator working on space-time dimension."""
 from .base import BaseSpaceTimeDenoiser
 from .lowrank import (
     HybridPCADenoiser,
