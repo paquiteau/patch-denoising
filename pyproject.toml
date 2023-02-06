@@ -4,6 +4,7 @@ description = "Denoising method for sequence of images or volumes. Primarly targ
 authors = [{name="Pierre-antoine Comby", email="pierre-antoine.comby@crans.org"}]
 
 dependencies = ["numpy", "scipy", "matplotlib", "tqdm"]
+requires-python = ">=3.8"
 
 dynamic = ["version"]
 
