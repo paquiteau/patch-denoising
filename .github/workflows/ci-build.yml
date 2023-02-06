@@ -48,7 +48,7 @@ jobs:
         run: |
           python --version
           python -m pip install --upgrade pip
-          python -m pip install .[test] numba
+          python -m pip install .[test,optional]
       - name: Run Tests
         shell: bash
         run: | 
