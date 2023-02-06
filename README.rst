@@ -51,7 +51,7 @@ See ``patch-denoise --help`` for detailled options.
 Documentation and Examples
 ==========================
 
-Documentation and examples are available at ``https://paquiteau.github.io/patch-denoising/`
+Documentation and examples are available at https://paquiteau.github.io/patch-denoising/
 
 
 Development version
@@ -59,5 +59,5 @@ Development version
 
 .. code::
 
-   git clone https://github.com/paquiteau/patch-denoising
-   pip install -e patch-denoising[dev,doc,test,optional]
+   $ git clone https://github.com/paquiteau/patch-denoising
+   $ pip install -e patch-denoising[dev,doc,test,optional]
