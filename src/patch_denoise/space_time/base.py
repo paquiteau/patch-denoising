@@ -112,8 +112,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
             p_denoise = np.reshape(p_denoise, (*patch_shape, -1))
             if self.recombination == "center":
                 patch_center_img = tuple(
-                    slice(ptl + ps // 2, ptl + ps // 2 + 1)
-                    for ptl, ps in zip(patch_tl, patch_shape, strict=True)
+                    ptl + ps // 2 for ptl, ps in zip(patch_tl, patch_shape, strict=True)
                 )
                 output_data[patch_center_img] = p_denoise[patch_center]
                 patchs_weight[patch_center_img] += extras[0]
