@@ -33,6 +33,8 @@ DENOISER_MAP = {
     ),
 }
 
+_RECOMBINATION = {"w": "weighted", "c": "center", "a": "average"}
+
 
 @dataclass
 class DenoiseParameters:
@@ -71,7 +73,17 @@ class DenoiseParameters:
                 d.patch_overlap = int(conf.pop(0))
             if conf:
                 c = conf.pop(0)
-                d.recombination = "weighted" if c == "w" else "center"
+                try:
+                    d.recombination = _RECOMBINATION[c]
+                except KeyError as exc:
+                    raise ValueError(f"unsupported  recombination key: {c}") from exc
             if conf:
-                d.mask_threshold = conf.pop(0)
+                d.mask_threshold = int(conf.pop(0))
             return d
+
+    def __str__(self):
+        ret_str = f"{self.method}_{self.patch_shape}_{self.patch_overlap}_"
+        ret_str += self.recombination[0]
+        if self.mask_threshold:
+            ret_str += f"_{self.mask_threshold}"
+        return ret_str

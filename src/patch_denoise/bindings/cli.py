@@ -36,7 +36,7 @@ def parse_args():
             "Format should be <name>_<patch-size>_<patch-overlap>_<recombination>.\n"
             "See Documentation of ``DenoiseParameter.from_str`` for full specification."
             "Default:\n   optimal-fro_11_5_w\n"
-            "Available denoising methods:\n  " + DENOISER_NAMES,
+            "Available denoising methods:\n  " + DENOISER_NAMES
         ),
         default="optimal-fro_11_5_w",
     )

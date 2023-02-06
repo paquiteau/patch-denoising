@@ -1,3 +1,5 @@
+"""Test for the binding module."""
+import os
 import numpy as np
 import numpy.testing as npt
 import pytest
@@ -15,6 +17,7 @@ except ImportError as e:
 
 
 from patch_denoise.bindings.modopt import LLRDenoiserOperator
+from patch_denoise.bindings.utils import DenoiseParameters
 from patch_denoise.denoise import mp_pca
 
 
@@ -38,3 +41,23 @@ def test_modopt(noisy_phantom):
     )
 
     npt.assert_allclose(denoised_modopt, denoised_func)
+
+
+def test_entrypoint():
+    exit_status = os.system("patch-denoise --help")
+    assert exit_status == 0
+
+
+def test_denoise_param():
+
+    d = DenoiseParameters(
+        "optimal-fro",
+        11,
+        10,
+        "weighted",
+        10,
+    )
+
+    d2 = DenoiseParameters.from_str(str(d))
+
+    assert d2 == d
