@@ -7,6 +7,7 @@ This is a example script to test various denoising methods on real-word fMRI dat
 Source data should a sequence of 2D or 3D data, the temporal dimension being the last one.
 
 """
+import matplotlib.pyplot as plt
 
 from patch_denoise.simulation.phantom import mr_shepp_logan_t2_star, g_factor_map
 from patch_denoise.simulation.activations import add_frames
@@ -16,7 +17,7 @@ from patch_denoise.simulation.noise import add_temporal_gaussian_noise
 # Setup the parameters for the simulation and noise
 
 SHAPE = (64, 64, 64)
-N_FRAMES = 200
+N_FRAMES = 400
 
 NOISE_LEVEL = 2
 
@@ -40,12 +41,11 @@ noisy_image = add_temporal_gaussian_noise(ground_truth, sigma=NOISE_LEVEL)
 # Any spatio temporal data can be unrolled like a carpet to show the temporal evolution
 # of every voxel.
 
-from denoiser.viz.plots import carpet_plot
+from patch_denoise.viz.plots import carpet_plot
 
-fig = carpet_plot(noisy_image, unfold="classic")
-fig.show()
+
+carpet_plot(noisy_image[32:48, 32:48], unfold="classic", transpose=True)
 
 # %%
 # In case of 2D data the voxels can be unfolded using a zig-zag pattern.
-fig = carpet_plot(noisy_image, unfold="zigzag")
-fig.show()
+carpet_plot(noisy_image[32:48, 32:48], unfold="zigzag")

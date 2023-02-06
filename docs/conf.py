@@ -64,7 +64,7 @@ napoleon_include_private_with_doc = True
 
 sphinx_gallery_conf = {
     "examples_dirs": ["../examples/"],
-    "filename_pattern": "/plot_",
+    "filename_pattern": "/example_",
     "ignore_pattern": r"/(__init__|conftest)\.py",
     "reference_url": {
         "numpy": "http://docs.scipy.org/doc/numpy-1.9.1",

@@ -54,12 +54,12 @@ def carpet_plot(
 
     if transpose:
         im = ax.imshow(unfolded_arr.T)
-        ax.set_xlabel("time")
-        ax.set_ylabel("voxel")
-    else:
-        im = ax.imshow(unfolded_arr)
         ax.set_ylabel("time")
         ax.set_xlabel("voxel")
+    else:
+        im = ax.imshow(unfolded_arr)
+        ax.set_xlabel("time")
+        ax.set_ylabel("voxel")
     if colorbar:
         fig.colorbar(im)
     return fig
