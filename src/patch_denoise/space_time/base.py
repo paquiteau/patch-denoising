@@ -78,7 +78,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
 
         for i, patch_tl in enumerate(patch_locs):
             patch_slice = tuple(
-                slice(tl, tl + ps) for tl, ps in zip(patch_tl, patch_shape, strict=True)
+                slice(tl, tl + ps) for tl, ps in zip(patch_tl, patch_shape)
             )
             if 100 * np.sum(process_mask[patch_slice]) / patch_size > mask_threshold:
                 get_it[i] = True
@@ -93,7 +93,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
 
         for patch_tl in patch_locs:
             patch_slice = tuple(
-                slice(tl, tl + ps) for tl, ps in zip(patch_tl, patch_shape, strict=True)
+                slice(tl, tl + ps) for tl, ps in zip(patch_tl, patch_shape)
             )
             process_mask[patch_slice] = 1
             # building the casoratti matrix
@@ -112,7 +112,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
             p_denoise = np.reshape(p_denoise, (*patch_shape, -1))
             if self.recombination == "center":
                 patch_center_img = tuple(
-                    ptl + ps // 2 for ptl, ps in zip(patch_tl, patch_shape, strict=True)
+                    ptl + ps // 2 for ptl, ps in zip(patch_tl, patch_shape)
                 )
                 output_data[patch_center_img] = p_denoise[patch_center]
                 patchs_weight[patch_center_img] += extras[0]

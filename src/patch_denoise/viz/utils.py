@@ -34,7 +34,7 @@ def array2zigzag(array):
     in the flattened version, unlike the classical row or column-wise stacking.
     """
     zigzag = _zigzag(*array.shape[:2])
-    return array[tuple(zip(*zigzag, strict=True))]
+    return array[tuple(zip(*zigzag))]
 
 
 def zigzag2array(array, shape):

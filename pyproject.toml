@@ -41,7 +41,7 @@ exclude_lines = ["pragma: no cover", "raise NotImplementedError"]
 src = ["src", "tests"]
 select = ["E", "F", "B", "Q", "UP", "D"]
 
-ignore = ["D100", "D102", "D103", "D104", "D105"]
+ignore = ["D100", "D102", "D103", "D104", "D105", "B905"]
 exclude = ["examples/", "tests/"]
 
 [tool.ruff.pydocstyle]
