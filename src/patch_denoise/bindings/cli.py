@@ -68,9 +68,9 @@ def load_as_array(input):
     if input is None:
         return None
     if input.endswith(".npy"):
-        return np.load(input)
+        return np.load(input), None
     elif input.endswith(".nii") or input.endswith(".nii.gz"):
-        return nib.load(input).get_fdata()
+        return nib.load(input).get_fdata(), input.affine
     else:
         raise ValueError("Unsupported file format. use numpy or nifti formats.")
 
