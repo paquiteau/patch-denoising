@@ -56,23 +56,43 @@ def parse_args():
         default=None,
         help="output noise map estimation file",
     )
+    parser.add_argument(
+        "--extra",
+        default=None,
+        nargs="*",
+        help="extra key=value arguments.",
+    )
 
     args = parser.parse_args()
 
     # default value for output.
-    if args.output is None:
-        input_path = args.input.split("/")
-        args.output = "/".join(input_path)[:-1] + "/d" + input_path[-1]
+    if args.output_file is None:
+        input_path = args.input_file.split("/")
+        args.output_file = "/".join(input_path)[:-1] + "/d" + input_path[-1]
+
+    if args.extra:
+        key_values = [kv.split("=") for kv in args.extra]
+        args.extra = {}
+        for k, v in key_values:
+            try:
+                v = float(v)
+            except ValueError:
+                pass
+            args.extra[k] = v
+    else:
+        args.extra = {}
+    return args
 
 
 def load_as_array(input):
     """Load a file as a numpy array, and return affine matrix if avaiable."""
     if input is None:
-        return None
+        return None, None
     if input.endswith(".npy"):
         return np.load(input), None
     elif input.endswith(".nii") or input.endswith(".nii.gz"):
-        return nib.load(input).get_fdata(), input.affine
+        nii = nib.load(input)
+        return nii.get_fdata(), nii.affine
     else:
         raise ValueError("Unsupported file format. use numpy or nifti formats.")
 
@@ -86,7 +106,7 @@ def save_array(data, affine, filename):
         if affine is None:
             affine = np.eye(len(data.shape))
         nii_img = nib.Nifti1Image(data, affine)
-        nii_img.save(filename)
+        nii_img.to_filename(filename)
     elif filename.endswith(".npy"):
         np.save(filename, data)
 
@@ -98,7 +118,7 @@ def main():
     args = parse_args()
     print(args)
 
-    input_data, affine = load_as_array(args.input)
+    input_data, affine = load_as_array(args.input_file)
     mask, affine_mask = load_as_array(args.mask)
     noise_map, affine_noise_map = load_as_array(args.noise_map)
 
@@ -108,7 +128,7 @@ def main():
         if affine_noise_map is not None and np.allclose(affine, affine_noise_map):
             warnings.warn("Affine matrix of input and noise map does not match")
     d_par = DenoiseParameters.from_str(args.conf)
-
+    print(d_par)
     denoise_func = DENOISER_MAP[d_par.method]
     extra_kwargs = dict()
 
@@ -129,9 +149,10 @@ def main():
         mask_threshold=d_par.mask_threshold,
         recombination=d_par.recombination,
         **extra_kwargs,
+        **args.extra
     )
 
-    save_array(denoised_data, affine, args.output)
+    save_array(denoised_data, affine, args.output_file)
     save_array(noise_std_map, affine, args.output_noise_map)
 
 
