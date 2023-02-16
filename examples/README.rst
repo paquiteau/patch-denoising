@@ -1,4 +1,6 @@
-Example of patch based denoising methods
-=======================================================
+Examples
+========
 
-This folder contains example to denoise data on simulation data or raw data from scanner reconstruction. 
+This folders contains examples showing how to the patch-based denoising methods.
+
+Results are demonstrated  on small scaled simulation data for the sake of reproducibility.
