@@ -5,7 +5,8 @@ Patch Denoising Methods
 
 |COVERAGE| |CI| |CD| 
 |DOC| |RELEASE|  |PYVERSION|
-|LICENSE| |LINTER| |STYLE|
+
+|LINTER| |STYLE| |LICENSE| |CITATION|
 
 
 .. |COVERAGE| image:: https://img.shields.io/codecov/c/github/paquiteau/patch-denoising
@@ -23,12 +24,14 @@ Patch Denoising Methods
    :target: https://github.com/charliemarsh/ruff
 .. |PYVERSION| image:: https://img.shields.io/pypi/pyversions/patch-denoise
    :target: https://pypi.org/project/patch-denoise/
-
+.. |CITATION| image:: https://img.shields.io/badge/paper-hal--openaccess-green
+   :target: https://hal.science/hal-03895194
+   
 This repository implements patch-denoising methods, with a particular focus on local-low rank methods.
 
 The target application is functional MRI thermal noise removal, but this methods can be applied to a wide range of image modalities.
 
-It includes several local-low-rank based denoising methods:
+It includes several local-low-rank based denoising methods (see the `documentation <https://paquiteau.github.io/patch-denoising>`_ for more details):
 
 1. MP-PCA
 2. Hybrid-PCA
@@ -70,3 +73,23 @@ Development version
 
    $ git clone https://github.com/paquiteau/patch-denoising
    $ pip install -e patch-denoising[dev,doc,test,optional]
+   
+Citation
+========
+
+If you use this package for academic work, please cite the associated publication, available on `HAL <https://hal.science/hal-03895194>`_ ::
+
+      @inproceedings{comby2023,
+        TITLE = {{Denoising of fMRI volumes using local low rank methods}},
+        AUTHOR = {Pierre-Antoine, Comby and Zaineb, Amor and Alexandre, Vignaud and Philippe, Ciuciu},
+        URL = {https://hal.science/hal-03895194},
+        BOOKTITLE = {{ISBI 2023 - International Symposium on Biomedical Imaging 2023}},
+        ADDRESS = {Carthagena de India, Colombia},
+        YEAR = {2023},
+        MONTH = Apr,
+        KEYWORDS = {functional MRI ; patch denoising ; singular value thresholding ; functional MRI patch denoising singular value thresholding},
+        PDF = {https://hal.science/hal-03895194/file/isbi2023_denoise.pdf},
+        HAL_ID = {hal-03895194},
+        HAL_VERSION = {v1},
+      }
+
