@@ -4,10 +4,28 @@ description = "Denoising method for sequence of images or volumes. Primarly targ
 authors = [{name="Pierre-antoine Comby", email="pierre-antoine.comby@crans.org"}]
 
 readme = "README.rst"
+license = {file = "LICENSE.txt"}
 dependencies = ["numpy", "scipy", "matplotlib", "tqdm"]
 requires-python = ">=3.8"
 
 dynamic = ["version"]
+
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Science/Research"
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3 :: Only",
+  "Topic :: Scientific/Engineering :: Image Processing"
+  "Topic :: Scientific/Engineering :: Medical Science Apps."
+]
 
 [project.optional-dependencies]
 optional = ["modopt", "nipype", "numba"]
@@ -28,7 +46,7 @@ version_scheme = "python-simplified-semver"
 local_scheme="no-local-version"
 
 [tool.coverage.run]
-omit = ["*tests*", "patch_denoise/bindings/*"]
+omit = ["*tests*"]
 
 [tool.coverage.report]
 precision = 2
