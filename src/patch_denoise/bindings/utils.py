@@ -143,11 +143,11 @@ def compute_mask(array, convex=False):
         Array to compute mask for.
     convex : bool, default False
         If True, the mask is convex for each slice.
+
     Returns
     -------
     numpy.ndarray
         Mask for array.
-
     """
     if time_axis is not None:
         mean = array.mean(axis=-1)

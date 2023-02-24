@@ -120,7 +120,7 @@ def main():
 
     input_data, affine = load_as_array(args.input_file)
     if args.mask == "auto":
-        mask = compute_mask(input_data, time_axis=-1)
+        mask = compute_mask(input_data)
         affine_mask = None
     else:
         mask, affine_mask = load_as_array(args.mask)
