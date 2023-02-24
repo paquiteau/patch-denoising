@@ -149,10 +149,7 @@ def compute_mask(array, convex=False):
     numpy.ndarray
         Mask for array.
     """
-    if time_axis is not None:
-        mean = array.mean(axis=-1)
-    else:
-        mean = array
+    mean = array.mean(axis=-1)
     mask = np.zeros(mean.shape, dtype=bool)
     for i in range(array.shape[-1]):
         mask[..., i] = mean[..., i] > threshold_otsu(mean[..., i])
