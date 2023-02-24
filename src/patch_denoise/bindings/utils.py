@@ -2,6 +2,7 @@
 from dataclasses import dataclass
 
 from skimage.filters import threshold_otsu
+from skimage.morphology import convex_hull_image
 import numpy as np
 
 from patch_denoise.denoise import (
@@ -129,14 +130,19 @@ def load_complex_nifti(mag_file, phase_file, filename=None):  # pragma: no cover
     return img
 
 
-def compute_mask(array, time_axis=-1):
+def compute_mask(array, convex=False):
     """Compute mask for array using the Otzu's method.
+
+    The time axis is assumed to be the last one.
+
+    The mask is computed slice-wise on the time average of the array.
 
     Parameters
     ----------
     array : numpy.ndarray
         Array to compute mask for.
-
+    convex : bool, default False
+        If True, the mask is convex for each slice.
     Returns
     -------
     numpy.ndarray
@@ -144,9 +150,13 @@ def compute_mask(array, time_axis=-1):
 
     """
     if time_axis is not None:
-        mean = array.mean(axis=time_axis)
+        mean = array.mean(axis=-1)
     else:
         mean = array
-    thresh = threshold_otsu(array)
-    mask = mean > thresh
+    mask = np.zeros(mean.shape, dtype=bool)
+    for i in range(array.shape[-1]):
+        mask[..., i] = mean[..., i] > threshold_otsu(mean[..., i])
+    if convex:
+        for i in range(array.shape[-1]):
+            mask[..., i] = convex_hull_image(mask[..., i])
     return mask
