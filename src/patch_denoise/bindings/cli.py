@@ -7,7 +7,7 @@ import warnings
 
 import numpy as np
 
-from .utils import DENOISER_MAP, DenoiseParameters
+from .utils import DENOISER_MAP, DenoiseParameters, compute_mask
 
 NIBABEL_AVAILABLE = True
 try:
@@ -119,7 +119,11 @@ def main():
     print(args)
 
     input_data, affine = load_as_array(args.input_file)
-    mask, affine_mask = load_as_array(args.mask)
+    if args.mask == "auto":
+        mask = compute_mask(input_data, time_axis=-1)
+        affine_mask = None
+    else:
+        mask, affine_mask = load_as_array(args.mask)
     noise_map, affine_noise_map = load_as_array(args.noise_map)
 
     if affine is not None:

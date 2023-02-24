@@ -1,6 +1,7 @@
 """Common utilities for bindings."""
 from dataclasses import dataclass
 
+from skimage.filters import threshold_otsu
 import numpy as np
 
 from patch_denoise.denoise import (
@@ -126,3 +127,26 @@ def load_complex_nifti(mag_file, phase_file, filename=None):  # pragma: no cover
     if filename is not None:
         np.save(filename, img)
     return img
+
+
+def compute_mask(array, time_axis=-1):
+    """Compute mask for array using the Otzu's method.
+
+    Parameters
+    ----------
+    array : numpy.ndarray
+        Array to compute mask for.
+
+    Returns
+    -------
+    numpy.ndarray
+        Mask for array.
+
+    """
+    if time_axis is not None:
+        mean = array.mean(axis=time_axis)
+    else:
+        mean = array
+    thresh = threshold_otsu(array)
+    mask = mean > thresh
+    return mask
