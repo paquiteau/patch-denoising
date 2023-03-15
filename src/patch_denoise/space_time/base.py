@@ -1,6 +1,6 @@
 """Base Structure for patch-based denoising on spatio-temporal dimension."""
 import abc
-
+import warnings
 import numpy as np
 from tqdm.auto import tqdm
 
@@ -148,7 +148,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
                 p = (p,) * (len(data_shape) - 1)
             pp[i] = p
         if np.prod(pp[0]) < data_shape[-1]:
-            raise ValueError(
+            warnings.warn(
                 f"the number of voxel in patch ({np.prod(pp[0])}) is smaller than the"
                 f" last dimension ({data_shape[-1]}), this makes an ill-conditioned"
                 "matrix for SVD."
