@@ -119,8 +119,10 @@ class BaseSpaceTimeDenoiser(abc.ABC):
             if progbar:
                 progbar.update()
         # Averaging the overlapping pixels.
-        output_data /= patchs_weight[..., None]
-        noise_std_estimate /= patchs_weight
+        # this is only required for averaging recombinations.
+        if self.recombination != "center":
+            output_data /= patchs_weight[..., None]
+            noise_std_estimate /= patchs_weight
 
         output_data[~process_mask] = 0
 
