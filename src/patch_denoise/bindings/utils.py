@@ -151,9 +151,9 @@ def compute_mask(array, convex=False):
     """
     mean = array.mean(axis=-1)
     mask = np.zeros(mean.shape, dtype=bool)
-    for i in range(array.shape[-1]):
+    for i in range(mean.shape[-1]):
         mask[..., i] = mean[..., i] > threshold_otsu(mean[..., i])
     if convex:
-        for i in range(array.shape[-1]):
+        for i in range(mean.shape[-1]):
             mask[..., i] = convex_hull_image(mask[..., i])
     return mask
