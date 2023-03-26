@@ -22,6 +22,16 @@ class BaseSpaceTimeDenoiser(abc.ABC):
     def __init__(self, patch_shape, patch_overlap, recombination="weighted"):
         self.p_shape = patch_shape
         self.p_ovl = patch_overlap
+        self.get_rank = False
+        if "-" in recombination:
+            recombination, extra = recombination.split("-")
+            self.get_rank = "rank" in extra
+
+        if recombination not in ["weighted", "average", "center"]:
+            raise ValueError(
+                "recombination must be one of 'weighted', 'average', 'center'"
+            )
+
         self.recombination = recombination
 
         self.input_denoising_kwargs = dict()
@@ -45,6 +55,8 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         """
         data_shape = input_data.shape
         output_data = np.zeros_like(input_data)
+        if self.get_rank:
+            rank_map = np.zeros(data_shape[:-1], dtype=np.int32)
         # Create Default mask
         if mask is None:
             process_mask = np.full(data_shape[:-1], True)
@@ -120,6 +132,9 @@ class BaseSpaceTimeDenoiser(abc.ABC):
                 )
             if not np.isnan(noise_var):
                 noise_std_estimate[patch_slice] += noise_var
+            if self.get_rank:
+                # the top left corner of the patch is used as id for the patch.
+                rank_map[patch_tl] = maxidx
             if progbar:
                 progbar.update()
         # Averaging the overlapping pixels.
@@ -129,6 +144,9 @@ class BaseSpaceTimeDenoiser(abc.ABC):
             noise_std_estimate /= patchs_weight
 
         output_data[~process_mask] = 0
+
+        if self.get_rank:  # return the rank map
+            return output_data, patchs_weight, noise_std_estimate, rank_map
 
         return output_data, patchs_weight, noise_std_estimate
 
