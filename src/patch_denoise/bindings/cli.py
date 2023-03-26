@@ -128,9 +128,13 @@ def main():
 
     if affine is not None:
         if affine_mask is not None and np.allclose(affine, affine_mask):
-            warnings.warn("Affine matrix of input and mask does not match")
+            warnings.warn(
+                "Affine matrix of input and mask does not match", stacklevel=2
+            )
         if affine_noise_map is not None and np.allclose(affine, affine_noise_map):
-            warnings.warn("Affine matrix of input and noise map does not match")
+            warnings.warn(
+                "Affine matrix of input and noise map does not match", stacklevel=2
+            )
     d_par = DenoiseParameters.from_str(args.conf)
     print(d_par)
     denoise_func = DENOISER_MAP[d_par.method]

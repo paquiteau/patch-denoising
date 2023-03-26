@@ -175,6 +175,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
             warnings.warn(
                 f"the number of voxel in patch ({np.prod(pp[0])}) is smaller than the"
                 f" last dimension ({data_shape[-1]}), this makes an ill-conditioned"
-                "matrix for SVD."
+                "matrix for SVD.",
+                stacklevel=2,
             )
         return tuple(pp)
