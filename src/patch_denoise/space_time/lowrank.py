@@ -58,11 +58,8 @@ class MPPCADenoiser(BaseSpaceTimeDenoiser):
             patch_new = eig_synthesis(p_center, eig_vec, p_tmean, maxidx)
 
         # Equation (3) of Manjon 2013
-        weights = 1.0 / (1.0 + maxidx)
-        noise_map = var_noise * weights
-        patch_new *= weights
 
-        return patch_new, noise_map, weights
+        return patch_new, var_noise, maxidx
 
 
 @fill_doc
@@ -115,11 +112,8 @@ class HybridPCADenoiser(BaseSpaceTimeDenoiser):
         else:
             patch_new = eig_synthesis(p_center, eig_vec, p_tmean, maxidx)
         # Equation (3) of Manjon2013
-        weights = 1.0 / (1.0 + maxidx)
-        noise_map = var_noise * weights
-        patch_new *= weights
 
-        return patch_new, noise_map, weights
+        return patch_new, var_noise, maxidx
 
 
 @fill_doc
@@ -183,11 +177,8 @@ class RawSVDDenoiser(BaseSpaceTimeDenoiser):
             p_new = svd_synthesis(u_vec, s_values, v_vec, p_tmean, maxidx)
 
         # Equation (3) in Manjon 2013
-        theta = 1.0 / (1.0 + maxidx)
-        p_new *= theta
-        weights = theta
 
-        return p_new, weights, np.NaN
+        return p_new, np.NaN, maxidx
 
 
 @fill_doc
@@ -403,12 +394,7 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
             maxidx = 0
             p_new = np.zeros_like(patch) + p_tmean
 
-        # Equation (3) in Manjon 2013
-        theta = 1.0 / (1.0 + maxidx)
-        p_new *= theta
-        weights = theta
-
-        return p_new, weights, np.NaN
+        return p_new, maxidx, np.NaN
 
 
 def _sure_atn_cost(X, method, sing_vals, gamma, sigma=None, tau=None):
@@ -633,9 +619,4 @@ class AdaptiveDenoiser(BaseSpaceTimeDenoiser):
             maxidx = 0
             p_new = np.zeros_like(patch) + p_tmean
 
-        # Equation (3) in Manjon 2013
-        theta = 1.0 / (1.0 + maxidx)
-        p_new *= theta
-        weights = theta
-
-        return p_new, weights, np.NaN
+        return p_new, maxidx, np.NaN

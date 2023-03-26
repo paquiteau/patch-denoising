@@ -94,7 +94,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
             # And ideally choosen by the user.
 
             patch[np.isnan(patch)] = np.mean(patch)
-            p_denoise, *extras = self._patch_processing(
+            p_denoise, maxidx, noise_var = self._patch_processing(
                 patch,
                 patch_slice=patch_slice,
                 **self.input_denoising_kwargs,
@@ -106,21 +106,25 @@ class BaseSpaceTimeDenoiser(abc.ABC):
                     ptl + ps // 2 for ptl, ps in zip(patch_tl, patch_shape)
                 )
                 output_data[patch_center_img] = p_denoise[patch_center]
-                patchs_weight[patch_center_img] += extras[0]
-                noise_std_estimate[patch_center_img] += extras[1]
-            else:
+                noise_std_estimate[patch_center_img] += noise_var
+            elif self.recombination == "weighted":
+                theta = 1 / (2 + maxidx)
+                output_data[patch_slice] += p_denoise * theta
+                patchs_weight[patch_slice] += theta
+            elif self.recombination == "average":
                 output_data[patch_slice] += p_denoise
-                if self.recombination == "weighted":
-                    patchs_weight[patch_slice] += extras[0]
-                elif self.recombination == "average":
-                    patchs_weight[patch_slice] += 1
-            if len(extras) > 1:
-                noise_std_estimate[patch_slice] += extras[1]
+                patchs_weight[patch_slice] += 1
+            else:
+                raise ValueError(
+                    "recombination must be one of 'weighted', 'average', 'center'"
+                )
+            if not np.isnan(noise_var):
+                noise_std_estimate[patch_slice] += noise_var
             if progbar:
                 progbar.update()
         # Averaging the overlapping pixels.
         # this is only required for averaging recombinations.
-        if self.recombination != "center":
+        if self.recombination in ["average", "weighted"]:
             output_data /= patchs_weight[..., None]
             noise_std_estimate /= patchs_weight
 
