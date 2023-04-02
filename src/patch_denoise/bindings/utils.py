@@ -56,14 +56,37 @@ class DenoiseParameters:
     recombination: str = "weighted"  # "center" is also available
     mask_threshold: int = 10
 
+    @property
+    def pretty_name(self):
+        """Return a pretty name for the representation of parameters."""
+        if self.method:
+            name = self.method
+            for attr in [
+                "patch_shape",
+                "patch_overlap",
+                "recombination",
+                "mask_threshold",
+            ]:
+                if getattr(self, attr):
+                    name += f"_{getattr(self, attr)}"
+        else:
+            name = "noisy"
+        return name
+
+    @property
+    def pretty_par(self):
+        """Get pretty representation of parameters."""
+        name = f"{self.patch_shape}_{self.patch_overlap}{self.recombination[0]}"
+        return name
+
+    @classmethod
+    def get_str(cls, **kwargs):
+        """Get full string representation from set of kwargs."""
+        return cls(**kwargs).pretty_name
+
     @classmethod
     def from_str(self, config_str):
-        """Parse config string to create data structure.
-
-        The full format is ::
-
-            <method>_<patch_shape>_<patch_overlap>_<recombination>_<mask_threshold>
-        """
+        """Create a DenoiseParameters from a string."""
         if "noisy" in config_str:
             return DenoiseParameters(
                 method=None,
@@ -83,21 +106,14 @@ class DenoiseParameters:
                 d.patch_overlap = int(conf.pop(0))
             if conf:
                 c = conf.pop(0)
-                try:
-                    d.recombination = _RECOMBINATION[c]
-                except KeyError as exc:
-                    raise ValueError(f"unsupported  recombination key: {c}") from exc
+                d.recombination = c
             if conf:
                 d.mask_threshold = int(conf.pop(0))
             return d
 
     def __str__(self):
-        """Return string reprensation."""
-        ret_str = f"{self.method}_{self.patch_shape}_{self.patch_overlap}_"
-        ret_str += self.recombination[0]
-        if self.mask_threshold:
-            ret_str += f"_{self.mask_threshold}"
-        return ret_str
+        """Get string representation."""
+        return self.pretty_name
 
 
 def load_complex_nifti(mag_file, phase_file, filename=None):  # pragma: no cover
