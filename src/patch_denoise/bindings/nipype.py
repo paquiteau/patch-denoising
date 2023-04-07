@@ -69,7 +69,7 @@ class PatchDenoiseOutputSpec(TraitedSpec):
 
     denoised_file = File(desc="denoised file")
     noise_std_map = File(desc="a map of the noise variance.")
-    pass
+    rank_map = File(desc="a map of the rank of the patch.")
 
 
 class PatchDenoise(SimpleInterface):
@@ -99,10 +99,10 @@ class PatchDenoise(SimpleInterface):
             data_mag_nii = nib.load(self.inputs.in_mag)
             data = data_mag_nii.get_fdata(dtype=np.float32)
             basename = self.inputs.in_mag
-            affine = data_mag_nii.affine
+            self._affine = data_mag_nii.affine
         else:
             data_real_nii = nib.load(self.inputs.in_real)
-            affine = data_real_nii.affine
+            self._affine = data_real_nii.affine
             data_real = data_real_nii.get_fdata(dtype=np.float32)
             data_imag = nib.load(self.inputs.in_imag).get_fdata(dtype=np.float32)
             data = 1j * data_imag
@@ -145,6 +145,8 @@ class PatchDenoise(SimpleInterface):
                 recombination=d_par.recombination,
                 **extra_kwargs,
             )
+            if "-rank" in d_par.recombination:
+                noise_std_map, rank_map = noise_std_map
         else:
             denoised_data = data
             noise_std_map = np.std(data, axis=-1, dtype=np.float32)
@@ -155,19 +157,23 @@ class PatchDenoise(SimpleInterface):
         _, base, _ = split_filename(basename)
         base = base.replace("_mag", "")
         base = base.replace("_real", "")
-        denoise_filename = f"{base}_d_{d_par.method}.nii"
-        noise_map_filename = f"{base}_noise_map.nii"
 
-        denoised_data_img = nib.Nifti1Image(denoised_data, affine=affine)
-        denoised_data_img.to_filename(denoise_filename)
-
-        noise_map_img = nib.Nifti1Image(noise_std_map, affine=affine)
-        noise_map_img.to_filename(noise_map_filename)
-
-        self._results["denoised_file"] = os.path.abspath(denoise_filename)
-        self._results["noise_std_map"] = os.path.abspath(noise_map_filename)
-
+        self._make_results_file(
+            "denoised_file",
+            f"{base}_d_{d_par.method}.nii",
+            denoised_data,
+        )
+        self._make_results_file("noise_std_map", f"{base}_noise_map.nii", noise_std_map)
+        if "-rank" in d_par.recombination:
+            self._make_results_file("rank_map", f"{base}_rank_map.nii", rank_map)
+        else:
+            self._results["rank_map"] = None
         return runtime
+
+    def _make_results_file(self, result_file, file_name, array, affine):
+        """Add a new results file."""
+        self._results[file_name] = os.path.abspath(file_name)
+        nib.save(nib.Nifti1Image(array, self._affine), file_name)
 
 
 class NoiseStdMapInputSpec(BaseInterfaceInputSpec):
