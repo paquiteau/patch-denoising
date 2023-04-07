@@ -42,4 +42,7 @@ except ImportError:
     from setuptools_scm import get_version as _gv
     from os import path as _path
 
-    __version__ = _gv(_path.join(_path.dirname(__file__), _path.pardir))
+    try:
+        __version__ = _gv(_path.join(_path.dirname(__file__), _path.pardir))
+    except:
+        __version__ = "0.0.0+unknown"
