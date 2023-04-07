@@ -33,7 +33,8 @@ mask_threshold: int
 tuple
     numpy.ndarray: The denoised sequence of volume
     numpy.ndarray: The weight of each pixel after the processing.
-    numpy.ndarray: If possible, the noise variance distribution in the volume.""",
+    numpy.ndarray: If possible, the noise variance distribution in the volume
+    numpy.ndarray: If possible, the rank of each patch in the volume.""",
     input_config="""
 input_data: numpy.ndarray
     The input data to denoise. It should be a ND array, and the last

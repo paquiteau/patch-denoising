@@ -136,7 +136,7 @@ class PatchDenoise(SimpleInterface):
 
         if denoise_func is not None:
             # CORE CALL
-            denoised_data, _, noise_std_map = denoise_func(
+            denoised_data, _, noise_std_map, rank_map = denoise_func(
                 data,
                 patch_shape=d_par.patch_shape,
                 patch_overlap=d_par.patch_overlap,
@@ -145,8 +145,6 @@ class PatchDenoise(SimpleInterface):
                 recombination=d_par.recombination,
                 **extra_kwargs,
             )
-            if "-rank" in d_par.recombination:
-                noise_std_map, rank_map = noise_std_map
         else:
             denoised_data = data
             noise_std_map = np.std(data, axis=-1, dtype=np.float32)
@@ -164,15 +162,12 @@ class PatchDenoise(SimpleInterface):
             denoised_data,
         )
         self._make_results_file("noise_std_map", f"{base}_noise_map.nii", noise_std_map)
-        if "-rank" in d_par.recombination:
-            self._make_results_file("rank_map", f"{base}_rank_map.nii", rank_map)
-        else:
-            self._results["rank_map"] = None
+        self._make_results_file("rank_map", f"{base}_rank_map.nii", rank_map)
         return runtime
 
-    def _make_results_file(self, result_file, file_name, array, affine):
+    def _make_results_file(self, result_file, file_name, array):
         """Add a new results file."""
-        self._results[file_name] = os.path.abspath(file_name)
+        self._results[result_file] = os.path.abspath(file_name)
         nib.save(nib.Nifti1Image(array, self._affine), file_name)
 
 
