@@ -44,5 +44,5 @@ except ImportError:
 
     try:
         __version__ = _gv(_path.join(_path.dirname(__file__), _path.pardir))
-    except:
+    except LookupError:
         __version__ = "0.0.0+unknown"
