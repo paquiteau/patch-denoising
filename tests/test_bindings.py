@@ -25,14 +25,13 @@ from patch_denoise.denoise import mp_pca
 
 @pytest.fixture(scope="module")
 def denoised_ref(noisy_phantom):
-    denoised_func, _, _ = mp_pca(
+    return mp_pca(
         noisy_phantom,
         patch_shape=6,
         patch_overlap=5,
         threshold_scale=2.3,
         recombination="weighted",
-    )
-    return denoised_func
+    )[0]
 
 
 @pytest.fixture
@@ -71,7 +70,7 @@ def test_cli(nifti_noisy_phantom, tmpdir_factory, denoised_ref):
     outfile = "out.nii"
     print(nifti_noisy_phantom, tempdir)
     exit_status = os.system(
-        f"patch-denoise {nifti_noisy_phantom} {outfile} --conf mp-pca_6_5_w --extra threshold_scale=2.3"
+        f"patch-denoise {nifti_noisy_phantom} {outfile} --conf mp-pca_6_5_weighted --extra threshold_scale=2.3"
     )
     assert exit_status == 0
     npt.assert_allclose(nib.load(outfile).get_fdata(), denoised_ref)
@@ -89,7 +88,7 @@ def test_nipype_mag(nifti_noisy_phantom, denoised_ref):
 
     interface = PatchDenoise()
     interface.inputs.in_mag = nifti_noisy_phantom
-    interface.inputs.denoise_str = "mp-pca_6_5_w"
+    interface.inputs.denoise_str = "mp-pca_6_5_weighted"
     interface.inputs.extra_kwargs = {"threshold_scale": 2.3}
 
     output_file = interface.run().outputs.denoised_file
@@ -104,7 +103,7 @@ def test_nipype_cpx(nifti_noisy_phantom):
     interface = PatchDenoise()
     interface.inputs.in_real = nifti_noisy_phantom
     interface.inputs.in_imag = nifti_noisy_phantom
-    interface.inputs.denoise_str = "mp-pca_6_5_w"
+    interface.inputs.denoise_str = "mp-pca_6_5_weighted"
     interface.inputs.extra_kwargs = {"threshold_scale": 2.3}
 
     output_file = interface.run().outputs.denoised_file
