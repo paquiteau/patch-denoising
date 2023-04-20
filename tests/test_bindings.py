@@ -107,3 +107,19 @@ def test_nipype_cpx(nifti_noisy_phantom):
     interface.inputs.extra_kwargs = {"threshold_scale": 2.3}
 
     output_file = interface.run().outputs.denoised_file
+
+
+def test_denoise_paramter_pretty_par():
+
+    pretty_par = DenoiseParameters("optimal-fro", 11, 10, "weighted", 10).pretty_par
+
+    assert pretty == "11_10w"
+
+
+def test_denoise_parameter_pretty():
+    """Test the pretty_name."""
+
+    pretty_string = "optimal-fro_11_10_weighted_10"
+    pretty_name = DenoiseParameters.from_str(pretty_string).pretty_name
+
+    assert pretty_name == pretty_string
