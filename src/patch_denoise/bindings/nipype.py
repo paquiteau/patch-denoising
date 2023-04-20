@@ -148,6 +148,7 @@ class PatchDenoise(SimpleInterface):
         else:
             denoised_data = data
             noise_std_map = np.std(data, axis=-1, dtype=np.float32)
+            rank_map = np.zeros_like(noise_std_map)
         # OUTPUT
         if np.any(np.iscomplex(denoised_data)):
             denoised_data = np.abs(denoised_data, dtype=np.float32)
@@ -156,13 +157,13 @@ class PatchDenoise(SimpleInterface):
         base = base.replace("_mag", "")
         base = base.replace("_real", "")
 
+        self._make_results_file("rank_map", f"{base}_rank_map.nii", rank_map)
         self._make_results_file(
             "denoised_file",
             f"{base}_d_{d_par.method}.nii",
             denoised_data,
         )
         self._make_results_file("noise_std_map", f"{base}_noise_map.nii", noise_std_map)
-        self._make_results_file("rank_map", f"{base}_rank_map.nii", rank_map)
         return runtime
 
     def _make_results_file(self, result_file, file_name, array):
