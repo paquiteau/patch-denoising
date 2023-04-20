@@ -18,7 +18,7 @@ from patch_denoise.simulation.phantom import g_factor_map
 @pytest.mark.parametrize("recombination", ["weighted", "average", "center"])
 def test_mppca_denoiser(phantom, noisy_phantom, recombination):
     """Test the MP-PCA denoiser."""
-    denoised, weights, noise = mp_pca(
+    denoised, weights, noise, rank_map = mp_pca(
         noisy_phantom,
         patch_shape=6,
         patch_overlap=5,
@@ -33,7 +33,7 @@ def test_mppca_denoiser(phantom, noisy_phantom, recombination):
 @pytest.mark.parametrize("recombination", ["weighted", "average", "center"])
 def test_hybridpca_denoiser(phantom, noisy_phantom, recombination):
     """Test the Hybrid-PCA denoiser."""
-    denoised, weights, noise = hybrid_pca(
+    denoised, weights, noise, rank_map = hybrid_pca(
         noisy_phantom,
         patch_shape=6,
         patch_overlap=5,
@@ -49,7 +49,7 @@ def test_hybridpca_denoiser(phantom, noisy_phantom, recombination):
 @pytest.mark.parametrize("recombination", ["weighted", "average", "center"])
 def test_nordic_denoiser(phantom, noisy_phantom, recombination):
     """Test the Hybrid-PCA denoiser."""
-    denoised, weights, noise = nordic(
+    denoised, weights, noise, rank_map = nordic(
         noisy_phantom,
         patch_shape=6,
         patch_overlap=5,
@@ -65,7 +65,7 @@ def test_nordic_denoiser(phantom, noisy_phantom, recombination):
 @pytest.mark.parametrize("recombination", ["weighted", "average", "center"])
 def test_rawsvt_denoiser(phantom, noisy_phantom, recombination):
     """Test the Hybrid-PCA denoiser."""
-    denoised, weights, noise = raw_svt(
+    denoised, weights, noise, rank_map = raw_svt(
         noisy_phantom,
         patch_shape=6,
         patch_overlap=5,
@@ -82,7 +82,7 @@ def test_rawsvt_denoiser(phantom, noisy_phantom, recombination):
 @pytest.mark.parametrize("loss", ["fro", "nuc", "ope"])
 def test_optimal_denoiser(phantom, noisy_phantom, recombination, loss):
     """Test the Optimal Thresholding denoiser."""
-    denoised, weights, noise = optimal_thresholding(
+    denoised, weights, noise, rank_map = optimal_thresholding(
         noisy_phantom,
         patch_shape=6,
         patch_overlap=5,
@@ -99,7 +99,7 @@ def test_optimal_denoiser(phantom, noisy_phantom, recombination, loss):
 @pytest.mark.parametrize("loss", ["fro", "nuc", "ope"])
 def test_optimal_denoiser2(phantom, noisy_phantom, recombination, loss):
     """Test the Optimal Thresholding denoiser with noise apriori provided."""
-    denoised, weights, noise = optimal_thresholding(
+    denoised, weights, noise, rank_map = optimal_thresholding(
         noisy_phantom,
         patch_shape=10,
         patch_overlap=9,
@@ -120,7 +120,7 @@ def test_optimal_denoiser2(phantom, noisy_phantom, recombination, loss):
 )
 def test_adaptive_denoiser(phantom, noisy_phantom, recombination, method, gamma):
     """Test the Adaptive Thresholding denoiser."""
-    denoised, weights, noise = adaptive_thresholding(
+    denoised, weights, noise, rank_map = adaptive_thresholding(
         noisy_phantom,
         patch_shape=10,
         patch_overlap=0,

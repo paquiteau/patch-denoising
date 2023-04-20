@@ -1,4 +1,4 @@
-"""Low Rank Denoising methods."""
+"""Low Rank  methods."""
 from types import MappingProxyType
 
 import numpy as np
@@ -59,7 +59,7 @@ class MPPCADenoiser(BaseSpaceTimeDenoiser):
 
         # Equation (3) of Manjon 2013
 
-        return patch_new, var_noise, maxidx
+        return patch_new, maxidx, var_noise
 
 
 @fill_doc
@@ -113,7 +113,7 @@ class HybridPCADenoiser(BaseSpaceTimeDenoiser):
             patch_new = eig_synthesis(p_center, eig_vec, p_tmean, maxidx)
         # Equation (3) of Manjon2013
 
-        return patch_new, var_noise, maxidx
+        return patch_new, maxidx, var_noise
 
 
 @fill_doc
@@ -178,7 +178,7 @@ class RawSVDDenoiser(BaseSpaceTimeDenoiser):
 
         # Equation (3) in Manjon 2013
 
-        return p_new, np.NaN, maxidx
+        return p_new, maxidx, np.NaN
 
 
 @fill_doc

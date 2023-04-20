@@ -149,7 +149,7 @@ def main():
         extra_kwargs["noise_std"] = noise_map
         if noise_map is None:
             raise RuntimeError("A noise map must me specified for this method.")
-    denoised_data, _, noise_std_map = denoise_func(
+    denoised_data, patchs_weight, noise_std_map, rank_map = denoise_func(
         input_data,
         patch_shape=d_par.patch_shape,
         patch_overlap=d_par.patch_overlap,

@@ -44,6 +44,7 @@ class LLRDenoiserOperator(ProximityParent):
             patch_overlap=patch_overlap,
             mask=mask,
             mask_threshold=mask_threshold,
+            recombination=recombination,
             progbar=progbar,
             **kwargs,
         )
