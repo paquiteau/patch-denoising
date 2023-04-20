@@ -113,7 +113,7 @@ def test_denoise_paramter_pretty_par():
 
     pretty_par = DenoiseParameters("optimal-fro", 11, 10, "weighted", 10).pretty_par
 
-    assert pretty == "11_10w"
+    assert pretty_par == "11_10w"
 
 
 def test_denoise_parameter_pretty():
