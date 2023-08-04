@@ -62,6 +62,12 @@ def parse_args():
         nargs="*",
         help="extra key=value arguments.",
     )
+    parser.add_argument(
+        "--nan-to-num",
+        default=None,
+        type=float,
+        help="Replace NaN by the provided value.",
+    )
 
     args = parser.parse_args()
 
@@ -119,6 +125,17 @@ def main():
     print(args)
 
     input_data, affine = load_as_array(args.input_file)
+
+    if args.nan_to_num is not None:
+        input_data = np.nan_to_num(input_data, nan=args.nan_to_num)
+    n_nans = np.isnan(input_data).sum()
+    if n_nans > 0:
+        warnings.warn(
+            f"{n_nans}/{np.prod(input_data.shape)} voxels are NaN."
+            " You might want to use --nan-to-num=<value>",
+            stacklevel=0,
+        )
+
     if args.mask == "auto":
         mask = compute_mask(input_data)
         affine_mask = None
@@ -135,6 +152,7 @@ def main():
             warnings.warn(
                 "Affine matrix of input and noise map does not match", stacklevel=2
             )
+
     d_par = DenoiseParameters.from_str(args.conf)
     print(d_par)
     denoise_func = DENOISER_MAP[d_par.method]
@@ -157,7 +175,7 @@ def main():
         mask_threshold=d_par.mask_threshold,
         recombination=d_par.recombination,
         **extra_kwargs,
-        **args.extra
+        **args.extra,
     )
 
     save_array(denoised_data, affine, args.output_file)
