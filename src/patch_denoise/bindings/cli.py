@@ -16,7 +16,6 @@ from .utils import (
     load_complex_nifti,
 )
 
-import nibabel as nib
 
 DENOISER_NAMES = ", ".join(d for d in DENOISER_MAP if d)
 
@@ -30,24 +29,24 @@ def parse_args():
         nargs="?",
         default=None,
         type=Path,
-        help=("Output (denoised) file.\n" "default is d<input_file_name>"),
+        help=("Output (denoised) file.\n" "default is D<input_file_name>"),
     )
 
     parser.add_argument(
         "--conf",
         help=(
-            "denoising configuration.\n"
+            "Denoising configuration.\n"
             "Format should be <name>_<patch-size>_<patch-overlap>_<recombination>.\n"
-            "See Documentation of ``DenoiseParameter.from_str`` for full specification."
-            "Default:\n   optimal-fro_11_5_w\n"
+            "See Documentation of ``DenoiseParameter.from_str`` for full specification.\n"
+            "Default:  optimal-fro_11_5_weighted\n"
             "Available denoising methods:\n  " + DENOISER_NAMES
         ),
-        default="optimal-fro_11_5_w",
+        default="optimal-fro_11_5_weighted",
     )
     parser.add_argument(
         "--mask",
         default=None,
-        help="mask file",
+        help="mask file, if auto or not provided it would be determined from the average image.",
     )
     parser.add_argument(
         "--noise-map",
@@ -63,7 +62,7 @@ def parse_args():
         "--extra",
         default=None,
         nargs="*",
-        help="extra key=value arguments.",
+        help="extra key=value arguments for denoising methods.",
     )
     parser.add_argument(
         "--nan-to-num",
@@ -75,7 +74,7 @@ def parse_args():
         "--input-phase",
         default=None,
         type=Path,
-        help="Phase of the input data.",
+        help="Phase of the input data. This MUST be in radian. No conversion would be applied.",
     )
     parser.add_argument("-v", "--verbose", action="count", default=0)
 
