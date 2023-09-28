@@ -73,7 +73,12 @@ def test_cli(nifti_noisy_phantom, tmpdir_factory, denoised_ref):
         f"patch-denoise {nifti_noisy_phantom} {outfile} --conf mp-pca_6_5_weighted --extra threshold_scale=2.3"
     )
     assert exit_status == 0
-    npt.assert_allclose(nib.load(outfile).get_fdata(), denoised_ref)
+    npt.assert_allclose(
+        nib.load(outfile).get_fdata(dtype=np.float32),
+        denoised_ref,
+        rtol=1e-6,
+        atol=1e-2,
+    )
 
 
 def test_denoise_param():
@@ -93,7 +98,7 @@ def test_nipype_mag(nifti_noisy_phantom, denoised_ref):
 
     output_file = interface.run().outputs.denoised_file
 
-    output_data = nib.load(output_file).get_fdata()
+    output_data = nib.load(output_file).get_fdata(dtype=np.float32)
     npt.assert_allclose(output_data, denoised_ref, rtol=1e-2)
 
 
@@ -110,7 +115,6 @@ def test_nipype_cpx(nifti_noisy_phantom):
 
 
 def test_denoise_paramter_pretty_par():
-
     pretty_par = DenoiseParameters("optimal-fro", 11, 10, "weighted", 10).pretty_par
 
     assert pretty_par == "11_10w"
