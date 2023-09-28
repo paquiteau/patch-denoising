@@ -127,6 +127,8 @@ def load_as_array(input):
 
 def save_array(data, affine, filename):
     """Save array to file, with affine matrix if required."""
+    import nibabel as nib
+
     if filename is None:
         return None
 
@@ -189,7 +191,6 @@ def compute_mask(array, convex=False):
     numpy.ndarray
         Mask for array.
     """
-
     from skimage.filters import threshold_otsu
     from skimage.morphology import convex_hull_image
 

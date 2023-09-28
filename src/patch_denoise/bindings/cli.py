@@ -37,7 +37,7 @@ def parse_args():
         help=(
             "Denoising configuration.\n"
             "Format should be <name>_<patch-size>_<patch-overlap>_<recombination>.\n"
-            "See Documentation of ``DenoiseParameter.from_str`` for full specification.\n"
+            "See Documentation of 'DenoiseParameter.from_str' for full specification.\n"
             "Default:  optimal-fro_11_5_weighted\n"
             "Available denoising methods:\n  " + DENOISER_NAMES
         ),
@@ -46,7 +46,10 @@ def parse_args():
     parser.add_argument(
         "--mask",
         default=None,
-        help="mask file, if auto or not provided it would be determined from the average image.",
+        help=(
+            "mask file, if auto or not provided"
+            " it would be determined from the average image."
+        ),
     )
     parser.add_argument(
         "--noise-map",
@@ -74,7 +77,10 @@ def parse_args():
         "--input-phase",
         default=None,
         type=Path,
-        help="Phase of the input data. This MUST be in radian. No conversion would be applied.",
+        help=(
+            "Phase of the input data. This MUST be in radian. "
+            "No conversion would be applied."
+        ),
     )
     parser.add_argument("-v", "--verbose", action="count", default=0)
 
