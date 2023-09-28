@@ -2,8 +2,6 @@
 from dataclasses import dataclass
 import logging
 
-from skimage.filters import threshold_otsu
-from skimage.morphology import convex_hull_image
 import numpy as np
 
 from patch_denoise.denoise import (
@@ -15,7 +13,6 @@ from patch_denoise.denoise import (
     adaptive_thresholding,
 )
 
-import nibabel as nib
 
 DENOISER_MAP = {
     None: None,
@@ -115,6 +112,8 @@ class DenoiseParameters:
 
 def load_as_array(input):
     """Load a file as a numpy array, and return affine matrix if avaiable."""
+    import nibabel as nib
+
     if input is None:
         return None, None
     if input.suffix == ".npy":
@@ -190,6 +189,10 @@ def compute_mask(array, convex=False):
     numpy.ndarray
         Mask for array.
     """
+
+    from skimage.filters import threshold_otsu
+    from skimage.morphology import convex_hull_image
+
     mean = array.mean(axis=-1)
     mask = np.zeros(mean.shape, dtype=bool)
     for i in range(mean.shape[-1]):
