@@ -1,6 +1,6 @@
 """Base Structure for patch-based denoising on spatio-temporal dimension."""
 import abc
-import warnings
+import logging
 import numpy as np
 from tqdm.auto import tqdm
 
@@ -80,7 +80,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
             if 100 * np.sum(process_mask[patch_slice]) / patch_size > mask_threshold:
                 get_it[i] = True
 
-        print("Denoise {:.2f}% patches".format(100 * np.sum(get_it) / len(patch_locs)))
+        logging.info("Denoise {:.2f}% patches".format(100 * np.sum(get_it) / len(patch_locs)))
         patch_locs = np.ascontiguousarray(patch_locs[get_it])
 
         if progbar is None:
@@ -163,7 +163,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
                 p = (p,) * (len(data_shape) - 1)
             pp[i] = p
         if np.prod(pp[0]) < data_shape[-1]:
-            warnings.warn(
+            logging.warning(
                 f"the number of voxel in patch ({np.prod(pp[0])}) is smaller than the"
                 f" last dimension ({data_shape[-1]}), this makes an ill-conditioned"
                 "matrix for SVD.",

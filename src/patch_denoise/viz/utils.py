@@ -61,6 +61,5 @@ def zigzag2array(array, shape):
     new_array = np.zeros(shape, dtype=array.dtype)
 
     for idx, z in enumerate(zigzag):
-        print(idx, z)
         new_array[z[0], z[1]] = array[idx]
     return new_array

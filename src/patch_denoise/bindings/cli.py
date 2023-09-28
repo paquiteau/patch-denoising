@@ -77,6 +77,7 @@ def parse_args():
         type=Path,
         help="Phase of the input data.",
     )
+    parser.add_argument("-v", "--verbose", action="count", default=0)
 
     args = parser.parse_args()
 
@@ -95,15 +96,17 @@ def parse_args():
             args.extra[k] = v
     else:
         args.extra = {}
+
+    levels = [logging.WARNING, logging.INFO, logging.DEBUG]
+    level = levels[min(args.verbose, len(levels) - 1)]  # cap to last level index
+    logging.basicConfig(level=level)
+
     return args
-
-
 
 
 def main():
     """Command line entry point."""
     args = parse_args()
-    print(args)
 
     if args.input_phase is not None:
         input_data, affine = load_complex_nifti(args.input_file, args.input_phase)
@@ -113,7 +116,7 @@ def main():
         input_data = np.nan_to_num(input_data, nan=args.nan_to_num)
     n_nans = np.isnan(input_data).sum()
     if n_nans > 0:
-        warnings.warn(
+        logging.warning(
             f"{n_nans}/{np.prod(input_data.shape)} voxels are NaN."
             " You might want to use --nan-to-num=<value>",
             stacklevel=0,
@@ -128,11 +131,11 @@ def main():
 
     if affine is not None:
         if affine_mask is not None and np.allclose(affine, affine_mask):
-            warnings.warn(
+            logging.warning(
                 "Affine matrix of input and mask does not match", stacklevel=2
             )
         if affine_noise_map is not None and np.allclose(affine, affine_noise_map):
-            warnings.warn(
+            logging.warning(
                 "Affine matrix of input and noise map does not match", stacklevel=2
             )
 

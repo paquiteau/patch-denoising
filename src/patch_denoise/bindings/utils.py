@@ -1,5 +1,6 @@
 """Common utilities for bindings."""
 from dataclasses import dataclass
+import logging
 
 from skimage.filters import threshold_otsu
 from skimage.morphology import convex_hull_image
@@ -160,6 +161,9 @@ def load_complex_nifti(mag_file, phase_file, filename=None):  # pragma: no cover
 
     if not np.allclose(mag_affine, phase_affine):
         logging.warning("Affine matrices for magnitude and phase are not the same")
+
+    logging.info("Phase data range is [%.2f %.2f]", np.min(phase), np.max(phase))
+    logging.info("Mag data range is [%.2f %.2f]", np.min(mag), np.max(mag))
     img = mag * np.exp(1j * phase)
 
     if filename is not None:
