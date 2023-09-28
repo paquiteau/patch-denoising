@@ -80,7 +80,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
             if 100 * np.sum(process_mask[patch_slice]) / patch_size > mask_threshold:
                 get_it[i] = True
 
-        logging.info("Denoise {:.2f}% patches".format(100 * np.sum(get_it) / len(patch_locs)))
+        logging.info(f"Denoise {100 * np.sum(get_it) / len(patch_locs):.2f}% patches")
         patch_locs = np.ascontiguousarray(patch_locs[get_it])
 
         if progbar is None:
