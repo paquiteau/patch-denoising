@@ -14,11 +14,7 @@ from patch_denoise.denoise import (
     adaptive_thresholding,
 )
 
-NIBABEL_AVAILABLE = True
-try:
-    import nibabel as nib
-except ImportError:
-    NIBABEL_AVAILABLE = False
+import nibabel as nib
 
 DENOISER_MAP = {
     None: None,
@@ -116,6 +112,35 @@ class DenoiseParameters:
         return self.pretty_name
 
 
+def load_as_array(input):
+    """Load a file as a numpy array, and return affine matrix if avaiable."""
+    if input is None:
+        return None, None
+    if input.suffix == ".npy":
+        return np.load(input), None
+    elif ".nii" in input.suffixes:
+        nii = nib.load(input)
+        return nii.get_fdata(dtype=np.float32), nii.affine
+    else:
+        raise ValueError("Unsupported file format. use numpy or nifti formats.")
+
+
+def save_array(data, affine, filename):
+    """Save array to file, with affine matrix if required."""
+    if filename is None:
+        return None
+
+    if ".nii" in filename.suffixes:
+        if affine is None:
+            affine = np.eye(len(data.shape))
+        nii_img = nib.Nifti1Image(data, affine)
+        nii_img.to_filename(filename)
+    elif filename.endswith(".npy"):
+        np.save(filename, data)
+
+    return filename
+
+
 def load_complex_nifti(mag_file, phase_file, filename=None):  # pragma: no cover
     """Load two nifti image (magnitude and phase) to create a complex valued array.
 
@@ -130,20 +155,16 @@ def load_complex_nifti(mag_file, phase_file, filename=None):  # pragma: no cover
     filename: str, default None
         The output filename
     """
-    if not NIBABEL_AVAILABLE:
-        raise RuntimeError(
-            "nibabel is not available, please install it to load experimental data"
-        )
+    mag, mag_affine = load_as_array(mag_file)
+    phase, phase_affine = load_as_array(phase_file)
 
-    mag = nib.load(mag_file).get_fdata()
-    phase = nib.load(phase_file).get_fdata()
-    print(np.min(phase), np.max(phase))
-    print(np.min(mag), np.max(mag))
+    if not np.allclose(mag_affine, phase_affine):
+        logging.warning("Affine matrices for magnitude and phase are not the same")
     img = mag * np.exp(1j * phase)
 
     if filename is not None:
         np.save(filename, img)
-    return img
+    return img, mag_affine
 
 
 def compute_mask(array, convex=False):

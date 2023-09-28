@@ -1,20 +1,22 @@
 #!/usr/bin/env python3
 """Cli interface."""
 
-
 import argparse
-import warnings
+from pathlib import Path
+import logging
 
 import numpy as np
 
-from .utils import DENOISER_MAP, DenoiseParameters, compute_mask
+from .utils import (
+    DENOISER_MAP,
+    DenoiseParameters,
+    compute_mask,
+    load_as_array,
+    save_array,
+    load_complex_nifti,
+)
 
-NIBABEL_AVAILABLE = True
-try:
-    import nibabel as nib
-except ImportError:
-    NIBABEL_AVAILABLE = False
-
+import nibabel as nib
 
 DENOISER_NAMES = ", ".join(d for d in DENOISER_MAP if d)
 
@@ -22,11 +24,12 @@ DENOISER_NAMES = ", ".join(d for d in DENOISER_MAP if d)
 def parse_args():
     """Parse input arguments."""
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument("input_file", help="Input (noisy) file.")
+    parser.add_argument("input_file", help="Input (noisy) file.", type=Path)
     parser.add_argument(
         "output_file",
         nargs="?",
         default=None,
+        type=Path,
         help=("Output (denoised) file.\n" "default is d<input_file_name>"),
     )
 
@@ -68,13 +71,18 @@ def parse_args():
         type=float,
         help="Replace NaN by the provided value.",
     )
+    parser.add_argument(
+        "--input-phase",
+        default=None,
+        type=Path,
+        help="Phase of the input data.",
+    )
 
     args = parser.parse_args()
 
     # default value for output.
     if args.output_file is None:
-        input_path = args.input_file.split("/")
-        args.output_file = "/".join(input_path)[:-1] + "/d" + input_path[-1]
+        args.output_file = args.input_file.with_stem("D" + args.input_file.stem)
 
     if args.extra:
         key_values = [kv.split("=") for kv in args.extra]
@@ -90,33 +98,6 @@ def parse_args():
     return args
 
 
-def load_as_array(input):
-    """Load a file as a numpy array, and return affine matrix if avaiable."""
-    if input is None:
-        return None, None
-    if input.endswith(".npy"):
-        return np.load(input), None
-    elif input.endswith(".nii") or input.endswith(".nii.gz"):
-        nii = nib.load(input)
-        return nii.get_fdata(), nii.affine
-    else:
-        raise ValueError("Unsupported file format. use numpy or nifti formats.")
-
-
-def save_array(data, affine, filename):
-    """Save array to file, with affine matrix if required."""
-    if filename is None:
-        return None
-
-    if filename.endswith(".nii") or filename.endswith(".nii.gz"):
-        if affine is None:
-            affine = np.eye(len(data.shape))
-        nii_img = nib.Nifti1Image(data, affine)
-        nii_img.to_filename(filename)
-    elif filename.endswith(".npy"):
-        np.save(filename, data)
-
-    return filename
 
 
 def main():
@@ -124,6 +105,8 @@ def main():
     args = parse_args()
     print(args)
 
+    if args.input_phase is not None:
+        input_data, affine = load_complex_nifti(args.input_file, args.input_phase)
     input_data, affine = load_as_array(args.input_file)
 
     if args.nan_to_num is not None:
