@@ -11,6 +11,7 @@ The available denoising methods are "nordic", "mp-pca", "hybrid-pca", "opt-fro",
 
 import nibabel as nib
 from patch_denoise.space_time.lowrank import OptimalSVDDenoiser
+import timeit
 
 # %%
 # Setup the parameters for the simulation and noise
@@ -27,10 +28,12 @@ img = nib.load(input_path)
 
 # data shape is (53, 63, 52, 262) with 3mm resolution
 patch_shape = (11, 11, 11)
-patch_overlap = (5)
+patch_overlap = (10)
 
 # initialize denoiser
 optimal_llr = OptimalSVDDenoiser(patch_shape, patch_overlap)
 
 # denoise image
+time_start = timeit.default_timer()
 denoised = optimal_llr.denoise(img.get_fdata())
+print(timeit.default_timer() - time_start)

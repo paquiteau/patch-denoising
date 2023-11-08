@@ -2,9 +2,10 @@
 import numpy as np
 from scipy.integrate import quad
 from scipy.linalg import eigh, svd
+import cupy
 
 
-def svd_analysis(input_data):
+def svd_analysis(input_data, engine="cpu"):
     """Return the centered SVD decomposition.
 
     U, S, Vt and M are compute such that:
@@ -22,7 +23,16 @@ def svd_analysis(input_data):
     mean = np.mean(input_data, axis=0)
     data_centered = input_data - mean
     # TODO  benchmark svd vs svds and order of data.
-    u_vec, s_vals, v_vec = svd(data_centered, full_matrices=False)
+    if engine == "cpu":
+        u_vec, s_vals, v_vec = svd(data_centered, full_matrices=False)
+    elif engine == "gpu":
+        data_centered = cupy.array(data_centered)
+        u_vec, s_vals, v_vec = cupy.linalg.svd(
+            data_centered, full_matrices=False
+        )
+#        u_vec = cupy.asnumpy(u_vec)
+#        s_vals = cupy.asnumpy(s_vals)
+#        v_vec = cupy.asnumpy(v_vec)
 
     return u_vec, s_vals, v_vec, mean
 
