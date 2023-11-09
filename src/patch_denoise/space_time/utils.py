@@ -2,7 +2,7 @@
 import numpy as np
 from scipy.integrate import quad
 from scipy.linalg import eigh, svd
-import cupy
+import cupy as cp
 
 
 def svd_analysis(input_data, engine="cpu"):
@@ -26,13 +26,13 @@ def svd_analysis(input_data, engine="cpu"):
     if engine == "cpu":
         u_vec, s_vals, v_vec = svd(data_centered, full_matrices=False)
     elif engine == "gpu":
-        data_centered = cupy.array(data_centered)
-        u_vec, s_vals, v_vec = cupy.linalg.svd(
+        data_centered = cp.array(data_centered)
+        u_vec, s_vals, v_vec = cp.linalg.svd(
             data_centered, full_matrices=False
         )
-#        u_vec = cupy.asnumpy(u_vec)
-#        s_vals = cupy.asnumpy(s_vals)
-#        v_vec = cupy.asnumpy(v_vec)
+        u_vec = cp.asnumpy(u_vec)
+        s_vals = cp.asnumpy(s_vals)
+        v_vec = cp.asnumpy(v_vec)
 
     return u_vec, s_vals, v_vec, mean
 

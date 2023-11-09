@@ -3,6 +3,7 @@ import abc
 import logging
 import numpy as np
 from tqdm.auto import tqdm
+import cupy as cp
 
 from .._docs import fill_doc
 
@@ -87,6 +88,11 @@ class BaseSpaceTimeDenoiser(abc.ABC):
             progbar = tqdm(total=len(patch_locs))
         elif progbar is not False:
             progbar.reset(total=len(patch_locs))
+        print(input_data.shape)
+        step = patch_shape[0] - patch_overlap[0]
+        patches = cp.lib.stride_tricks.sliding_window_view(input_data, patch_shape, axis=(0, 1, 2))[::step, :]
+        print(patches.shape)
+        exit(0)
 
         for patch_tl in patch_locs:
             patch_slice = tuple(
