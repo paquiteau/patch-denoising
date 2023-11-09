@@ -90,9 +90,10 @@ class BaseSpaceTimeDenoiser(abc.ABC):
             progbar.reset(total=len(patch_locs))
         print(input_data.shape)
         step = patch_shape[0] - patch_overlap[0]
-        patches = cp.lib.stride_tricks.sliding_window_view(input_data, patch_shape, axis=(0, 1, 2))[::step, :]
+        patches = cp.lib.stride_tricks.sliding_window_view(
+            input_data, patch_shape, axis=(0, 1, 2)
+        )[::step, ::step, ::step]
         print(patches.shape)
-        exit(0)
 
         for patch_tl in patch_locs:
             patch_slice = tuple(
