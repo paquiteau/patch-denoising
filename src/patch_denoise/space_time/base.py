@@ -88,13 +88,32 @@ class BaseSpaceTimeDenoiser(abc.ABC):
             progbar = tqdm(total=len(patch_locs))
         elif progbar is not False:
             progbar.reset(total=len(patch_locs))
-        print(input_data.shape)
+
+        # Pad the data
+
+        output_data = cp.asarray(output_data)
+
+        input_data = cp.asarray(input_data)
+
+        c, h, w, t_s = input_data.shape
+        kc, kh, kw = patch_shape  # kernel size
+        sc, sh, sw = np.repeat(
+            patch_shape[0] - patch_overlap[0], len(patch_shape)
+        )
+        needed_c = int((cp.ceil((c - kc) / sc + 1) - ((c - kc) / sc + 1)) * kc)
+        needed_h = int((cp.ceil((h - kh) / sh + 1) - ((h - kh) / sh + 1)) * kh)
+        needed_w = int((cp.ceil((w - kw) / sw + 1) - ((w - kw) / sw + 1)) * kw)
+
+        input_data_padded = cp.pad(
+            input_data, ((0, needed_c), (0, needed_h), (0, needed_w), (0, 0)
+        ), mode='edge')
+
         step = patch_shape[0] - patch_overlap[0]
         patches = cp.lib.stride_tricks.sliding_window_view(
-            input_data, patch_shape, axis=(0, 1, 2)
+            input_data_padded, patch_shape, axis=(0, 1, 2)
         )[::step, ::step, ::step]
         print(patches.shape)
-
+        exit(0)
         for patch_tl in patch_locs:
             patch_slice = tuple(
                 slice(tl, tl + ps) for tl, ps in zip(patch_tl, patch_shape)

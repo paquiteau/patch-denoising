@@ -28,7 +28,7 @@ img = nib.load(input_path)
 
 # data shape is (53, 63, 52, 262) with 3mm resolution
 patch_shape = (11, 11, 11)
-patch_overlap = (5)
+patch_overlap = (1)
 
 # initialize denoiser
 optimal_llr = OptimalSVDDenoiser(patch_shape, patch_overlap)
