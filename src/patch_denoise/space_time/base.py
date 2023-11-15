@@ -95,10 +95,10 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         )[::step, ::step, ::step]
         print(patches.shape)
         # TODO patch reshape and prod step
-        patch[np.isnan(patch)] = np.mean(patch)
+        patches[cp.isnan(patches)] = np.mean(patches)
         p_denoise, maxidx, noise_var = self._patch_processing(
-            patch,
-            patch_slice=patch_slice,
+            patches,
+            patch_slice=None,
             engine="gpu",
             **self.input_denoising_kwargs,
         )
