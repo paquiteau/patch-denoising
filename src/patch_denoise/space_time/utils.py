@@ -24,9 +24,12 @@ def svd_analysis(input_data, engine="cpu"):
     data_centered = input_data - mean
     # TODO  benchmark svd vs svds and order of data.
     if engine == "cpu":
+        mean = np.mean(input_data, axis=0)
+        data_centered = input_data - mean
         u_vec, s_vals, v_vec = svd(data_centered, full_matrices=False)
     elif engine == "gpu":
-        data_centered = cp.array(data_centered)
+        mean = cp.mean(input_data, axis=0)
+        data_centered = input_data - mean
         u_vec, s_vals, v_vec = cp.linalg.svd(
             data_centered, full_matrices=False
         )
