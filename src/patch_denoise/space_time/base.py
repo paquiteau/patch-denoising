@@ -36,7 +36,9 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         self.input_denoising_kwargs = dict()
 
     @fill_doc
-    def denoise(self, input_data, mask=None, mask_threshold=50, progbar=None):
+    def denoise(
+        self, input_data, mask=None, mask_threshold=50, progbar=None, engine="cpu"
+    ):
         """Denoise the input_data, according to mask.
 
         Patches are extracted sequentially and process by the implemented
@@ -100,10 +102,10 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         patches = patches.transpose((0, 1, 2, 4, 5, 6, 3))
         patches = patches.reshape((np.prod(patches.shape[:3]), patch_size, t_s))
         patches[cp.isnan(patches)] = cp.mean(patches)
-        p_denoise, maxidx, noise_var = self._patch_processing(
+        p_denoise_, maxidx, noise_var = self._patch_processing(
             patches,
             patch_slice=None,
-            engine="gpu",
+            engine=engine,
             **self.input_denoising_kwargs,
         )
 
@@ -126,7 +128,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         elif progbar is not False:
             progbar.reset(total=len(patch_locs))
 
-        for patch_tl in patch_locs:
+        for patch_tl, p_denoise, in zip(patch_locs, p_denoise_):
             patch_slice = tuple(
                 slice(tl, tl + ps) for tl, ps in zip(patch_tl, patch_shape)
             )
@@ -139,11 +141,11 @@ class BaseSpaceTimeDenoiser(abc.ABC):
             # And ideally choosen by the user.
 
             patch[np.isnan(patch)] = np.mean(patch)
-            p_denoise, maxidx, noise_var = self._patch_processing(
-                patch,
-                patch_slice=patch_slice,
-                **self.input_denoising_kwargs,
-            )
+            # p_denoise, maxidx, noise_var = self._patch_processing(
+            #     patch,
+            #     patch_slice=patch_slice,
+            #     **self.input_denoising_kwargs,
+            # )
 
             p_denoise = np.reshape(p_denoise, (*patch_shape, -1))
             patch_center_img = tuple(

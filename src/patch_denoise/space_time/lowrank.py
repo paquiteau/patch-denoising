@@ -321,6 +321,7 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         noise_std=None,
         eps_marshenko_pastur=1e-7,
         progbar=None,
+        engine="cpu",
     ):
         """
         Optimal thresholing denoising method.
@@ -365,7 +366,9 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         else:
             self.input_denoising_kwargs["var_apriori"] = noise_std**2
 
-        return super().denoise(input_data, mask, mask_threshold, progbar=progbar)
+        return super().denoise(
+            input_data, mask, mask_threshold, progbar=progbar, engine=engine
+        )
 
     def _patch_processing(
         self,

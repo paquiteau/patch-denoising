@@ -58,6 +58,7 @@ def svd_synthesis(u_vec, s_vals, v_vec, mean, idx, engine="cpu"):
     -------
     np.ndarray: The reconstructed matrix.
     """
+    # TODO check shapes
     if engine == "cpu":
         return (u_vec[:, :idx] @ (s_vals[:idx, None] * v_vec[:idx, :])) + mean
     if engine == "gpu":

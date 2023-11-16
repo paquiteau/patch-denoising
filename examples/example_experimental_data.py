@@ -35,5 +35,5 @@ optimal_llr = OptimalSVDDenoiser(patch_shape, patch_overlap)
 
 # denoise image
 time_start = timeit.default_timer()
-denoised = optimal_llr.denoise(img.get_fdata())
+denoised = optimal_llr.denoise(img.get_fdata(), engine="gpu")
 print(timeit.default_timer() - time_start)
