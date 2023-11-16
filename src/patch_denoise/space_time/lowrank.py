@@ -374,8 +374,9 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         shrink_func=None,
         mp_median=None,
         var_apriori=None,
-        engine="gpu",
+        engine="cpu",
     ):
+        # TODO check matching of shapes and reshape to work with same indexes
         u_vec, s_values, v_vec, p_tmean = svd_analysis(patch, engine=engine)
         if var_apriori is not None:
             sigma = np.mean(np.sqrt(var_apriori[patch_slice]))

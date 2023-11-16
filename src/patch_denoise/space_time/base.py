@@ -5,6 +5,7 @@ import numpy as np
 from tqdm.auto import tqdm
 import cupy as cp
 import pdb
+import timeit
 
 from .._docs import fill_doc
 
@@ -51,6 +52,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         -------
         $denoise_return
         """
+        time_start = timeit.default_timer()
         data_shape = input_data.shape
         output_data = np.zeros_like(input_data)
         rank_map = np.zeros(data_shape[:-1], dtype=np.int32)
@@ -104,21 +106,6 @@ class BaseSpaceTimeDenoiser(abc.ABC):
             engine="gpu",
             **self.input_denoising_kwargs,
         )
-
-        # # Define the shape of the array, the patch, and the step
-        # array_shape = p_denoise.shape
-
-        # # Calculate the top-left corner of each patch
-        # patch_tl = np.array(np.meshgrid(
-        #     *[range(0, dim - ps + 1, step+1) for dim, ps in zip(array_shape, patch_shape)]
-        # )).T.reshape(-1, 3)
-
-        # # Calculate the center of each patch
-        # patch_centers = patch_tl + np.array(patch_shape) // 2
-
-        # print(len(patch_centers))
-
-        exit(0)
 
         # discard useless patches
         patch_locs = get_patch_locs(patch_shape, patch_overlap, data_shape[:-1])
@@ -182,6 +169,9 @@ class BaseSpaceTimeDenoiser(abc.ABC):
             rank_map[patch_center_img] = maxidx
             if progbar:
                 progbar.update()
+        print(timeit.default_timer() - time_start)
+
+        exit(0)
         # Averaging the overlapping pixels.
         # this is only required for averaging recombinations.
         if self.recombination in ["average", "weighted"]:
