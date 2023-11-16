@@ -4,6 +4,7 @@ import logging
 import numpy as np
 from tqdm.auto import tqdm
 import cupy as cp
+import pdb
 
 from .._docs import fill_doc
 
@@ -93,9 +94,10 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         patches = cp.lib.stride_tricks.sliding_window_view(
             input_data_padded, patch_shape, axis=(0, 1, 2)
         )[::step, ::step, ::step]
-        print(patches.shape)
-        # TODO patch reshape and prod step
-        patches[cp.isnan(patches)] = np.mean(patches)
+
+        patches = patches.transpose((0, 1, 2, 4, 5, 6, 3))
+        patches = patches.reshape((np.prod(patches.shape[:3]), patch_size, t_s))
+        patches[cp.isnan(patches)] = cp.mean(patches)
         p_denoise, maxidx, noise_var = self._patch_processing(
             patches,
             patch_slice=None,

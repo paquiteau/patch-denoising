@@ -3,6 +3,7 @@ import numpy as np
 from scipy.integrate import quad
 from scipy.linalg import eigh, svd
 import cupy as cp
+import pdb
 
 
 def svd_analysis(input_data, engine="cpu"):
@@ -20,8 +21,6 @@ def svd_analysis(input_data, engine="cpu"):
     -------
     u_vec, s_vals, v_vec, mean
     """
-    mean = np.mean(input_data, axis=0)
-    data_centered = input_data - mean
     # TODO  benchmark svd vs svds and order of data.
     if engine == "cpu":
         mean = np.mean(input_data, axis=0)
@@ -36,6 +35,7 @@ def svd_analysis(input_data, engine="cpu"):
         u_vec = cp.asnumpy(u_vec)
         s_vals = cp.asnumpy(s_vals)
         v_vec = cp.asnumpy(v_vec)
+        mean = cp.asnumpy(mean)
 
     return u_vec, s_vals, v_vec, mean
 
@@ -58,7 +58,9 @@ def svd_synthesis(u_vec, s_vals, v_vec, mean, idx):
     -------
     np.ndarray: The reconstructed matrix.
     """
-    return (u_vec[:, :idx] @ (s_vals[:idx, None] * v_vec[:idx, :])) + mean
+    return (
+        u_vec[..., :idx] @ (s_vals[:idx, ..., None] * v_vec[:idx, ...])
+    ) + mean
 
 
 def eig_analysis(input_data, max_eig_val=10):
