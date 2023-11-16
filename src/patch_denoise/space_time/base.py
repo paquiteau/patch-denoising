@@ -105,6 +105,19 @@ class BaseSpaceTimeDenoiser(abc.ABC):
             **self.input_denoising_kwargs,
         )
 
+        # # Define the shape of the array, the patch, and the step
+        # array_shape = p_denoise.shape
+
+        # # Calculate the top-left corner of each patch
+        # patch_tl = np.array(np.meshgrid(
+        #     *[range(0, dim - ps + 1, step+1) for dim, ps in zip(array_shape, patch_shape)]
+        # )).T.reshape(-1, 3)
+
+        # # Calculate the center of each patch
+        # patch_centers = patch_tl + np.array(patch_shape) // 2
+
+        # print(len(patch_centers))
+
         exit(0)
 
         # discard useless patches

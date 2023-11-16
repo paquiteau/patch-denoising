@@ -376,10 +376,7 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         var_apriori=None,
         engine="gpu",
     ):
-        if engine == "gpu":
-           u_vec, s_values, v_vec, p_tmean = svd_analysis(patch, engine=engine)
-        elif engine == "cpu":
-           u_vec, s_values, v_vec, p_tmean = svd_analysis(patch, engine=engine)
+        u_vec, s_values, v_vec, p_tmean = svd_analysis(patch, engine=engine)
         if var_apriori is not None:
             sigma = np.mean(np.sqrt(var_apriori[patch_slice]))
         else:
@@ -394,38 +391,12 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
 
         if np.any(thresh_s_values):
             maxidx = np.max(np.nonzero(thresh_s_values)) + 1
-            p_new = svd_synthesis(u_vec, thresh_s_values, v_vec, p_tmean, maxidx)
+            p_new = svd_synthesis(
+                u_vec, thresh_s_values, v_vec, p_tmean, maxidx, engine=engine
+            )
         else:
             maxidx = 0
             p_new = np.zeros_like(patch) + p_tmean
-
-    #    if engine == "gpu":
-    #        u_vec, s_values, v_vec, p_tmean = svd_analysis(patch, engine=engine)
-    #        if var_apriori is not None:
-    #            sigma = cp.mean(cp.sqrt(var_apriori[patch_slice]))
-    #        else:
-    #            sigma = cp.median(s_values) / cp.sqrt(
-    #                patch.shape[1] * mp_median
-    #            )
-
-    #        scale_factor = cp.sqrt(patch.shape[1]) * sigma
-    #        thresh_s_values = cp.array(scale_factor * shrink_func(
-    #            s_values / scale_factor,
-    #            beta=patch.shape[1] / patch.shape[0],
-    #        ))
-    #        thresh_s_values[cp.isnan(thresh_s_values)] = 0
-
-    #        if cp.any(thresh_s_values):
-    #            maxidx = cp.amax(cp.array(
-    #                cp.nonzero(thresh_s_values)
-    #            ) + 1)
-    #            print(maxidx)
-    #            p_new = svd_synthesis(
-    #                u_vec, thresh_s_values, v_vec, p_tmean, maxidx
-    #            )
-    #        else:
-    #            maxidx = 0
-    #            p_new = cp.zeros_like(patch) + p_tmean
 
         return p_new, maxidx, np.NaN
 

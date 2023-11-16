@@ -40,7 +40,7 @@ def svd_analysis(input_data, engine="cpu"):
     return u_vec, s_vals, v_vec, mean
 
 
-def svd_synthesis(u_vec, s_vals, v_vec, mean, idx):
+def svd_synthesis(u_vec, s_vals, v_vec, mean, idx, engine="cpu"):
     """
     Reconstruct ``X = (U @ (S * V)) + M`` with only the max_idx greatest component.
 
@@ -58,9 +58,12 @@ def svd_synthesis(u_vec, s_vals, v_vec, mean, idx):
     -------
     np.ndarray: The reconstructed matrix.
     """
-    return (
-        u_vec[..., :idx] @ (s_vals[:idx, ..., None] * v_vec[:idx, ...])
-    ) + mean
+    if engine == "cpu":
+        return (u_vec[:, :idx] @ (s_vals[:idx, None] * v_vec[:idx, :])) + mean
+    if engine == "gpu":
+        return (
+            u_vec[..., :idx] @ (s_vals[:idx, ..., None] * v_vec[:idx, ...])
+        ) + mean
 
 
 def eig_analysis(input_data, max_eig_val=10):
