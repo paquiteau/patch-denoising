@@ -31,15 +31,15 @@ def svd_analysis(input_data, engine="cpu"):
         u_vec, s_vals, v_vec = cp.linalg.svd(
             data_centered, full_matrices=False
         )
-        u_vec = cp.asnumpy(u_vec)
-        s_vals = cp.asnumpy(s_vals)
-        v_vec = cp.asnumpy(v_vec)
-        mean = cp.asnumpy(mean)
+        # u_vec = cp.asnumpy(u_vec)
+        # s_vals = cp.asnumpy(s_vals)
+        # v_vec = cp.asnumpy(v_vec)
+        # mean = cp.asnumpy(mean)
 
     return u_vec, s_vals, v_vec, mean
 
 
-def svd_synthesis(u_vec, s_vals, v_vec, mean, idx, engine="cpu"):
+def svd_synthesis(u_vec, s_vals, v_vec, mean, idx):
     """
     Reconstruct ``X = (U @ (S * V)) + M`` with only the max_idx greatest component.
 
@@ -57,13 +57,7 @@ def svd_synthesis(u_vec, s_vals, v_vec, mean, idx, engine="cpu"):
     -------
     np.ndarray: The reconstructed matrix.
     """
-    # TODO check shapes
-    if engine == "cpu":
-        return (u_vec[:, :idx] @ (s_vals[:idx, None] * v_vec[:idx, :])) + mean
-    if engine == "gpu":
-        return (
-            u_vec[..., :idx] @ (s_vals[:idx, ..., None] * v_vec[:idx, ...])
-        ) + mean
+    return (u_vec[:, :idx] @ (s_vals[:idx, None] * v_vec[:idx, :])) + mean
 
 
 def eig_analysis(input_data, max_eig_val=10):

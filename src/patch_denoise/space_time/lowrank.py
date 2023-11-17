@@ -381,26 +381,63 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
     ):
         # TODO check matching of shapes and reshape to work with same indexes
         u_vec, s_values, v_vec, p_tmean = svd_analysis(patch, engine=engine)
-        if var_apriori is not None:
-            sigma = np.mean(np.sqrt(var_apriori[patch_slice]))
-        else:
-            sigma = np.median(s_values) / np.sqrt(patch.shape[1] * mp_median)
+        if engine == "cpu":
+            if var_apriori is not None:
+                sigma = np.mean(np.sqrt(var_apriori[patch_slice]))
+            else:
+                sigma = np.median(s_values) / np.sqrt(patch.shape[1] * mp_median)
 
-        scale_factor = np.sqrt(patch.shape[1]) * sigma
-        thresh_s_values = scale_factor * shrink_func(
-            s_values / scale_factor,
-            beta=patch.shape[1] / patch.shape[0],
-        )
-        thresh_s_values[np.isnan(thresh_s_values)] = 0
-
-        if np.any(thresh_s_values):
-            maxidx = np.max(np.nonzero(thresh_s_values)) + 1
-            p_new = svd_synthesis(
-                u_vec, thresh_s_values, v_vec, p_tmean, maxidx, engine=engine
+            scale_factor = np.sqrt(patch.shape[1]) * sigma
+            thresh_s_values = scale_factor * shrink_func(
+                s_values / scale_factor,
+                beta=patch.shape[1] / patch.shape[0],
             )
-        else:
-            maxidx = 0
-            p_new = np.zeros_like(patch) + p_tmean
+            thresh_s_values[np.isnan(thresh_s_values)] = 0
+
+            if np.any(thresh_s_values):
+                maxidx = np.max(np.nonzero(thresh_s_values)) + 1
+                p_new = svd_synthesis(u_vec, thresh_s_values, v_vec, p_tmean, maxidx)
+            else:
+                maxidx = 0
+                p_new = np.zeros_like(patch) + p_tmean
+
+        if engine == "gpu":
+            if var_apriori is not None:
+                 #sigma = np.mean(np.sqrt(var_apriori[patch_slice]))
+                 pass
+            else:
+                sigma = cp.median(
+                    s_values, axis=1
+                ) / cp.sqrt(patch.shape[-1] * mp_median)
+
+            scale_factor = (cp.sqrt(patch.shape[-1]) * sigma)[..., None]
+            thresh_s_values = scale_factor * shrink_func(
+                s_values / scale_factor,
+                beta=patch.shape[-1] / patch.shape[-2],
+            )
+            thresh_s_values[cp.isnan(thresh_s_values)] = 0
+
+            # Check all batches to see if they have any values above 0
+            check_any = cp.any(thresh_s_values, axis=1)
+            indices_true = cp.nonzero(check_any)[0]
+            indices_false = cp.nonzero(~check_any)[0]
+            maxidx = cp.zeros(thresh_s_values.shape[0])
+            p_new = cp.zeros(patch.shape)
+
+            if len(indices_true) > 0:
+                # Get values at nonzero indices and get the max index for each
+                thresh_s_values_t = thresh_s_values[indices_true, :]
+                for i in indices_true:
+                    maxidx[i] = cp.max(cp.array(cp.nonzero(thresh_s_values_t[i]))) + 1
+                    p_new[i] = (
+                        u_vec[i, :, :maxidx[i]] @ (
+                            thresh_s_values_t[i, :maxidx[i], None] * v_vec[i, :maxidx[i], :]
+                        )
+                    ) + p_tmean[i, :]
+            if len(indices_false) > 0:
+                for i in indices_false:
+                    maxidx[i] = 0
+                    p_new[i] = cp.zeros_like(patch[i]) + p_tmean[i, :]
 
         return p_new, maxidx, np.NaN
 

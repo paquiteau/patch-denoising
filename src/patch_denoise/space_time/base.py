@@ -4,7 +4,6 @@ import logging
 import numpy as np
 from tqdm.auto import tqdm
 import cupy as cp
-import timeit
 
 from .._docs import fill_doc
 
@@ -58,7 +57,6 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         -------
         $denoise_return
         """
-        time_start = timeit.default_timer()
         data_shape = input_data.shape
         output_data = np.zeros_like(input_data)
         rank_map = np.zeros(data_shape[:-1], dtype=np.int32)
@@ -99,7 +97,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
             progbar.reset(total=len(patch_locs))
 
         if engine == "cpu":
-            for patch_tl in zip(patch_locs):
+            for patch_tl in patch_locs:
                 patch_slice = tuple(
                     slice(tl, tl + ps) for tl, ps in zip(patch_tl, patch_shape)
                 )
@@ -142,11 +140,9 @@ class BaseSpaceTimeDenoiser(abc.ABC):
                 rank_map[patch_center_img] = maxidx
                 if progbar:
                     progbar.update()
-            print(timeit.default_timer() - time_start)
 
         if engine == "gpu": 
             # Pad the data
-            output_data = cp.asarray(output_data)
             input_data = cp.asarray(input_data)
 
             c, h, w, t_s = input_data.shape
@@ -170,13 +166,16 @@ class BaseSpaceTimeDenoiser(abc.ABC):
             patches = patches.transpose((0, 1, 2, 4, 5, 6, 3))
             patches = patches.reshape((np.prod(patches.shape[:3]), patch_size, t_s))
             patches[cp.isnan(patches)] = cp.mean(patches)
-            patches_denoise, maxidx, noise_var = self._patch_processing(
+            patches_denoise, patches_maxidx, noise_var = self._patch_processing(
                 patches,
                 patch_slice=None,
                 engine=engine,
                 **self.input_denoising_kwargs,
             )
-            for patch_tl, p_denoise, in zip(patch_locs, patches_denoise):
+            patches_denoise = cp.asnumpy(patches_denoise)
+            patches_maxidx = cp.asnumpy(patches_maxidx)
+            for patch_tl, p_denoise, maxidx in zip(patch_locs, patches_denoise, patches_maxidx):
+                #breakpoint()
                 patch_slice = tuple(
                     slice(tl, tl + ps) for tl, ps in zip(patch_tl, patch_shape)
                 )
@@ -205,9 +204,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
                 rank_map[patch_center_img] = maxidx
                 if progbar:
                     progbar.update()                
-            print(timeit.default_timer() - time_start)
 
-        exit(0)
         # Averaging the overlapping pixels.
         # this is only required for averaging recombinations.
         if self.recombination in ["average", "weighted"]:
