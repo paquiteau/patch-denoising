@@ -3,7 +3,6 @@ import numpy as np
 from scipy.integrate import quad
 from scipy.linalg import eigh, svd
 import cupy as cp
-import pdb
 
 
 def svd_analysis(input_data, engine="cpu"):

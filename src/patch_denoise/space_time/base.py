@@ -4,7 +4,6 @@ import logging
 import numpy as np
 from tqdm.auto import tqdm
 import cupy as cp
-import pdb
 import timeit
 
 from .._docs import fill_doc
@@ -37,7 +36,12 @@ class BaseSpaceTimeDenoiser(abc.ABC):
 
     @fill_doc
     def denoise(
-        self, input_data, mask=None, mask_threshold=50, progbar=None, engine="cpu"
+        self,
+        input_data,
+        mask=None,
+        mask_threshold=50,
+        progbar=None,
+        engine="cpu"
     ):
         """Denoise the input_data, according to mask.
 
@@ -75,40 +79,6 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         patchs_weight = np.zeros(data_shape[:-1], np.float32)
         noise_std_estimate = np.zeros(data_shape[:-1], dtype=np.float32)
 
-        # Pad the data
-
-        output_data = cp.asarray(output_data)
-
-        input_data = cp.asarray(input_data)
-
-        c, h, w, t_s = input_data.shape
-        kc, kh, kw = patch_shape  # kernel size
-        sc, sh, sw = np.repeat(
-            patch_shape[0] - patch_overlap[0], len(patch_shape)
-        )
-        needed_c = int((cp.ceil((c - kc) / sc + 1) - ((c - kc) / sc + 1)) * kc)
-        needed_h = int((cp.ceil((h - kh) / sh + 1) - ((h - kh) / sh + 1)) * kh)
-        needed_w = int((cp.ceil((w - kw) / sw + 1) - ((w - kw) / sw + 1)) * kw)
-
-        input_data_padded = cp.pad(
-            input_data, ((0, needed_c), (0, needed_h), (0, needed_w), (0, 0)
-        ), mode='edge')
-
-        step = patch_shape[0] - patch_overlap[0]
-        patches = cp.lib.stride_tricks.sliding_window_view(
-            input_data_padded, patch_shape, axis=(0, 1, 2)
-        )[::step, ::step, ::step]
-
-        patches = patches.transpose((0, 1, 2, 4, 5, 6, 3))
-        patches = patches.reshape((np.prod(patches.shape[:3]), patch_size, t_s))
-        patches[cp.isnan(patches)] = cp.mean(patches)
-        p_denoise_, maxidx, noise_var = self._patch_processing(
-            patches,
-            patch_slice=None,
-            engine=engine,
-            **self.input_denoising_kwargs,
-        )
-
         # discard useless patches
         patch_locs = get_patch_locs(patch_shape, patch_overlap, data_shape[:-1])
         get_it = np.zeros(len(patch_locs), dtype=bool)
@@ -128,50 +98,114 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         elif progbar is not False:
             progbar.reset(total=len(patch_locs))
 
-        for patch_tl, p_denoise, in zip(patch_locs, p_denoise_):
-            patch_slice = tuple(
-                slice(tl, tl + ps) for tl, ps in zip(patch_tl, patch_shape)
-            )
-            process_mask[patch_slice] = 1
-            # building the casoratti matrix
-            patch = np.reshape(input_data[patch_slice], (-1, input_data.shape[-1]))
-
-            # Replace all nan by mean value of patch.
-            # FIXME this behaviour should be documented
-            # And ideally choosen by the user.
-
-            patch[np.isnan(patch)] = np.mean(patch)
-            # p_denoise, maxidx, noise_var = self._patch_processing(
-            #     patch,
-            #     patch_slice=patch_slice,
-            #     **self.input_denoising_kwargs,
-            # )
-
-            p_denoise = np.reshape(p_denoise, (*patch_shape, -1))
-            patch_center_img = tuple(
-                ptl + ps // 2 for ptl, ps in zip(patch_tl, patch_shape)
-            )
-            if self.recombination == "center":
-                output_data[patch_center_img] = p_denoise[patch_center]
-                noise_std_estimate[patch_center_img] += noise_var
-            elif self.recombination == "weighted":
-                theta = 1 / (2 + maxidx)
-                output_data[patch_slice] += p_denoise * theta
-                patchs_weight[patch_slice] += theta
-            elif self.recombination == "average":
-                output_data[patch_slice] += p_denoise
-                patchs_weight[patch_slice] += 1
-            else:
-                raise ValueError(
-                    "recombination must be one of 'weighted', 'average', 'center'"
+        if engine == "cpu":
+            for patch_tl in zip(patch_locs):
+                patch_slice = tuple(
+                    slice(tl, tl + ps) for tl, ps in zip(patch_tl, patch_shape)
                 )
-            if not np.isnan(noise_var):
-                noise_std_estimate[patch_slice] += noise_var
-            # the top left corner of the patch is used as id for the patch.
-            rank_map[patch_center_img] = maxidx
-            if progbar:
-                progbar.update()
-        print(timeit.default_timer() - time_start)
+                process_mask[patch_slice] = 1
+                # building the casoratti matrix
+                patch = np.reshape(input_data[patch_slice], (-1, input_data.shape[-1]))
+
+                # Replace all nan by mean value of patch.
+                # FIXME this behaviour should be documented
+                # And ideally choosen by the user.
+
+                patch[np.isnan(patch)] = np.mean(patch)
+                p_denoise, maxidx, noise_var = self._patch_processing(
+                    patch,
+                    patch_slice=patch_slice,
+                    **self.input_denoising_kwargs,
+                )
+
+                p_denoise = np.reshape(p_denoise, (*patch_shape, -1))
+                patch_center_img = tuple(
+                    ptl + ps // 2 for ptl, ps in zip(patch_tl, patch_shape)
+                )
+                if self.recombination == "center":
+                    output_data[patch_center_img] = p_denoise[patch_center]
+                    noise_std_estimate[patch_center_img] += noise_var
+                elif self.recombination == "weighted":
+                    theta = 1 / (2 + maxidx)
+                    output_data[patch_slice] += p_denoise * theta
+                    patchs_weight[patch_slice] += theta
+                elif self.recombination == "average":
+                    output_data[patch_slice] += p_denoise
+                    patchs_weight[patch_slice] += 1
+                else:
+                    raise ValueError(
+                        "recombination must be one of 'weighted', 'average', 'center'"
+                    )
+                if not np.isnan(noise_var):
+                    noise_std_estimate[patch_slice] += noise_var
+                # the top left corner of the patch is used as id for the patch.
+                rank_map[patch_center_img] = maxidx
+                if progbar:
+                    progbar.update()
+            print(timeit.default_timer() - time_start)
+
+        if engine == "gpu": 
+            # Pad the data
+            output_data = cp.asarray(output_data)
+            input_data = cp.asarray(input_data)
+
+            c, h, w, t_s = input_data.shape
+            kc, kh, kw = patch_shape  # kernel size
+            sc, sh, sw = np.repeat(
+                patch_shape[0] - patch_overlap[0], len(patch_shape)
+            )
+            needed_c = int((cp.ceil((c - kc) / sc + 1) - ((c - kc) / sc + 1)) * kc)
+            needed_h = int((cp.ceil((h - kh) / sh + 1) - ((h - kh) / sh + 1)) * kh)
+            needed_w = int((cp.ceil((w - kw) / sw + 1) - ((w - kw) / sw + 1)) * kw)
+
+            input_data_padded = cp.pad(
+                input_data, ((0, needed_c), (0, needed_h), (0, needed_w), (0, 0)
+            ), mode='edge')
+
+            step = patch_shape[0] - patch_overlap[0]
+            patches = cp.lib.stride_tricks.sliding_window_view(
+                input_data_padded, patch_shape, axis=(0, 1, 2)
+            )[::step, ::step, ::step]
+
+            patches = patches.transpose((0, 1, 2, 4, 5, 6, 3))
+            patches = patches.reshape((np.prod(patches.shape[:3]), patch_size, t_s))
+            patches[cp.isnan(patches)] = cp.mean(patches)
+            patches_denoise, maxidx, noise_var = self._patch_processing(
+                patches,
+                patch_slice=None,
+                engine=engine,
+                **self.input_denoising_kwargs,
+            )
+            for patch_tl, p_denoise, in zip(patch_locs, patches_denoise):
+                patch_slice = tuple(
+                    slice(tl, tl + ps) for tl, ps in zip(patch_tl, patch_shape)
+                )
+                process_mask[patch_slice] = 1
+                p_denoise = np.reshape(p_denoise, (*patch_shape, -1))
+                patch_center_img = tuple(
+                    ptl + ps // 2 for ptl, ps in zip(patch_tl, patch_shape)
+                )
+                if self.recombination == "center":
+                    output_data[patch_center_img] = p_denoise[patch_center]
+                    noise_std_estimate[patch_center_img] += noise_var
+                elif self.recombination == "weighted":
+                    theta = 1 / (2 + maxidx)
+                    output_data[patch_slice] += p_denoise * theta
+                    patchs_weight[patch_slice] += theta
+                elif self.recombination == "average":
+                    output_data[patch_slice] += p_denoise
+                    patchs_weight[patch_slice] += 1
+                else:
+                    raise ValueError(
+                        "recombination must be one of 'weighted', 'average', 'center'"
+                    )
+                if not np.isnan(noise_var):
+                    noise_std_estimate[patch_slice] += noise_var
+                # the top left corner of the patch is used as id for the patch.
+                rank_map[patch_center_img] = maxidx
+                if progbar:
+                    progbar.update()                
+            print(timeit.default_timer() - time_start)
 
         exit(0)
         # Averaging the overlapping pixels.
