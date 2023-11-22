@@ -379,7 +379,6 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         var_apriori=None,
         engine="cpu",
     ):
-        # TODO check matching of shapes and reshape to work with same indexes
         u_vec, s_values, v_vec, p_tmean = svd_analysis(patch, engine=engine)
         if engine == "cpu":
             if var_apriori is not None:

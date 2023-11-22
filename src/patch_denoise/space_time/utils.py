@@ -31,10 +31,6 @@ def svd_analysis(input_data, engine="cpu"):
         u_vec, s_vals, v_vec = cp.linalg.svd(
             data_centered, full_matrices=False
         )
-        # u_vec = cp.asnumpy(u_vec)
-        # s_vals = cp.asnumpy(s_vals)
-        # v_vec = cp.asnumpy(v_vec)
-        # mean = cp.asnumpy(mean)
 
     return u_vec, s_vals, v_vec, mean
 
