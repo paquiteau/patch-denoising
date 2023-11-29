@@ -9,14 +9,34 @@ Source data should a sequence of 2D or 3D data, the temporal dimension being the
 The available denoising methods are "nordic", "mp-pca", "hybrid-pca", "opt-fro", "opt-nuc" and "opt-op".
 """
 
-from patch_denoise.simulation.phantom import mr_shepp_logan_t2_star, g_factor_map
-from patch_denoise.simulation.activations import add_frames
-from patch_denoise.simulation.noise import add_temporal_gaussian_noise
+import nibabel as nib
+from patch_denoise.space_time.lowrank import OptimalSVDDenoiser
+import timeit
 
 # %%
 # Setup the parameters for the simulation and noise
 
-SHAPE = (64, 64, 64)
-N_FRAMES = 200
+# SHAPE = (64, 64, 64)
+# N_FRAMES = 200
 
-NOISE_LEVEL = 2
+# NOISE_LEVEL = 2
+
+base_path = "/data/parietal/store2/data/ibc/"
+#input_path = base_path + "3mm/sub-01/ses-00/func/wrdcsub-01_ses-00_task-ArchiSocial_dir-ap_bold.nii.gz"
+input_path = base_path + "sourcedata/sub-01/ses-00/func/sub-01_ses-00_task-ArchiSocial_dir-ap_bold.nii.gz"
+output_path = "/scratch/ymzayek/retreat_data/output.nii"
+
+img = nib.load(input_path)
+
+print(f"Data shape is {img.shape} with affine \n{img.affine}")
+
+patch_shape = (11, 11, 11)
+patch_overlap = (5)
+
+# initialize denoiser
+optimal_llr = OptimalSVDDenoiser(patch_shape, patch_overlap)
+
+# denoise image
+time_start = timeit.default_timer()
+denoised = optimal_llr.denoise(img.get_fdata(), engine="gpu", batch_size=100)
+print(timeit.default_timer() - time_start)
