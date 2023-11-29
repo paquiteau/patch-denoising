@@ -21,19 +21,22 @@ N_FRAMES = 200
 
 NOISE_LEVEL = 2
 
-input_path = "/data/parietal/store2/data/ibc/3mm/sub-01/ses-00/func/wrdcsub-01_ses-00_task-ArchiSocial_dir-ap_bold.nii.gz"
+#input_path = "/data/parietal/store2/data/ibc/3mm/sub-01/ses-00/func/wrdcsub-01_ses-00_task-ArchiSocial_dir-ap_bold.nii.gz"
+#"/data/parietal/store2/data/ibc/derivatives/sub-01/ses-00/func/wrdcsub-01_ses-00_task-ArchiSocial_dir-ap_bold.nii.gz"
+input_path = "/data/parietal/store2/data/ibc/sourcedata/sub-01/ses-00/func/sub-01_ses-00_task-ArchiSocial_dir-ap_bold.nii.gz"
 output_path = "/scratch/ymzayek/retreat_data/output.nii"
 
 img = nib.load(input_path)
 
-# data shape is (53, 63, 52, 262) with 3mm resolution
+print(f"Data shape is {img.shape} with affine {img.affine}")
+
 patch_shape = (11, 11, 11)
-patch_overlap = (1)
+patch_overlap = (5)
 
 # initialize denoiser
 optimal_llr = OptimalSVDDenoiser(patch_shape, patch_overlap)
 
 # denoise image
 time_start = timeit.default_timer()
-denoised = optimal_llr.denoise(img.get_fdata(), engine="gpu")
+denoised = optimal_llr.denoise(img.get_fdata(), engine="cpu")
 print(timeit.default_timer() - time_start)

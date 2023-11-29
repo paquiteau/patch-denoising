@@ -5,7 +5,7 @@ from scipy.linalg import eigh, svd
 import cupy as cp
 
 
-def svd_analysis(input_data, engine="cpu"):
+def svd_analysis(input_data):
     """Return the centered SVD decomposition.
 
     U, S, Vt and M are compute such that:
@@ -21,18 +21,40 @@ def svd_analysis(input_data, engine="cpu"):
     u_vec, s_vals, v_vec, mean
     """
     # TODO  benchmark svd vs svds and order of data.
-    if engine == "cpu":
-        mean = np.mean(input_data, axis=0)
-        data_centered = input_data - mean
-        u_vec, s_vals, v_vec = svd(data_centered, full_matrices=False)
-    elif engine == "gpu":
-        mean = cp.mean(input_data, axis=0)
-        data_centered = input_data - mean
+    mean = np.mean(input_data, axis=0)
+    data_centered = input_data - mean
+    u_vec, s_vals, v_vec = svd(data_centered, full_matrices=False)
+
+    return u_vec, s_vals, v_vec, mean
+
+
+def svd_analysis_gpu(input_data, batch_size):
+    # Initialize arrays to store the results
+    # input_data shape is (total patches, patch size, time)
+    batch_size = batch_size
+    # total_patches = input_data.shape[0]
+    # if total_patches % batch_size != 0:
+    #     raise ValueError("Batch size must be a divisor of total patches")
+    m = input_data.shape[1]
+    n = input_data.shape[2]
+    U_batched = cp.empty((batch_size, m, m), dtype=cp.float64)
+    S_batched = cp.empty((batch_size, min(m, n)), dtype=cp.float64)
+    V_batched = cp.empty((batch_size, n, n), dtype=cp.float64)
+    mean_batched = cp.empty((batch_size, n), dtype=cp.float64)
+
+    # Compute SVD for each matrix in the batch
+    for i in range(batch_size):
+        mean = cp.mean(input_data[i], axis=1)
+        data_centered = input_data[i] - mean
         u_vec, s_vals, v_vec = cp.linalg.svd(
             data_centered, full_matrices=False
         )
+        U_batched[i] = u_vec
+        S_batched[i] = cp.diag(s_vals)
+        V_batched[i] = v_vec
+        mean_batched[i] = mean
 
-    return u_vec, s_vals, v_vec, mean
+    return U_batched, S_batched, V_batched, mean_batched
 
 
 def svd_synthesis(u_vec, s_vals, v_vec, mean, idx):
