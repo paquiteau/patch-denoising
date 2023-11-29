@@ -16,19 +16,19 @@ import timeit
 # %%
 # Setup the parameters for the simulation and noise
 
-SHAPE = (64, 64, 64)
-N_FRAMES = 200
+# SHAPE = (64, 64, 64)
+# N_FRAMES = 200
 
-NOISE_LEVEL = 2
+# NOISE_LEVEL = 2
 
-#input_path = "/data/parietal/store2/data/ibc/3mm/sub-01/ses-00/func/wrdcsub-01_ses-00_task-ArchiSocial_dir-ap_bold.nii.gz"
-#"/data/parietal/store2/data/ibc/derivatives/sub-01/ses-00/func/wrdcsub-01_ses-00_task-ArchiSocial_dir-ap_bold.nii.gz"
-input_path = "/data/parietal/store2/data/ibc/sourcedata/sub-01/ses-00/func/sub-01_ses-00_task-ArchiSocial_dir-ap_bold.nii.gz"
+base_path = "/data/parietal/store2/data/ibc/"
+#input_path = base_path + "3mm/sub-01/ses-00/func/wrdcsub-01_ses-00_task-ArchiSocial_dir-ap_bold.nii.gz"
+input_path = base_path + "sourcedata/sub-01/ses-00/func/sub-01_ses-00_task-ArchiSocial_dir-ap_bold.nii.gz"
 output_path = "/scratch/ymzayek/retreat_data/output.nii"
 
 img = nib.load(input_path)
 
-print(f"Data shape is {img.shape} with affine {img.affine}")
+print(f"Data shape is {img.shape} with affine \n{img.affine}")
 
 patch_shape = (11, 11, 11)
 patch_overlap = (5)
@@ -38,5 +38,5 @@ optimal_llr = OptimalSVDDenoiser(patch_shape, patch_overlap)
 
 # denoise image
 time_start = timeit.default_timer()
-denoised = optimal_llr.denoise(img.get_fdata(), engine="cpu")
+denoised = optimal_llr.denoise(img.get_fdata(), engine="gpu", batch_size=100)
 print(timeit.default_timer() - time_start)

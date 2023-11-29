@@ -7,7 +7,7 @@ import cupy as cp
 
 from .._docs import fill_doc
 
-from .utils import get_patch_locs
+from .utils import get_patch_locs, get_patches_gpu
 
 
 @fill_doc
@@ -198,30 +198,9 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         elif progbar is not False:
             progbar.reset(total=len(patch_locs))
 
-        # Pad the data
-        input_data = cp.asarray(input_data)
+        patches = get_patches_gpu(input_data, patch_shape, patch_overlap)
+        patches[np.isnan(patches)] = np.mean(patches)
 
-        c, h, w, t_s = input_data.shape
-        kc, kh, kw = patch_shape  # kernel size
-        sc, sh, sw = np.repeat(
-            patch_shape[0] - patch_overlap[0], len(patch_shape)
-        )
-        needed_c = int((cp.ceil((c - kc) / sc + 1) - ((c - kc) / sc + 1)) * kc)
-        needed_h = int((cp.ceil((h - kh) / sh + 1) - ((h - kh) / sh + 1)) * kh)
-        needed_w = int((cp.ceil((w - kw) / sw + 1) - ((w - kw) / sw + 1)) * kw)
-
-        input_data_padded = cp.pad(
-            input_data, ((0, needed_c), (0, needed_h), (0, needed_w), (0, 0)
-        ), mode='edge')
-
-        step = patch_shape[0] - patch_overlap[0]
-        patches = cp.lib.stride_tricks.sliding_window_view(
-            input_data_padded, patch_shape, axis=(0, 1, 2)
-        )[::step, ::step, ::step]
-
-        patches = patches.transpose((0, 1, 2, 4, 5, 6, 3))
-        patches = patches.reshape((np.prod(patches.shape[:3]), patch_size, t_s))
-        patches[cp.isnan(patches)] = cp.mean(patches)
         patches_denoise, patches_maxidx, noise_var = self._patch_processing_gpu(
             patches,
             patch_slices=patch_slices,

@@ -323,6 +323,7 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         eps_marshenko_pastur=1e-7,
         progbar=None,
         engine="cpu",
+        batch_size=None,
     ):
         """
         Optimal thresholing denoising method.
@@ -371,10 +372,16 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
             return super().denoise(
                 input_data, mask, mask_threshold, progbar=progbar,
             )
-        else:
+        elif engine == "gpu":
             return super().denoise_gpu(
-                input_data, mask, mask_threshold, progbar=progbar,
+                input_data,
+                mask,
+                mask_threshold,
+                progbar=progbar,
+                batch_size=batch_size,
             )
+        else:
+            raise ValueError(f"Unknown engine: {engine}. Use 'cpu' or 'gpu'.")
 
     def _patch_processing(
         self,

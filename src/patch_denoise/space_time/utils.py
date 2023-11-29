@@ -29,31 +29,35 @@ def svd_analysis(input_data):
 
 
 def svd_analysis_gpu(input_data, batch_size):
+    total_samples = input_data.shape[0]
+    num_batches = int(np.ceil(total_samples/ batch_size))
+    adjusted_batch_size = total_samples // num_batches
+    last_batch_size = total_samples % adjusted_batch_size
+
     # Initialize arrays to store the results
     # input_data shape is (total patches, patch size, time)
-    batch_size = batch_size
-    # total_patches = input_data.shape[0]
-    # if total_patches % batch_size != 0:
-    #     raise ValueError("Batch size must be a divisor of total patches")
     m = input_data.shape[1]
     n = input_data.shape[2]
-    U_batched = cp.empty((batch_size, m, m), dtype=cp.float64)
-    S_batched = cp.empty((batch_size, min(m, n)), dtype=cp.float64)
-    V_batched = cp.empty((batch_size, n, n), dtype=cp.float64)
-    mean_batched = cp.empty((batch_size, n), dtype=cp.float64)
+    U_batched = cp.empty((total_samples, m, n), dtype=cp.float64)
+    S_batched = cp.empty((total_samples, min(m, n)), dtype=cp.float64)
+    V_batched = cp.empty((total_samples, n, n), dtype=cp.float64)
+    mean_batched = cp.empty((total_samples, n), dtype=cp.float64)
 
     # Compute SVD for each matrix in the batch
-    for i in range(batch_size):
-        mean = cp.mean(input_data[i], axis=1)
-        data_centered = input_data[i] - mean
+    for i in range(num_batches):
+        print(i)
+        start_idx = i * adjusted_batch_size
+        end_idx = start_idx + adjusted_batch_size if i < num_batches - 1 else start_idx + last_batch_size
+        idx = slice(start_idx, end_idx)
+        mean = cp.mean(input_data[idx], axis=1, keepdims=True)
+        data_centered = cp.asarray(input_data[idx] - mean)
         u_vec, s_vals, v_vec = cp.linalg.svd(
             data_centered, full_matrices=False
         )
-        U_batched[i] = u_vec
-        S_batched[i] = cp.diag(s_vals)
-        V_batched[i] = v_vec
-        mean_batched[i] = mean
-
+        U_batched[idx] = u_vec
+        S_batched[idx] = s_vals
+        V_batched[idx] = v_vec
+        mean_batched[idx] = cp.asarray(cp.squeeze(mean))
     return U_batched, S_batched, V_batched, mean_batched
 
 
@@ -225,6 +229,43 @@ def get_patch_locs(p_shape, p_ovl, v_shape):
         patch_locs[..., idx] = coords
 
     return patch_locs.reshape(-1, len(p_shape))
+
+
+def get_patches_gpu(input_data, patch_shape, patch_overlap):
+    """Extract all the patches from a volume.
+    
+    Returns
+    -------
+    numpy.ndarray
+        All the patches in shape (patches, patch size, time).
+    """
+    patch_size = np.prod(patch_shape)
+
+    # Pad the data
+    input_data = cp.asarray(input_data)
+
+    c, h, w, t_s = input_data.shape
+    kc, kh, kw = patch_shape  # kernel size
+    sc, sh, sw = np.repeat(
+        patch_shape[0] - patch_overlap[0], len(patch_shape)
+    )
+    needed_c = int((cp.ceil((c - kc) / sc + 1) - ((c - kc) / sc + 1)) * kc)
+    needed_h = int((cp.ceil((h - kh) / sh + 1) - ((h - kh) / sh + 1)) * kh)
+    needed_w = int((cp.ceil((w - kw) / sw + 1) - ((w - kw) / sw + 1)) * kw)
+
+    input_data_padded = cp.pad(
+        input_data, ((0, needed_c), (0, needed_h), (0, needed_w), (0, 0)
+    ), mode='edge')
+
+    step = patch_shape[0] - patch_overlap[0]
+    patches = cp.lib.stride_tricks.sliding_window_view(
+        input_data_padded, patch_shape, axis=(0, 1, 2)
+    )[::step, ::step, ::step]
+
+    patches = patches.transpose((0, 1, 2, 4, 5, 6, 3))
+    patches = patches.reshape((np.prod(patches.shape[:3]), patch_size, t_s))
+    
+    return cp.asnumpy(patches)
 
 
 def estimate_noise(noise_sequence, block_size=1):
