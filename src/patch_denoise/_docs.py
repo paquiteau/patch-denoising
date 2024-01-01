@@ -5,7 +5,6 @@ docdict contains the standard argument documentation found across the package.
 Docstring can then use templated argument such as ``$patch_config`` that will be
 substitute by their definition (see docdict items).
 
-source:
 """
 
 import inspect

@@ -45,8 +45,8 @@ class DenoiseParameters:
     """Denoise Parameters data structure."""
 
     method: str = None
-    patch_shape: int = 11
-    patch_overlap: int = 0
+    patch_shape: int | tuple[int, ...] = 11
+    patch_overlap: int | tuple[int, ...] = 0
     recombination: str = "weighted"  # "center" is also available
     mask_threshold: int = 10
 

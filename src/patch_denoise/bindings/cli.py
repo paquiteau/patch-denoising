@@ -44,6 +44,19 @@ def parse_args():
         default="optimal-fro_11_5_weighted",
     )
     parser.add_argument(
+        "--time-slice",
+        help=(
+            "Slice across time. \n"
+            "If <N>x the patch will be N times longer in space than in time \n"
+            "If int, this is the size of the time dimension patch. \n"
+            "If not specified, the whole time serie is used. \n"
+            "Note: setting a low aspect ratio will increase the number of patch to be"
+            "processed, and will increase memory usage and computation times."
+        ),
+        default=None,
+        type=str,
+    )
+    parser.add_argument(
         "--mask",
         default=None,
         help=(
@@ -145,6 +158,13 @@ def main():
             )
 
     d_par = DenoiseParameters.from_str(args.conf)
+    if isinstance(args.time_slice, str):
+        if args.time_slice.endswith("x"):
+            t = float(args.time_slice[:-1])
+            t = int(d_par ** (input_data.ndim - 1) / t)
+        else:
+            t = int(args.time_slice)
+        d_par.patch_shape = (d_par.patch_shape,) * (input_data.ndim - 1) + (t,)
     print(d_par)
     denoise_func = DENOISER_MAP[d_par.method]
     extra_kwargs = dict()
