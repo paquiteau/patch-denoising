@@ -11,8 +11,8 @@ on:
 jobs:
   linter-check:
     runs-on: ubuntu-latest
-    steps: 
-      - name: Checkout 
+    steps:
+      - name: Checkout
         uses: actions/checkout@v3
       - name: Set up Python "3.10"
         uses: actions/setup-python@v4
@@ -26,8 +26,8 @@ jobs:
         run: black . --diff --color
       - name: ruff Check
         shell: bash
-        run: ruff src
-        
+        run: ruff check src
+
   test-suite:
     runs-on: ${{ matrix.os }}
     needs: linter-check
@@ -36,7 +36,6 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         python-version: ["3.12", "3.11", "3.10", "3.9"]
-        
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
@@ -51,5 +50,5 @@ jobs:
           python -m pip install .[test,optional]
       - name: Run Tests
         shell: bash
-        run: | 
+        run: |
           pytest -n auto -x

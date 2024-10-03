@@ -1,4 +1,5 @@
 """Utilities for space-time denoising."""
+
 import numpy as np
 from scipy.integrate import quad
 from scipy.linalg import eigh, svd
@@ -145,7 +146,7 @@ def eig_synthesis(data_centered, eig_vec, mean, max_val):
     return ((data_centered @ eig_vec) @ eig_vec.conj().T) + mean
 
 
-def marshenko_pastur_median(beta, eps=1e-7):
+def marchenko_pastur_median(beta, eps=1e-7):
     r"""Compute the median of the Marchenko-Pastur Distribution.
 
     Parameters
@@ -204,19 +205,38 @@ def marshenko_pastur_median(beta, eps=1e-7):
 
 
 def estimate_noise(noise_sequence, block_size=1):
-    """Estimate the temporal noise standard deviation of a noise only sequence."""
+    """Estimate a noise map from a noise only sequence.
+
+    The noise map is the standard deviation of the noise in each patch.
+
+    Parameters
+    ----------
+    noise_sequence : np.ndarray of shape (X, Y, Z, T)
+        The noise-only data.
+    block_size : int
+        The size of the patch used to estimate the noise.
+
+    Returns
+    -------
+    np.ndarray of shape (X, Y, Z)
+        The estimated noise map.
+    """
     volume_shape = noise_sequence.shape[:-1]
     noise_map = np.empty(volume_shape)
     patch_shape = (block_size,) * len(volume_shape)
     patch_overlap = (block_size - 1,) * len(volume_shape)
 
     for patch_tl in get_patch_locs(patch_shape, patch_overlap, volume_shape):
+        # Get the index of voxels in the patch
         patch_slice = tuple(
             slice(ptl, ptl + ps) for ptl, ps in zip(patch_tl, patch_shape)
         )
+        # Identify the voxel in the center of the patch
         patch_center_img = tuple(
             slice(ptl + ps // 2, ptl + ps // 2 + 1)
             for ptl, ps in zip(patch_tl, patch_shape)
         )
+        # Set the value of the voxel in the center of the patch to the SD of
+        # the patch
         noise_map[patch_center_img] = np.std(noise_sequence[patch_slice])
     return noise_map

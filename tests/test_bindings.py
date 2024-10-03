@@ -1,5 +1,7 @@
 """Test for the binding module."""
+
 import os
+
 import numpy as np
 import numpy.testing as npt
 import pytest
@@ -15,7 +17,6 @@ try:
     import nibabel as nib
 except ImportError as e:
     NIPYPE_AVAILABLE = False
-
 
 from patch_denoise.bindings.modopt import LLRDenoiserOperator
 from patch_denoise.bindings.nipype import PatchDenoise

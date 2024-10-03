@@ -1,7 +1,8 @@
 """Base Structure for patch-based denoising on spatio-temporal dimension."""
+
 import abc
-from functools import partial, cached_property
 import logging
+
 import numpy as np
 from tqdm.auto import tqdm
 
@@ -43,7 +44,8 @@ class PatchedArray:
 
         if self._ps.size != dimensions or step.size != dimensions:
             raise ValueError(
-                "self._ps and step must have the same number of dimensions as the input self._array."
+                "self._ps and step must have the same number of dimensions as the "
+                "input self._array."
             )
 
         # Ensure patch size is not larger than self._array size along each axis
