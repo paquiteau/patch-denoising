@@ -15,6 +15,7 @@ from .utils import (
     save_array,
     load_complex_nifti,
 )
+from patch_denoise import __version__
 
 
 DENOISER_NAMES = ", ".join(d for d in DENOISER_MAP if d)
@@ -22,7 +23,7 @@ DENOISER_NAMES = ", ".join(d for d in DENOISER_MAP if d)
 
 def parse_args():
     """Parse input arguments."""
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("input_file", help="Input (noisy) file.", type=Path)
     parser.add_argument(
         "output_file",
@@ -32,62 +33,102 @@ def parse_args():
         help=("Output (denoised) file.\n" "default is D<input_file_name>"),
     )
 
-    parser.add_argument(
+    parser.add_argument("--version", action="version", version=__version__)
+
+    denoising_group = parser.add_argument_group("Denoising parameters")
+
+    conf_vs_separate = denoising_group.add_mutually_exclusive_group(required=True)
+    conf_vs_separate.add_argument(
+        "--method",
+        help=(
+            "Denoising method.\n"
+            f"Available denoising methods:\n  {DENOISER_NAMES}\n"
+            "This parameter is mutually exclusive with --conf."
+        ),
+        choices=DENOISER_MAP,
+        default="optimal-fro",
+    )
+
+    denoising_group.add_argument(
+        "--patch-size",
+        help=(
+            "Patch size. \n"
+            "If int, this is the size of the patch in each dimension. \n"
+            "If not specified, the default value is used. \n"
+            "Note: setting a low aspect ratio will increase the number of patch to be"
+            "processed, and will increase memory usage and computation times. "
+            "This parameter should be used in conjunction with --method and "
+            "is mutually exclusive with --conf."
+        ),
+        default=11,
+        type=int,
+    )
+    denoising_group.add_argument(
+        "--patch-overlap",
+        help=(
+            "Patch overlap. \n"
+            "If int, this is the size of the overlap in each dimension. \n"
+            "If not specified, the default value is used. \n"
+            "Note: setting a low overlap will increase the number of patch to be "
+            "processed, and will increase memory usage and computation times. "
+            "This parameter should be used in conjunction with --method and "
+            "is mutually exclusive with --conf."
+        ),
+        default=5,
+        type=int,
+    )
+    denoising_group.add_argument(
+        "--recombination",
+        help=(
+            "Recombination method. \n"
+            "If 'mean', the mean of the overlapping patches is used. \n"
+            "If 'weighted', the weighted mean of the overlapping patches is used. \n"
+            "If not specified, the default value is used. "
+            "This parameter should be used in conjunction with --method and "
+            "is mutually exclusive with --conf."
+        ),
+        default="weighted",
+        choices=["mean", "weighted"],
+    )
+    denoising_group.add_argument(
+        "--extra",
+        metavar="key=value",
+        default=None,
+        nargs="*",
+        help="extra key=value arguments for denoising methods.",
+    )
+    conf_vs_separate.add_argument(
         "--conf",
         help=(
             "Denoising configuration.\n"
             "Format should be <name>_<patch-size>_<patch-overlap>_<recombination>.\n"
             "See Documentation of 'DenoiseParameter.from_str' for full specification.\n"
-            "Default:  optimal-fro_11_5_weighted\n"
-            "Available denoising methods:\n  " + DENOISER_NAMES
-        ),
-        default="optimal-fro_11_5_weighted",
-    )
-    parser.add_argument(
-        "--time-slice",
-        help=(
-            "Slice across time. \n"
-            "If <N>x the patch will be N times longer in space than in time \n"
-            "If int, this is the size of the time dimension patch. \n"
-            "If not specified, the whole time serie is used. \n"
-            "Note: setting a low aspect ratio will increase the number of patch to be"
-            "processed, and will increase memory usage and computation times."
+            f"Available denoising methods:\n  {DENOISER_NAMES}\n"
+            "This parameter is mutually exclusive with --method."
         ),
         default=None,
-        type=str,
     )
-    parser.add_argument(
+
+    data_group = parser.add_argument_group("Additional input data")
+    data_group.add_argument(
         "--mask",
+        metavar="FILE|auto",
         default=None,
         help=(
             "mask file, if auto or not provided"
             " it would be determined from the average image."
         ),
     )
-    parser.add_argument(
+    data_group.add_argument(
         "--noise-map",
+        metavar="FILE",
         default=None,
+        type=Path,
         help="noise map estimation file",
     )
-    parser.add_argument(
-        "--output-noise-map",
-        default=None,
-        help="output noise map estimation file",
-    )
-    parser.add_argument(
-        "--extra",
-        default=None,
-        nargs="*",
-        help="extra key=value arguments for denoising methods.",
-    )
-    parser.add_argument(
-        "--nan-to-num",
-        default=None,
-        type=float,
-        help="Replace NaN by the provided value.",
-    )
-    parser.add_argument(
+    data_group.add_argument(
         "--input-phase",
+        metavar="FILE",
         default=None,
         type=Path,
         help=(
@@ -95,7 +136,42 @@ def parse_args():
             "No conversion would be applied."
         ),
     )
-    parser.add_argument("-v", "--verbose", action="count", default=0)
+
+    misc_group = parser.add_argument_group("Miscellaneous options")
+    misc_group.add_argument(
+        "--time-slice",
+        help=(
+            "Slice across time. \n"
+            "If <N>x the patch will be N times longer in space than in time \n"
+            "If int, this is the size of the time dimension patch. \n"
+            "If not specified, the whole time series is used. \n"
+            "Note: setting a low aspect ratio will increase the number of patch to be"
+            "processed, and will increase memory usage and computation times."
+        ),
+        default=None,
+        type=str,
+    )
+    misc_group.add_argument(
+        "--output-noise-map",
+        metavar="FILE",
+        default=None,
+        type=Path,
+        help="Output name for calculated noise map",
+    )
+    misc_group.add_argument(
+        "--nan-to-num",
+        metavar="VALUE",
+        default=None,
+        type=float,
+        help="Replace NaN by the provided value.",
+    )
+    misc_group.add_argument(
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
+        help="Increase verbosity level. You can provide multiple times (e.g., -vvv).",
+    )
 
     args = parser.parse_args()
 
