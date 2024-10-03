@@ -292,7 +292,7 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
     ----------
     $patch_config
     loss: str
-        The loss determines the choise of the optimal thresholding function
+        The loss determines the choice of the optimal thresholding function
         associated to it. The losses `"fro"`, `"nuc"` and `"op"` are supported,
         for the frobenius, nuclear and operator norm, respectively.
     """
@@ -336,7 +336,7 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         $mask_config
         $noise_std
         loss: str
-            The loss for which the optimal thresholding is perform.
+            The loss for which the optimal thresholding is performed.
         eps_marshenko_pastur: float
             The precision with which the optimal threshold is computed.
 
@@ -346,7 +346,7 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
 
         Notes
         -----
-        Reimplement of the original Matlab code [#]_ in python.
+        Reimplementation of the original Matlab code [#]_ in python.
 
         References
         ----------
