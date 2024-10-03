@@ -280,6 +280,8 @@ def main():
         input_data, affine = load_complex_nifti(args.input_file, args.input_phase)
     input_data, affine = load_as_array(args.input_file)
 
+    kwargs = args.extra
+
     if args.nan_to_num is not None:
         input_data = np.nan_to_num(input_data, nan=args.nan_to_num)
     n_nans = np.isnan(input_data).sum()
@@ -326,7 +328,6 @@ def main():
         args.patch_shape = (args.patch_shape,) * (input_data.ndim - 1) + (t,)
 
     denoise_func = DENOISER_MAP[args.method]
-    extra_kwargs = dict()
 
     if args.method in [
         "nordic",
@@ -334,7 +335,7 @@ def main():
         "adaptive-qut",
         "optimal-fro-noise",
     ]:
-        extra_kwargs["noise_std"] = noise_map
+        kwargs["noise_std"] = noise_map
         if noise_map is None:
             raise RuntimeError("A noise map must be specified for this method.")
 
@@ -345,8 +346,7 @@ def main():
         mask=mask,
         mask_threshold=args.mask_threshold,
         recombination=args.recombination,
-        **extra_kwargs,
-        **args.extra,
+        **kwargs,
     )
 
     save_array(denoised_data, affine, args.output_file)
