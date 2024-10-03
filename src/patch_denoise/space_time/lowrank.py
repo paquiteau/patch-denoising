@@ -26,7 +26,7 @@ except ImportError:
 
 @fill_doc
 class MPPCADenoiser(BaseSpaceTimeDenoiser):
-    """Denoising using Marchenko-Pastur principal components analysis (MP-PCA) thresholding.
+    """Denoising using Marchenko-Pastur principal components analysis thresholding.
 
     Parameters
     ----------

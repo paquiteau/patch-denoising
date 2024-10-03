@@ -44,7 +44,8 @@ class PatchedArray:
 
         if self._ps.size != dimensions or step.size != dimensions:
             raise ValueError(
-                "self._ps and step must have the same number of dimensions as the input self._array."
+                "self._ps and step must have the same number of dimensions as the "
+                "input self._array."
             )
 
         # Ensure patch size is not larger than self._array size along each axis
