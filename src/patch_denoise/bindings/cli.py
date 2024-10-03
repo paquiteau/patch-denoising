@@ -2,8 +2,9 @@
 """Cli interface."""
 
 import argparse
-from pathlib import Path
 import logging
+from functools import partial
+from pathlib import Path
 
 import numpy as np
 
@@ -21,16 +22,80 @@ from patch_denoise import __version__
 DENOISER_NAMES = ", ".join(d for d in DENOISER_MAP if d)
 
 
+def _path_exists(path, parser):
+    """Ensure a given path exists."""
+    if path is None or not Path(path).exists():
+        raise parser.error(f"Path does not exist: <{path}>.")
+    return Path(path).absolute()
+
+
+def _is_file(path, parser):
+    """Ensure a given path exists and it is a file."""
+    path = _path_exists(path, parser)
+    if not path.is_file():
+        raise parser.error(
+            f"Path should point to a file (or symlink of file): <{path}>."
+        )
+    return path
+
+
+def _positive_int(string, is_parser=True):
+    """Check if argument is an integer >= 0."""
+    error = argparse.ArgumentTypeError if is_parser else ValueError
+    try:
+        intarg = int(string)
+    except ValueError:
+        msg = "Argument must be a nonnegative integer."
+        raise error(msg) from None
+
+    if intarg < 0:
+        raise error("Int argument must be nonnegative.")
+    return intarg
+
+
+class ToDict(argparse.Action):
+    """A custom argparse "store" action to handle a list of key=value pairs."""
+
+    def __call__(self, parser, namespace, values, option_string=None):  # noqa: U100
+        """Call the argument."""
+        d = {}
+        for spec in values:
+            try:
+                key, value = spec.split("=")
+            except ValueError:
+                raise ValueError(
+                    "Extra arguments must be in the form key=value."
+                ) from None
+
+            # Convert any float-like values to float
+            try:
+                value = float(value)
+            except ValueError:
+                pass
+
+            d[key] = value
+        setattr(namespace, self.dest, d)
+
+
 def parse_args():
     """Parse input arguments."""
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("input_file", help="Input (noisy) file.", type=Path)
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    IsFile = partial(_is_file, parser=parser)
+    PositiveInt = partial(_positive_int, is_parser=True)
+
+    parser.add_argument(
+        "input_file",
+        help="Input (noisy) file.",
+        type=IsFile,
+    )
     parser.add_argument(
         "output_file",
         nargs="?",
         default=None,
         type=Path,
-        help=("Output (denoised) file.\n" "default is D<input_file_name>"),
+        help=("Output (denoised) file.\nDefault is D<input_file_name>."),
     )
 
     parser.add_argument("--version", action="version", version=__version__)
@@ -42,7 +107,7 @@ def parse_args():
         "--method",
         help=(
             "Denoising method.\n"
-            f"Available denoising methods:\n  {DENOISER_NAMES}\n"
+            f"Available denoising methods:\n  {DENOISER_NAMES}.\n"
             "This parameter is mutually exclusive with --conf."
         ),
         choices=DENOISER_MAP,
@@ -50,40 +115,43 @@ def parse_args():
     )
 
     denoising_group.add_argument(
-        "--patch-size",
+        "--patch-shape",
         help=(
-            "Patch size. \n"
-            "If int, this is the size of the patch in each dimension. \n"
-            "If not specified, the default value is used. \n"
-            "Note: setting a low aspect ratio will increase the number of patch to be"
-            "processed, and will increase memory usage and computation times. "
+            "Patch shape.\n"
+            "If int, this is the size of the patch in each dimension.\n"
+            "If not specified, the default value is used.\n"
+            "Note: setting a low aspect ratio will increase the number of "
+            "patches to be processed, "
+            "and will increase memory usage and computation times.\n"
             "This parameter should be used in conjunction with --method and "
             "is mutually exclusive with --conf."
         ),
         default=11,
-        type=int,
+        type=PositiveInt,
+        metavar="INT",
     )
     denoising_group.add_argument(
         "--patch-overlap",
         help=(
-            "Patch overlap. \n"
-            "If int, this is the size of the overlap in each dimension. \n"
-            "If not specified, the default value is used. \n"
-            "Note: setting a low overlap will increase the number of patch to be "
-            "processed, and will increase memory usage and computation times. "
+            "Patch overlap.\n"
+            "If int, this is the size of the overlap in each dimension.\n"
+            "If not specified, the default value is used.\n"
+            "Note: setting a low overlap will increase the number of patches "
+            "to be processed, "
+            "and will increase memory usage and computation times.\n"
             "This parameter should be used in conjunction with --method and "
             "is mutually exclusive with --conf."
         ),
         default=5,
-        type=int,
+        type=PositiveInt,
+        metavar="INT",
     )
     denoising_group.add_argument(
         "--recombination",
         help=(
-            "Recombination method. \n"
-            "If 'mean', the mean of the overlapping patches is used. \n"
-            "If 'weighted', the weighted mean of the overlapping patches is used. \n"
-            "If not specified, the default value is used. "
+            "Recombination method.\n"
+            "If 'mean', the mean of the overlapping patches is used.\n"
+            "If 'weighted', the weighted mean of the overlapping patches is used.\n"
             "This parameter should be used in conjunction with --method and "
             "is mutually exclusive with --conf."
         ),
@@ -91,22 +159,37 @@ def parse_args():
         choices=["mean", "weighted"],
     )
     denoising_group.add_argument(
-        "--extra",
-        metavar="key=value",
-        default=None,
-        nargs="*",
-        help="extra key=value arguments for denoising methods.",
+        "--mask-threshold",
+        help=(
+            "Mask threshold.\n"
+            "If int, this is the threshold for the mask.\n"
+            "If not specified, the default value is used.\n"
+            "This parameter should be used in conjunction with --method and "
+            "is mutually exclusive with --conf."
+        ),
+        default=10,
+        type=int,
+        metavar="INT",
     )
     conf_vs_separate.add_argument(
         "--conf",
         help=(
             "Denoising configuration.\n"
-            "Format should be <name>_<patch-size>_<patch-overlap>_<recombination>.\n"
+            "Format should be "
+            "<name>_<patch-size>_<patch-overlap>_<recombination>_<mask_threshold>.\n"
             "See Documentation of 'DenoiseParameter.from_str' for full specification.\n"
-            f"Available denoising methods:\n  {DENOISER_NAMES}\n"
+            f"Available denoising methods:\n  {DENOISER_NAMES}.\n"
             "This parameter is mutually exclusive with --method."
         ),
         default=None,
+    )
+    denoising_group.add_argument(
+        "--extra",
+        metavar="key=value",
+        default=None,
+        nargs="+",
+        help="extra key=value arguments for denoising methods.",
+        action=ToDict,
     )
 
     data_group = parser.add_argument_group("Additional input data")
@@ -123,16 +206,16 @@ def parse_args():
         "--noise-map",
         metavar="FILE",
         default=None,
-        type=Path,
+        type=IsFile,
         help="noise map estimation file",
     )
     data_group.add_argument(
         "--input-phase",
         metavar="FILE",
         default=None,
-        type=Path,
+        type=IsFile,
         help=(
-            "Phase of the input data. This MUST be in radian. "
+            "Phase of the input data. This MUST be in radians. "
             "No conversion would be applied."
         ),
     )
@@ -179,16 +262,7 @@ def parse_args():
     if args.output_file is None:
         args.output_file = args.input_file.with_stem("D" + args.input_file.stem)
 
-    if args.extra:
-        key_values = [kv.split("=") for kv in args.extra]
-        args.extra = {}
-        for k, v in key_values:
-            try:
-                v = float(v)
-            except ValueError:
-                pass
-            args.extra[k] = v
-    else:
+    if not args.extra:
         args.extra = {}
 
     levels = [logging.WARNING, logging.INFO, logging.DEBUG]
@@ -233,19 +307,28 @@ def main():
                 "Affine matrix of input and noise map does not match", stacklevel=2
             )
 
-    d_par = DenoiseParameters.from_str(args.conf)
+    # Parse configuration string instead of defining each parameter separately
+    if args.conf is not None:
+        d_par = DenoiseParameters.from_str(args.conf)
+        args.method = d_par.method
+        args.patch_shape = d_par.patch_shape
+        args.patch_overlap = d_par.patch_overlap
+        args.recombination = d_par.recombination
+        args.mask_threshold = d_par.mask_threshold
+
     if isinstance(args.time_slice, str):
         if args.time_slice.endswith("x"):
             t = float(args.time_slice[:-1])
-            t = int(d_par ** (input_data.ndim - 1) / t)
+            t = int(args.patch_shape ** (input_data.ndim - 1) / t)
         else:
             t = int(args.time_slice)
-        d_par.patch_shape = (d_par.patch_shape,) * (input_data.ndim - 1) + (t,)
-    print(d_par)
-    denoise_func = DENOISER_MAP[d_par.method]
+
+        args.patch_shape = (args.patch_shape,) * (input_data.ndim - 1) + (t,)
+
+    denoise_func = DENOISER_MAP[args.method]
     extra_kwargs = dict()
 
-    if d_par.method in [
+    if args.method in [
         "nordic",
         "hybrid-pca",
         "adaptive-qut",
@@ -257,11 +340,11 @@ def main():
 
     denoised_data, patchs_weight, noise_std_map, rank_map = denoise_func(
         input_data,
-        patch_shape=d_par.patch_shape,
-        patch_overlap=d_par.patch_overlap,
+        patch_shape=args.patch_shape,
+        patch_overlap=args.patch_overlap,
         mask=mask,
-        mask_threshold=d_par.mask_threshold,
-        recombination=d_par.recombination,
+        mask_threshold=args.mask_threshold,
+        recombination=args.recombination,
         **extra_kwargs,
         **args.extra,
     )
