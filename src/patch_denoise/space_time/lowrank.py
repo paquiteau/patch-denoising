@@ -1,4 +1,5 @@
-"""Low Rank  methods."""
+"""Low Rank methods."""
+
 from types import MappingProxyType
 
 import numpy as np
@@ -9,7 +10,7 @@ from .base import BaseSpaceTimeDenoiser, PatchedArray
 from .utils import (
     eig_analysis,
     eig_synthesis,
-    marshenko_pastur_median,
+    marchenko_pastur_median,
     svd_analysis,
     svd_synthesis,
 )
@@ -25,7 +26,7 @@ except ImportError:
 
 @fill_doc
 class MPPCADenoiser(BaseSpaceTimeDenoiser):
-    """Denoising using the MP-PCA threshoding.
+    """Denoising using Marchenko-Pastur principal components analysis thresholding.
 
     Parameters
     ----------
@@ -127,7 +128,7 @@ class RawSVDDenoiser(BaseSpaceTimeDenoiser):
     ----------
     $patch_config
     threshold_vlue: float
-        treshold value for the singular values.
+        threshold value for the singular values.
     """
 
     def __init__(
@@ -180,7 +181,7 @@ class RawSVDDenoiser(BaseSpaceTimeDenoiser):
 
         # Equation (3) in Manjon 2013
 
-        return p_new, maxidx, np.NaN
+        return p_new, maxidx, np.nan
 
 
 @fill_doc
@@ -204,7 +205,7 @@ class NordicDenoiser(RawSVDDenoiser):
     ):
         """Denoise using the NORDIC method.
 
-        Along with the input data a noise stp map or value should be provided.
+        Along with the input data a noise std map or value should be provided.
 
         Parameters
         ----------
@@ -291,7 +292,7 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
     ----------
     $patch_config
     loss: str
-        The loss determines the choise of the optimal thresholding function
+        The loss determines the choice of the optimal thresholding function
         associated to it. The losses `"fro"`, `"nuc"` and `"op"` are supported,
         for the frobenius, nuclear and operator norm, respectively.
     """
@@ -335,7 +336,7 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         $mask_config
         $noise_std
         loss: str
-            The loss for which the optimal thresholding is perform.
+            The loss for which the optimal thresholding is performed.
         eps_marshenko_pastur: float
             The precision with which the optimal threshold is computed.
 
@@ -345,7 +346,7 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
 
         Notes
         -----
-        Reimplement of the original Matlab code [#]_ in python.
+        Reimplementation of the original Matlab code [#]_ in python.
 
         References
         ----------
@@ -356,7 +357,7 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         """
         p_s, p_o = self._get_patch_param(input_data.shape)
 
-        self.input_denoising_kwargs["mp_median"] = marshenko_pastur_median(
+        self.input_denoising_kwargs["mp_median"] = marchenko_pastur_median(
             beta=input_data.shape[-1] / np.prod(p_s),
             eps=eps_marshenko_pastur,
         )
@@ -402,7 +403,7 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
             maxidx = 0
             p_new = np.zeros_like(patch) + p_tmean
 
-        return p_new, maxidx, np.NaN
+        return p_new, maxidx, np.nan
 
 
 def _sure_atn_cost(X, method, sing_vals, gamma, sigma=None, tau=None):
@@ -500,7 +501,7 @@ def _get_gamma_tau(patch, sing_vals, stdest, method, gamma0, tau0):
 
     if tau0 is None:
         tau0 = np.log(np.median(sing_vals))
-    cost_glob = np.Inf
+    cost_glob = np.inf
     for g in gamma0:
         res_opti = minimize(
             lambda x: _sure_atn_cost(
@@ -630,4 +631,4 @@ class AdaptiveDenoiser(BaseSpaceTimeDenoiser):
             maxidx = 0
             p_new = np.zeros_like(patch) + p_tmean
 
-        return p_new, maxidx, np.NaN
+        return p_new, maxidx, np.nan

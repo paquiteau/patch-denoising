@@ -49,7 +49,7 @@ class LLRDenoiserOperator(ProximityParent):
             **kwargs,
         )
         self.op = self._op_method
-        self.cost = lambda *args, **kw: np.NaN
+        self.cost = lambda *args, **kw: np.nan
         self.time_dimension = time_dimension
 
     def _op_method(self, data, **kwargs):
