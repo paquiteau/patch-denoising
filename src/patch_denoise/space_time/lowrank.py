@@ -181,7 +181,7 @@ class RawSVDDenoiser(BaseSpaceTimeDenoiser):
 
         # Equation (3) in Manjon 2013
 
-        return p_new, maxidx, np.NaN
+        return p_new, maxidx, np.nan
 
 
 @fill_doc
@@ -403,7 +403,7 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
             maxidx = 0
             p_new = np.zeros_like(patch) + p_tmean
 
-        return p_new, maxidx, np.NaN
+        return p_new, maxidx, np.nan
 
 
 def _sure_atn_cost(X, method, sing_vals, gamma, sigma=None, tau=None):
@@ -631,4 +631,4 @@ class AdaptiveDenoiser(BaseSpaceTimeDenoiser):
             maxidx = 0
             p_new = np.zeros_like(patch) + p_tmean
 
-        return p_new, maxidx, np.NaN
+        return p_new, maxidx, np.nan
