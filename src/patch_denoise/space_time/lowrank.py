@@ -501,7 +501,7 @@ def _get_gamma_tau(patch, sing_vals, stdest, method, gamma0, tau0):
 
     if tau0 is None:
         tau0 = np.log(np.median(sing_vals))
-    cost_glob = np.Inf
+    cost_glob = np.inf
     for g in gamma0:
         res_opti = minimize(
             lambda x: _sure_atn_cost(
