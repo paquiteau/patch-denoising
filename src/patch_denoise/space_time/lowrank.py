@@ -1,4 +1,5 @@
-"""Low Rank  methods."""
+"""Low Rank methods."""
+
 from types import MappingProxyType
 
 import numpy as np
@@ -9,7 +10,7 @@ from .base import BaseSpaceTimeDenoiser, PatchedArray
 from .utils import (
     eig_analysis,
     eig_synthesis,
-    marshenko_pastur_median,
+    marchenko_pastur_median,
     svd_analysis,
     svd_synthesis,
 )
@@ -25,7 +26,7 @@ except ImportError:
 
 @fill_doc
 class MPPCADenoiser(BaseSpaceTimeDenoiser):
-    """Denoising using the MP-PCA threshoding.
+    """Denoising using Marchenko-Pastur principal components analysis (MP-PCA) thresholding.
 
     Parameters
     ----------
@@ -127,7 +128,7 @@ class RawSVDDenoiser(BaseSpaceTimeDenoiser):
     ----------
     $patch_config
     threshold_vlue: float
-        treshold value for the singular values.
+        threshold value for the singular values.
     """
 
     def __init__(
@@ -204,7 +205,7 @@ class NordicDenoiser(RawSVDDenoiser):
     ):
         """Denoise using the NORDIC method.
 
-        Along with the input data a noise stp map or value should be provided.
+        Along with the input data a noise std map or value should be provided.
 
         Parameters
         ----------
@@ -356,7 +357,7 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         """
         p_s, p_o = self._get_patch_param(input_data.shape)
 
-        self.input_denoising_kwargs["mp_median"] = marshenko_pastur_median(
+        self.input_denoising_kwargs["mp_median"] = marchenko_pastur_median(
             beta=input_data.shape[-1] / np.prod(p_s),
             eps=eps_marshenko_pastur,
         )

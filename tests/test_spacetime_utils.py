@@ -8,7 +8,7 @@ from patch_denoise.space_time.utils import (
     eig_analysis,
     eig_synthesis,
     estimate_noise,
-    marshenko_pastur_median,
+    marchenko_pastur_median,
     svd_analysis,
     svd_synthesis,
 )
@@ -55,7 +55,7 @@ def test_marshenko_pastur_median(beta, rng, n_runs=10000, n_samples=1000):
         else:
             return 0
 
-    integral_median = marshenko_pastur_median(beta, eps=1e-7)
+    integral_median = marchenko_pastur_median(beta, eps=1e-7)
 
     vals = np.linspace(beta_m, beta_p, n_samples)
     proba = np.array(list(map(f, vals)))

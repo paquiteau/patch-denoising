@@ -1,10 +1,10 @@
-LLR Denosing methods
+LLR Denoising Methods
 =====================
 
 Patch-denoise implemement several local-low-rank methods, based on singular values thresholding.
 
 
-Singular Value thresholding
+Singular Value Thresholding
 ---------------------------
 
 General Procedure
