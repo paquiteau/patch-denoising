@@ -77,8 +77,7 @@ class ToDict(argparse.Action):
         setattr(namespace, self.dest, d)
 
 
-def parse_args():
-    """Parse input arguments."""
+def _get_parser():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
@@ -255,7 +254,12 @@ def parse_args():
         default=0,
         help="Increase verbosity level. You can provide multiple times (e.g., -vvv).",
     )
+    return parser
 
+
+def parse_args():
+    """Parse input arguments."""
+    parser = _get_parser()
     args = parser.parse_args()
 
     # default value for output.
