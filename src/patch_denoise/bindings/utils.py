@@ -1,6 +1,9 @@
 """Common utilities for bindings."""
-from dataclasses import dataclass
+
+from __future__ import annotations
+
 import logging
+from dataclasses import dataclass
 
 import numpy as np
 

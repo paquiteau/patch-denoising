@@ -58,11 +58,11 @@ exclude_lines = ["pragma: no cover", "raise NotImplementedError"]
 #linting using ruff
 [tool.ruff]
 src = ["src", "tests"]
-select = ["E", "F", "B", "Q", "UP", "D"]
 
 [tool.ruff.lint]
 ignore = ["B905"]
 exclude = ["examples/", "tests/"]
+select = ["E", "F", "B", "Q", "UP", "D"]
 
 [tool.ruff.lint.pydocstyle]
 convention="numpy"
