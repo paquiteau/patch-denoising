@@ -76,7 +76,7 @@ def test_noise_estimation(block_dim):
     The mean patch-wise standard deviation should be close to the overall
     standard deviation.
     """
-    for seed in range(10):
+    for seed in range(15):
         print(f"Seed: {seed}")
         rng = np.random.RandomState(seed)
         medium_random_matrix = rng.randn(200, 200, 100)
