@@ -71,11 +71,17 @@ def test_marshenko_pastur_median(beta, rng, n_runs=10000, n_samples=1000):
 
 @pytest.mark.parametrize("block_dim", range(5, 10))
 def test_noise_estimation(medium_random_matrix, block_dim):
-    """Test noise estimation."""
-    noise_map = estimate_noise(medium_random_matrix, block_dim)
+    """Test noise estimation.
 
+    The mean patch-wise standard deviation should be close to the overall
+    standard deviation.
+    """
+    noise_map = estimate_noise(medium_random_matrix, block_dim)
+    print(np.nanmean(noise_map))
     real_std = np.nanstd(medium_random_matrix)
+    print(real_std)
     err = np.nanmean(noise_map - real_std)
+    print(err)
     assert err <= 0.1 * real_std
 
 
