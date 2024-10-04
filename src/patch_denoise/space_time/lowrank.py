@@ -40,7 +40,7 @@ class MPPCADenoiser(BaseSpaceTimeDenoiser):
         self.input_denoising_kwargs["threshold_scale"] = threshold_scale
 
     def _patch_processing(self, patch, patch_idx=None, threshold_scale=1.0):
-        """Process a pach with the MP-PCA method."""
+        """Process a patch with the MP-PCA method."""
         p_center, eig_vals, eig_vec, p_tmean = eig_analysis(patch)
         maxidx = 0
         meanvar = np.mean(eig_vals)
@@ -102,7 +102,7 @@ class HybridPCADenoiser(BaseSpaceTimeDenoiser):
         return super().denoise(input_data, mask, mask_threshold, progbar=progbar)
 
     def _patch_processing(self, patch, patch_idx=None, var_apriori=None):
-        """Process a pach with the Hybrid-PCA method."""
+        """Process a patch with the Hybrid-PCA method."""
         varest = np.mean(var_apriori.get_patch(patch_idx))
         p_center, eig_vals, eig_vec, p_tmean = eig_analysis(patch)
         maxidx = 0
@@ -168,7 +168,7 @@ class RawSVDDenoiser(BaseSpaceTimeDenoiser):
         return super().denoise(input_data, mask, mask_threshold, progbar=progbar)
 
     def _patch_processing(self, patch, patch_idx=None, **kwargs):
-        """Process a pach with the simple SVT method."""
+        """Process a patch with the simple SVT method."""
         # Centering for better precision in SVD
         u_vec, s_values, v_vec, p_tmean = svd_analysis(patch)
 

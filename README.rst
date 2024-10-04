@@ -39,7 +39,7 @@ It includes several local-low-rank based denoising methods (see the `documentati
 4. Optimal Thresholding
 5. Raw Singular Value Thresholding
 
-A mathematical description of theses methods is available in the documentation.
+A mathematical description of these methods is available in the documentation.
 
 
 
@@ -58,7 +58,7 @@ After installing you can use the ``patch-denoise`` command-line.
 
    $ patch-denoise input_file.nii output_file.nii --mask="auto"
 
-See ``patch-denoise --help`` for detailled options.
+See ``patch-denoise --help`` for detailed options.
 
 Documentation and Examples
 ==========================
