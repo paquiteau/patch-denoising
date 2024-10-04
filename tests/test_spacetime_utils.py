@@ -76,12 +76,14 @@ def test_noise_estimation(medium_random_matrix, block_dim):
     The mean patch-wise standard deviation should be close to the overall
     standard deviation.
     """
+    print(f"Max of raw: {np.nanmax(medium_random_matrix)}")
+    print(f"Min of raw: {np.nanmin(medium_random_matrix)}")
     noise_map = estimate_noise(medium_random_matrix, block_dim)
-    print(np.nanmean(noise_map))
+    print(f"Mean of noise map: {np.nanmean(noise_map)}")
     real_std = np.nanstd(medium_random_matrix)
-    print(real_std)
+    print(f"SD of raw: {real_std}")
     err = np.nanmean(noise_map - real_std)
-    print(err)
+    print(f"Err: {err}")
     assert err <= 0.1 * real_std
 
 

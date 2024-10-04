@@ -238,7 +238,5 @@ def estimate_noise(noise_sequence, block_size=1):
         )
         # Set the value of the voxel in the center of the patch to the SD of
         # the patch
-        patch_data = noise_sequence[patch_slice]
-        print(patch_data.shape)
         noise_map[patch_center_img] = np.std(noise_sequence[patch_slice])
     return noise_map
