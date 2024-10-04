@@ -12,5 +12,7 @@
 
    api
    denoisers
-   auto_examples/index
    usage
+
+
+.. auto_examples/index
