@@ -46,7 +46,7 @@ A mathematical description of these methods is available in the documentation.
 Installation
 ============
 
-patch-denoise requires Python>=3.8
+patch-denoise requires Python>=3.9
 
 
 Quickstart
