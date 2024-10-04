@@ -70,21 +70,27 @@ def test_marshenko_pastur_median(beta, rng, n_runs=10000, n_samples=1000):
 
 
 @pytest.mark.parametrize("block_dim", range(5, 10))
-def test_noise_estimation(medium_random_matrix, block_dim):
+def test_noise_estimation(block_dim):
     """Test noise estimation.
 
     The mean patch-wise standard deviation should be close to the overall
     standard deviation.
     """
-    print(f"Max of raw: {np.nanmax(medium_random_matrix)}")
-    print(f"Min of raw: {np.nanmin(medium_random_matrix)}")
-    noise_map = estimate_noise(medium_random_matrix, block_dim)
-    print(f"Mean of noise map: {np.nanmean(noise_map)}")
-    real_std = np.nanstd(medium_random_matrix)
-    print(f"SD of raw: {real_std}")
-    err = np.nanmean(noise_map - real_std)
-    print(f"Err: {err}")
-    assert err <= 0.1 * real_std
+    for seed in range(10):
+        print(f"Seed: {seed}")
+        rng = np.random.RandomState(seed)
+        medium_random_matrix = rng.randn(200, 200, 100)
+        print(f"Mean of raw: {np.nanmean(medium_random_matrix)}")
+        print(f"Max of raw: {np.nanmax(medium_random_matrix)}")
+        print(f"Min of raw: {np.nanmin(medium_random_matrix)}")
+
+        noise_map = estimate_noise(medium_random_matrix, block_dim)
+        print(f"Mean of noise map: {np.nanmean(noise_map)}")
+        real_std = np.nanstd(medium_random_matrix)
+        print(f"SD of raw: {real_std}")
+        err = np.nanmean(noise_map - real_std)
+        print(f"Err: {err}")
+        assert err <= 0.1 * real_std
 
 
 @parametrize_random_matrix
