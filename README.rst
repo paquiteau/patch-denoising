@@ -39,7 +39,7 @@ It includes several local-low-rank based denoising methods (see the `documentati
 4. Optimal Thresholding
 5. Raw Singular Value Thresholding
 
-A mathematical description of theses methods is available in the documentation.
+A mathematical description of these methods is available in the documentation.
 
 
 
