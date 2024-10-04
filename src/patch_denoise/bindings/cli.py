@@ -49,7 +49,7 @@ def parse_args():
             "Slice across time. \n"
             "If <N>x the patch will be N times longer in space than in time \n"
             "If int, this is the size of the time dimension patch. \n"
-            "If not specified, the whole time serie is used. \n"
+            "If not specified, the whole time series is used. \n"
             "Note: setting a low aspect ratio will increase the number of patch to be"
             "processed, and will increase memory usage and computation times."
         ),

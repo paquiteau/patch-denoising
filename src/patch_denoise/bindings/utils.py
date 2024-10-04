@@ -114,7 +114,7 @@ class DenoiseParameters:
 
 
 def load_as_array(input):
-    """Load a file as a numpy array, and return affine matrix if avaiable."""
+    """Load a file as a numpy array, and return affine matrix if available."""
     import nibabel as nib
 
     if input is None:

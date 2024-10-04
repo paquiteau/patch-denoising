@@ -1,6 +1,6 @@
 [project]
 name = "patch-denoise"
-description = "Denoising method for sequence of images or volumes. Primarly targeting fMRI data."
+description = "Denoising method for sequence of images or volumes. Primarily targeting fMRI data."
 authors = [{name="Pierre-antoine Comby", email="pierre-antoine.comby@crans.org"}]
 
 readme = "README.rst"
@@ -30,7 +30,7 @@ classifiers = [
 [project.optional-dependencies]
 optional = ["modopt", "nipype", "numba"]
 test = ["pytest", "pytest-cov", "pytest-xdist", "pytest-sugar"]
-# sphinx 6 failes with pydata, sphinx 5 with sphinx gallery...
+# sphinx 6 fails with pydata, sphinx 5 with sphinx gallery...
 doc = ["pydata-sphinx-theme", "numpydoc", "sphinx_gallery", "sphinx<5"]
 dev = ["black", "isort", "ruff"]
 

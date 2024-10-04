@@ -1,7 +1,7 @@
 LLR Denoising Methods
 =====================
 
-Patch-denoise implemement several local-low-rank methods, based on singular values thresholding.
+Patch-denoise implement several local-low-rank methods, based on singular values thresholding.
 
 
 Singular Value Thresholding
