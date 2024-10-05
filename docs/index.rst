@@ -14,5 +14,4 @@
    denoisers
    usage
 
-
-.. auto_examples/index
+   .. auto_examples/index

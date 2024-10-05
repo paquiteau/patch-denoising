@@ -1,5 +1,5 @@
 ############
-command line
+Command line
 ############
 
 ``patch-denoise`` minimally requires a path to a NIfTI file,
