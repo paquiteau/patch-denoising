@@ -36,7 +36,7 @@ version = ".".join(release.split(".")[:2])
 extensions = [
     "sphinx.ext.duration",
     "sphinx.ext.autodoc",
-    # "sphinx.ext.autosummary",
+    "sphinx.ext.autosummary",
     "sphinx.ext.doctest",
     "sphinx.ext.intersphinx",
     "sphinx.ext.mathjax",

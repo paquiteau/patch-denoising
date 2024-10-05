@@ -1,9 +1,9 @@
 API Reference
 =============
 
-.. .. autosummary::
-..    :toctree: _autosummary
-..    :template: custom-module-template.rst
-..    :recursive:
+.. autosummary::
+    :toctree: _autosummary
+    :template: custom-module-template.rst
+    :recursive:
 
-..     patch_denoise
+    patch_denoise

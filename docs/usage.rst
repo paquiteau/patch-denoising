@@ -1,6 +1,6 @@
-#########################################
-Using patch-denoise from the command line
-#########################################
+############
+command line
+############
 
 ``patch-denoise`` minimally requires a path to a NIfTI file,
 but it can take advantage of reconstructed phase data and/or noise volumes.
