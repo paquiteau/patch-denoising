@@ -1,7 +1,6 @@
 ---
 name: Update precommit hooks
 
-
 on:
 
 # Uses the cron schedule for github actions
@@ -27,12 +26,9 @@ on:
 jobs:
     update_precommit_hooks:
 
-    # only run on upstream repo
-        if: github.repository_owner == 'nilearn'
-
         runs-on: ubuntu-latest
         steps:
-        -   name: Checkout nilearn
+        -   name: Checkout
             uses: actions/checkout@v4
         -   name: Set up Python
             uses: actions/setup-python@v5
@@ -51,4 +47,3 @@ jobs:
                 token: ${{ secrets.GITHUB_TOKEN }}
                 delete-branch: true
                 title: '[BOT] update pre-commit hooks'
-                body: done via this [GitHub Action](https://github.com/${{ github.repository_owner }}/nilearn/blob/main/.github/workflows/update_precommit_hooks.yml)
