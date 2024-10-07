@@ -53,7 +53,6 @@ jobs:
     name: Deploy API Documentation
     runs-on: ubuntu-latest
     if: success()
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -70,19 +69,20 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install .[optional,doc]
-
       - name: Build API documentation
         run: make -C docs html
-
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           # Upload entire repository
           path: 'build'
-
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          publish_branch: gh-pages
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/build/
+          force_orphan: true
 
   build-n-publish:
     name: Build and publish Python 🐍 distributions 📦 to TestPyPI
