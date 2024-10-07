@@ -4,13 +4,13 @@ import runpy
 import pytest
 
 
-def pytest_collect_file(path, parent):
+def pytest_collect_file(file_path: Path, parent):
     """Pytest hook.
 
     Create a collector for the given path, or None if not relevant.
     The new node needs to have the specified parent as parent.
     """
-    p = Path(path)
+    p = Path(file_path)
     if p.suffix == ".py" and "example" in p.name:
         return Script.from_parent(parent, path=p, name=p.name)
 
