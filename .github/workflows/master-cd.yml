@@ -64,7 +64,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.12"
       - name: Install dependencies
         shell: bash -l {0}
         run: |
@@ -72,14 +72,13 @@ jobs:
           python -m pip install .[optional,doc]
 
       - name: Build API documentation
-        run: |
-          python -m sphinx docs docs_build
+        run: make -C docs html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           # Upload entire repository
-          path: 'docs_build'
+          path: 'build'
 
       - name: Deploy to GitHub Pages
         id: deployment
