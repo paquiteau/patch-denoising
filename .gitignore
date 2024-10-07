@@ -1,6 +1,7 @@
 .DS_Store
 .idea
 *.log
+sg_execution_times.rst
 tmp/
 
 *_cache/

@@ -46,6 +46,10 @@ A mathematical description of these methods is available in the documentation.
 Installation
 ============
 
+.. code::
+
+   $ pip install patch-denoise
+
 patch-denoise requires Python>=3.9
 
 
