@@ -18,27 +18,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
-      - name: Black setup
-        shell: bash
-        run: pip install black ruff
-      - name: Black Check
-        shell: bash
-        run: black . --diff --color
-      - name: ruff Check
-        shell: bash
-        run: ruff check src
-
-  codespell:
-    name: Check for spelling errors
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Annotate locations with typos
-        uses: codespell-project/codespell-problem-matcher@v1
-      - name: Codespell
-        uses: codespell-project/actions-codespell@v2
+      - uses: pre-commit/action@v3.0.1
 
   test-suite:
     runs-on: ${{ matrix.os }}
