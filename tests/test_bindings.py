@@ -10,12 +10,12 @@ MODOPT_AVAILABLE = True
 NIPYPE_AVAILABLE = True
 try:
     import modopt
-except ImportError as e:
+except ImportError:
     MODOPT_AVAILABLE = False
 try:
-    import nipype
     import nibabel as nib
-except ImportError as e:
+    import nipype
+except ImportError:
     NIPYPE_AVAILABLE = False
 
 from patch_denoise.bindings.modopt import LLRDenoiserOperator
@@ -45,7 +45,7 @@ def nifti_noisy_phantom(noisy_phantom, tmpdir_factory):
 
 
 def test_modopt(noisy_phantom, denoised_ref):
-    """test the Modopt Operator."""
+    """Test the Modopt Operator."""
     operator = LLRDenoiserOperator(
         "mp-pca",
         patch_shape=6,
@@ -91,7 +91,6 @@ def test_denoise_param():
 
 def test_nipype_mag(nifti_noisy_phantom, denoised_ref):
     """Test the Nipye Interfaces."""
-
     interface = PatchDenoise()
     interface.inputs.in_mag = nifti_noisy_phantom
     interface.inputs.denoise_str = "mp-pca_6_5_weighted"
@@ -105,7 +104,6 @@ def test_nipype_mag(nifti_noisy_phantom, denoised_ref):
 
 def test_nipype_cpx(nifti_noisy_phantom):
     """Test the Nipye Interfaces."""
-
     interface = PatchDenoise()
     interface.inputs.in_real = nifti_noisy_phantom
     interface.inputs.in_imag = nifti_noisy_phantom
@@ -123,7 +121,6 @@ def test_denoise_paramter_pretty_par():
 
 def test_denoise_parameter_pretty():
     """Test the pretty_name."""
-
     pretty_string = "optimal-fro_11_10_weighted_10"
     pretty_name = DenoiseParameters.from_str(pretty_string).pretty_name
 

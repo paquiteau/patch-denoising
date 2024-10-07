@@ -53,17 +53,21 @@ class PatchedArray:
 
         # Calculate the shape and strides of the sliding view
         grid_shape = tuple(
-            ((self._arr.shape[i] - self._ps[i]) // step[i] + 1)
-            if self._ps[i] < self._arr.shape[i]
-            else 1
+            (
+                ((self._arr.shape[i] - self._ps[i]) // step[i] + 1)
+                if self._ps[i] < self._arr.shape[i]
+                else 1
+            )
             for i in range(dimensions)
         )
         shape = grid_shape + tuple(self._ps)
         strides = (
             tuple(
-                self._arr.strides[i] * step[i]
-                if self._ps[i] < self._arr.shape[i]
-                else 0
+                (
+                    self._arr.strides[i] * step[i]
+                    if self._ps[i] < self._arr.shape[i]
+                    else 0
+                )
                 for i in range(dimensions)
             )
             + self._arr.strides

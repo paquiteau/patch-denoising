@@ -1,6 +1,8 @@
 """Configuration for testing the example scripts."""
-from pathlib import Path
+
 import runpy
+from pathlib import Path
+
 import pytest
 
 
