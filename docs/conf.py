@@ -5,6 +5,7 @@ This file only contains a selection of the most common options. For a full
 list see the documentation:
 https://www.sphinx-doc.org/en/master/usage/configuration.html
 """
+
 # -- Path setup --------------------------------------------------------------
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -43,7 +44,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",
     # "sphinx_gallery.gen_gallery",
-    "sphinxarg.ext"
+    "sphinxarg.ext",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -75,9 +76,9 @@ napoleon_include_private_with_doc = True
 sphinx_gallery_conf = {
     "examples_dirs": ["../examples/"],
     "filename_pattern": "/example_",
-    'ignore_pattern': 'conftest.py',
-    'example_extensions': {'.py'},    
-    "gallery_dirs" : ["auto_examples"],
+    "ignore_pattern": "conftest.py",
+    "example_extensions": {".py"},
+    "gallery_dirs": ["auto_examples"],
     "reference_url": {
         "numpy": "http://docs.scipy.org/doc/numpy-1.9.1",
         "scipy": "http://docs.scipy.org/doc/scipy-0.17.0/reference",
