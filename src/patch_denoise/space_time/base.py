@@ -267,7 +267,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
 
         #     # Replace all nan by mean value of patch.
         #     # FIXME this behaviour should be documented
-        #     # And ideally choosen by the user.
+        #     # And ideally chosen by the user.
 
         #     patch[np.isnan(patch)] = np.mean(patch)
         #     p_denoise, maxidx, noise_var = self._patch_processing(

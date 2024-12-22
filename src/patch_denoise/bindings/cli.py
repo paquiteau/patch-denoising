@@ -182,6 +182,7 @@ def _get_parser():
         ),
         default=None,
     )
+
     denoising_group.add_argument(
         "--extra",
         metavar="key=value",
