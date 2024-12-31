@@ -216,7 +216,7 @@ def _get_parser():
         type=IsFile,
         help=(
             "Phase of the input data. This MUST be in radians. "
-            "No conversion would be applied."
+            "No rescaling will be applied."
         ),
     )
     data_group.add_argument(
@@ -224,7 +224,10 @@ def _get_parser():
         metavar="FILE",
         default=None,
         type=IsFile,
-        help="phase component of the noise map estimation file",
+        help=(
+            "Phase component of the noise map estimation file. "
+            "This MUST be in radians. No rescaling will be applied."
+        ),
     )
 
     misc_group = parser.add_argument_group("Miscellaneous options")
