@@ -216,7 +216,17 @@ def _get_parser():
         type=IsFile,
         help=(
             "Phase of the input data. This MUST be in radians. "
-            "No conversion would be applied."
+            "No rescaling will be applied."
+        ),
+    )
+    data_group.add_argument(
+        "--noise-map-phase",
+        metavar="FILE",
+        default=None,
+        type=IsFile,
+        help=(
+            "Phase component of the noise map estimation file. "
+            "This MUST be in radians. No rescaling will be applied."
         ),
     )
 
@@ -283,17 +293,19 @@ def main():
 
     if args.input_phase is not None:
         input_data, affine = load_complex_nifti(args.input_file, args.input_phase)
-    input_data, affine = load_as_array(args.input_file)
+    else:
+        input_data, affine = load_as_array(args.input_file)
 
     kwargs = args.extra
 
     if args.nan_to_num is not None:
         input_data = np.nan_to_num(input_data, nan=args.nan_to_num)
+
     n_nans = np.isnan(input_data).sum()
     if n_nans > 0:
         logging.warning(
-            f"{n_nans}/{np.prod(input_data.shape)} voxels are NaN."
-            " You might want to use --nan-to-num=<value>",
+            f"{n_nans}/{input_data.size} voxels are NaN. "
+            "You might want to use --nan-to-num=<value>",
             stacklevel=0,
         )
 
@@ -302,14 +314,30 @@ def main():
         affine_mask = None
     else:
         mask, affine_mask = load_as_array(args.mask)
-    noise_map, affine_noise_map = load_as_array(args.noise_map)
+
+    if args.noise_map is not None and args.noise_map_phase is not None:
+        noise_map, affine_noise_map = load_complex_nifti(
+            args.noise_map,
+            args.noise_map_phase,
+        )
+    elif args.noise_map is not None:
+        noise_map, affine_noise_map = load_as_array(args.noise_map)
+    elif args.noise_map_phase is not None:
+        raise ValueError(
+            "The phase component of the noise map has been provided, "
+            "but not the magnitude."
+        )
+    else:
+        noise_map = None
+        affine_noise_map = None
 
     if affine is not None:
-        if affine_mask is not None and np.allclose(affine, affine_mask):
+        if (affine_mask is not None) and not np.allclose(affine, affine_mask):
             logging.warning(
                 "Affine matrix of input and mask does not match", stacklevel=2
             )
-        if affine_noise_map is not None and np.allclose(affine, affine_noise_map):
+
+        if (affine_noise_map is not None) and not np.allclose(affine, affine_noise_map):
             logging.warning(
                 "Affine matrix of input and noise map does not match", stacklevel=2
             )
@@ -344,7 +372,7 @@ def main():
         if noise_map is None:
             raise RuntimeError("A noise map must be specified for this method.")
 
-    denoised_data, patchs_weight, noise_std_map, rank_map = denoise_func(
+    denoised_data, _, noise_std_map, _ = denoise_func(
         input_data,
         patch_shape=args.patch_shape,
         patch_overlap=args.patch_overlap,
