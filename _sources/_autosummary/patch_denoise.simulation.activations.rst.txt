@@ -1,0 +1,31 @@
+patch\_denoise.simulation.activations
+=====================================
+
+.. automodule:: patch_denoise.simulation.activations
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+      :nosignatures:
+   
+      add_frames
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

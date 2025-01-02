@@ -1,0 +1,6 @@
+patch\_denoise.space\_time.utils.get\_patch\_locs
+=================================================
+
+.. currentmodule:: patch_denoise.space_time.utils
+
+.. autofunction:: get_patch_locs

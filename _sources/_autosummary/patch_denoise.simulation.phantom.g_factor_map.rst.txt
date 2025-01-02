@@ -1,0 +1,6 @@
+patch\_denoise.simulation.phantom.g\_factor\_map
+================================================
+
+.. currentmodule:: patch_denoise.simulation.phantom
+
+.. autofunction:: g_factor_map

@@ -1,0 +1,647 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" data-theme="light">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Command line &#8212; patch-denoise 1.4.3.dev17 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="_static/documentation_options.js?v=bd4cb489"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'usage';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="LLR Denoising Methods" href="denoisers.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="1.4" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="light">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">patch-denoise 1.4.3.dev17 documentation</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="api.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="denoisers.html">
+    LLR Denoising Methods
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#">
+    Command line
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="api.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="denoisers.html">
+    LLR Denoising Methods
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#">
+    Command line
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"></div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Command line</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="command-line">
+<h1>Command line<a class="headerlink" href="#command-line" title="Link to this heading">#</a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">patch-denoise</span></code> minimally requires a path to a NIfTI file,
+but it can take advantage of reconstructed phase data and/or noise volumes.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">patch</span><span class="o">-</span><span class="n">denoise</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">version</span><span class="p">]</span>
+                     <span class="p">[</span><span class="o">--</span><span class="n">method</span> <span class="p">{</span><span class="kc">None</span><span class="p">,</span><span class="n">mp</span><span class="o">-</span><span class="n">pca</span><span class="p">,</span><span class="n">hybrid</span><span class="o">-</span><span class="n">pca</span><span class="p">,</span><span class="n">raw</span><span class="p">,</span><span class="n">optimal</span><span class="o">-</span><span class="n">fro</span><span class="p">,</span><span class="n">optimal</span><span class="o">-</span><span class="n">fro</span><span class="o">-</span><span class="n">noise</span><span class="p">,</span><span class="n">optimal</span><span class="o">-</span><span class="n">nuc</span><span class="p">,</span><span class="n">optimal</span><span class="o">-</span><span class="n">ope</span><span class="p">,</span><span class="n">nordic</span><span class="p">,</span><span class="n">adaptive</span><span class="o">-</span><span class="n">qut</span><span class="p">}]</span>
+                     <span class="p">[</span><span class="o">--</span><span class="n">patch</span><span class="o">-</span><span class="n">shape</span> <span class="n">INT</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">patch</span><span class="o">-</span><span class="n">overlap</span> <span class="n">INT</span><span class="p">]</span>
+                     <span class="p">[</span><span class="o">--</span><span class="n">recombination</span> <span class="p">{</span><span class="n">mean</span><span class="p">,</span><span class="n">weighted</span><span class="p">}]</span> <span class="p">[</span><span class="o">--</span><span class="n">mask</span><span class="o">-</span><span class="n">threshold</span> <span class="n">INT</span><span class="p">]</span>
+                     <span class="p">[</span><span class="o">--</span><span class="n">conf</span> <span class="n">CONF</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">extra</span> <span class="n">key</span><span class="o">=</span><span class="n">value</span> <span class="p">[</span><span class="n">key</span><span class="o">=</span><span class="n">value</span> <span class="o">...</span><span class="p">]]</span>
+                     <span class="p">[</span><span class="o">--</span><span class="n">mask</span> <span class="n">FILE</span><span class="o">|</span><span class="n">auto</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">noise</span><span class="o">-</span><span class="nb">map</span> <span class="n">FILE</span><span class="p">]</span>
+                     <span class="p">[</span><span class="o">--</span><span class="nb">input</span><span class="o">-</span><span class="n">phase</span> <span class="n">FILE</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">noise</span><span class="o">-</span><span class="nb">map</span><span class="o">-</span><span class="n">phase</span> <span class="n">FILE</span><span class="p">]</span>
+                     <span class="p">[</span><span class="o">--</span><span class="n">time</span><span class="o">-</span><span class="nb">slice</span> <span class="n">TIME_SLICE</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">output</span><span class="o">-</span><span class="n">noise</span><span class="o">-</span><span class="nb">map</span> <span class="n">FILE</span><span class="p">]</span>
+                     <span class="p">[</span><span class="o">--</span><span class="n">nan</span><span class="o">-</span><span class="n">to</span><span class="o">-</span><span class="n">num</span> <span class="n">VALUE</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">v</span><span class="p">]</span>
+                     <span class="n">input_file</span> <span class="p">[</span><span class="n">output_file</span><span class="p">]</span>
+</pre></div>
+</div>
+<section id="patch_denoise.bindings.cli-_get_parser-positional-arguments">
+<h2>Positional Arguments<a class="headerlink" href="#patch_denoise.bindings.cli-_get_parser-positional-arguments" title="Link to this heading">#</a></h2>
+<dl class="option-list">
+<dt><kbd>input_file</kbd></dt>
+<dd><p>Input (noisy) file.</p>
+</dd>
+<dt><kbd>output_file</kbd></dt>
+<dd><p>Output (denoised) file.
+Default is D&lt;input_file_name&gt;.</p>
+</dd>
+</dl>
+</section>
+<section id="patch_denoise.bindings.cli-_get_parser-named-arguments">
+<h2>Named Arguments<a class="headerlink" href="#patch_denoise.bindings.cli-_get_parser-named-arguments" title="Link to this heading">#</a></h2>
+<dl class="option-list">
+<dt><kbd>--version</kbd></dt>
+<dd><p>show program’s version number and exit</p>
+</dd>
+</dl>
+</section>
+<section id="patch_denoise.bindings.cli-_get_parser-denoising-parameters">
+<h2>Denoising parameters<a class="headerlink" href="#patch_denoise.bindings.cli-_get_parser-denoising-parameters" title="Link to this heading">#</a></h2>
+<dl class="option-list">
+<dt><kbd>--method</kbd></dt>
+<dd><p>Possible choices: None, mp-pca, hybrid-pca, raw, optimal-fro, optimal-fro-noise, optimal-nuc, optimal-ope, nordic, adaptive-qut</p>
+<p>Denoising method.
+Available denoising methods:</p>
+<blockquote>
+<div><p>mp-pca, hybrid-pca, raw, optimal-fro, optimal-fro-noise, optimal-nuc, optimal-ope, nordic, adaptive-qut.</p>
+</div></blockquote>
+<p>This parameter is mutually exclusive with –conf.</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">'optimal-fro'</span></code></p>
+</dd>
+<dt><kbd>--patch-shape</kbd></dt>
+<dd><p>Patch shape.
+If int, this is the size of the patch in each dimension.
+If not specified, the default value is used.
+Note: setting a low aspect ratio will increase the number of patches to be processed, and will increase memory usage and computation times.
+This parameter should be used in conjunction with –method and is mutually exclusive with –conf.</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">11</span></code></p>
+</dd>
+<dt><kbd>--patch-overlap</kbd></dt>
+<dd><p>Patch overlap.
+If int, this is the size of the overlap in each dimension.
+If not specified, the default value is used.
+Note: setting a low overlap will increase the number of patches to be processed, and will increase memory usage and computation times.
+This parameter should be used in conjunction with –method and is mutually exclusive with –conf.</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">5</span></code></p>
+</dd>
+<dt><kbd>--recombination</kbd></dt>
+<dd><p>Possible choices: mean, weighted</p>
+<p>Recombination method.
+If ‘mean’, the mean of the overlapping patches is used.
+If ‘weighted’, the weighted mean of the overlapping patches is used.
+This parameter should be used in conjunction with –method and is mutually exclusive with –conf.</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">'weighted'</span></code></p>
+</dd>
+<dt><kbd>--mask-threshold</kbd></dt>
+<dd><p>Mask threshold.
+If int, this is the threshold for the mask.
+If not specified, the default value is used.
+This parameter should be used in conjunction with –method and is mutually exclusive with –conf.</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">10</span></code></p>
+</dd>
+<dt><kbd>--conf</kbd></dt>
+<dd><p>Denoising configuration.
+Format should be &lt;name&gt;_&lt;patch-size&gt;_&lt;patch-overlap&gt;_&lt;recombination&gt;_&lt;mask_threshold&gt;.
+See Documentation of ‘DenoiseParameter.from_str’ for full specification.
+Available denoising methods:</p>
+<blockquote>
+<div><p>mp-pca, hybrid-pca, raw, optimal-fro, optimal-fro-noise, optimal-nuc, optimal-ope, nordic, adaptive-qut.</p>
+</div></blockquote>
+<p>This parameter is mutually exclusive with –method.</p>
+</dd>
+<dt><kbd>--extra</kbd></dt>
+<dd><p>extra key=value arguments for denoising methods.</p>
+</dd>
+</dl>
+</section>
+<section id="patch_denoise.bindings.cli-_get_parser-additional-input-data">
+<h2>Additional input data<a class="headerlink" href="#patch_denoise.bindings.cli-_get_parser-additional-input-data" title="Link to this heading">#</a></h2>
+<dl class="option-list">
+<dt><kbd>--mask</kbd></dt>
+<dd><p>mask file, if auto or not provided it would be determined from the average image.</p>
+</dd>
+<dt><kbd>--noise-map</kbd></dt>
+<dd><p>noise map estimation file</p>
+</dd>
+<dt><kbd>--input-phase</kbd></dt>
+<dd><p>Phase of the input data. This MUST be in radians. No rescaling will be applied.</p>
+</dd>
+<dt><kbd>--noise-map-phase</kbd></dt>
+<dd><p>Phase component of the noise map estimation file. This MUST be in radians. No rescaling will be applied.</p>
+</dd>
+</dl>
+</section>
+<section id="patch_denoise.bindings.cli-_get_parser-miscellaneous-options">
+<h2>Miscellaneous options<a class="headerlink" href="#patch_denoise.bindings.cli-_get_parser-miscellaneous-options" title="Link to this heading">#</a></h2>
+<dl class="option-list">
+<dt><kbd>--time-slice</kbd></dt>
+<dd><p>Slice across time.
+If &lt;N&gt;x the patch will be N times longer in space than in time
+If int, this is the size of the time dimension patch.
+If not specified, the whole time series is used.
+Note: setting a low aspect ratio will increase the number of patch to beprocessed, and will increase memory usage and computation times.</p>
+</dd>
+<dt><kbd>--output-noise-map</kbd></dt>
+<dd><p>Output name for calculated noise map</p>
+</dd>
+<dt><kbd>--nan-to-num</kbd></dt>
+<dd><p>Replace NaN by the provided value.</p>
+</dd>
+<dt><kbd>-v, --verbose</kbd></dt>
+<dd><p>Increase verbosity level. You can provide multiple times (e.g., -vvv).</p>
+<p>Default: <code class="docutils literal notranslate"><span class="pre">0</span></code></p>
+</dd>
+</dl>
+</section>
+<section id="using-patch-denoise-on-bids-data">
+<h2>Using patch-denoise on BIDS data<a class="headerlink" href="#using-patch-denoise-on-bids-data" title="Link to this heading">#</a></h2>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>These examples assume that the phase data are in radians.
+If they are in arbitrary units,
+you will need to rescale them before running patch-denoise.</p>
+</div>
+<section id="magnitude-only">
+<h3>Magnitude only<a class="headerlink" href="#magnitude-only" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>patch-denoise<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>sub-01/func/sub-01_task-rest_part-mag_bold.nii.gz<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>sub-01_task-rest_part-mag_desc-denoised_bold.nii.gz<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--mask<span class="w"> </span>auto<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--method<span class="w"> </span>optimal-fro<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--patch-shape<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--patch-overlap<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--recombination<span class="w"> </span>weighted<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--mask-threshold<span class="w"> </span><span class="m">1</span>
+</pre></div>
+</div>
+</section>
+<section id="magnitude-with-noise-volumes">
+<h3>Magnitude with noise volumes<a class="headerlink" href="#magnitude-with-noise-volumes" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>patch-denoise<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>sub-01/func/sub-01_task-rest_part-mag_bold.nii.gz<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>sub-01_task-rest_part-mag_desc-denoised_bold.nii.gz<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--noise-map<span class="w"> </span>sub-01/func/sub-01_task-rest_part-mag_noRF.nii.gz<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--mask<span class="w"> </span>auto<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--method<span class="w"> </span>optimal-fro<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--patch-shape<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--patch-overlap<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--recombination<span class="w"> </span>weighted<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--mask-threshold<span class="w"> </span><span class="m">1</span>
+</pre></div>
+</div>
+</section>
+<section id="magnitude-and-phase">
+<h3>Magnitude and phase<a class="headerlink" href="#magnitude-and-phase" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>patch-denoise<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>sub-01/func/sub-01_task-rest_part-mag_bold.nii.gz<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>sub-01_task-rest_part-mag_desc-denoised_bold.nii.gz<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--input-phase<span class="w"> </span>sub-01/func/sub-01_task-rest_part-phase_bold.nii.gz<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--mask<span class="w"> </span>auto<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--method<span class="w"> </span>optimal-fro<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--patch-shape<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--patch-overlap<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--recombination<span class="w"> </span>weighted<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--mask-threshold<span class="w"> </span><span class="m">1</span>
+</pre></div>
+</div>
+</section>
+<section id="magnitude-and-phase-with-noise-volumes">
+<h3>Magnitude and phase with noise volumes<a class="headerlink" href="#magnitude-and-phase-with-noise-volumes" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>patch-denoise<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>sub-01/func/sub-01_task-rest_part-mag_bold.nii.gz<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>sub-01_task-rest_part-mag_desc-denoised_bold.nii.gz<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--input-phase<span class="w"> </span>sub-01/func/sub-01_task-rest_part-phase_bold.nii.gz<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--noise-map<span class="w"> </span>sub-01/func/sub-01_task-rest_part-mag_noRF.nii.gz<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--noise-map-phase<span class="w"> </span>sub-01/func/sub-01_task-rest_part-phase_noRF.nii.gz<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--mask<span class="w"> </span>auto<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--method<span class="w"> </span>optimal-fro<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--patch-shape<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--patch-overlap<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--recombination<span class="w"> </span>weighted<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--mask-threshold<span class="w"> </span><span class="m">1</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="denoisers.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">LLR Denoising Methods</p>
+      </div>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#patch_denoise.bindings.cli-_get_parser-positional-arguments">Positional Arguments</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#patch_denoise.bindings.cli-_get_parser-named-arguments">Named Arguments</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#patch_denoise.bindings.cli-_get_parser-denoising-parameters">Denoising parameters</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#patch_denoise.bindings.cli-_get_parser-additional-input-data">Additional input data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#patch_denoise.bindings.cli-_get_parser-miscellaneous-options">Miscellaneous options</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#using-patch-denoise-on-bids-data">Using patch-denoise on BIDS data</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#magnitude-only">Magnitude only</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#magnitude-with-noise-volumes">Magnitude with noise volumes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#magnitude-and-phase">Magnitude and phase</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#magnitude-and-phase-with-noise-volumes">Magnitude and phase with noise volumes</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/usage.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2022, Pierre-Antoine Comby.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

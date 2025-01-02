@@ -1,0 +1,6 @@
+patch\_denoise.space\_time.lowrank.sure\_atn\_cost
+==================================================
+
+.. currentmodule:: patch_denoise.space_time.lowrank
+
+.. autofunction:: sure_atn_cost

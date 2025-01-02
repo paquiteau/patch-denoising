@@ -1,0 +1,33 @@
+patch\_denoise.space\_time.base
+===============================
+
+.. automodule:: patch_denoise.space_time.base
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      BaseSpaceTimeDenoiser
+      PatchedArray
+   
+   
+
+   
+   
+   
+
+
+

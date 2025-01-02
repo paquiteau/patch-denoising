@@ -1,0 +1,86 @@
+PatchDenoiseInputSpec
+=====================
+
+.. currentmodule:: patch_denoise.bindings.nipype
+
+.. autoclass:: PatchDenoiseInputSpec
+   :members:
+   :private-members:
+   :show-inheritance:
+   :special-members: __call__, __add__, __mul__, __matmul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~PatchDenoiseInputSpec.__init__
+      ~PatchDenoiseInputSpec.add_class_trait
+      ~PatchDenoiseInputSpec.add_trait
+      ~PatchDenoiseInputSpec.add_trait_listener
+      ~PatchDenoiseInputSpec.all_trait_names
+      ~PatchDenoiseInputSpec.base_trait
+      ~PatchDenoiseInputSpec.class_default_traits_view
+      ~PatchDenoiseInputSpec.class_editable_traits
+      ~PatchDenoiseInputSpec.class_trait_names
+      ~PatchDenoiseInputSpec.class_trait_view
+      ~PatchDenoiseInputSpec.class_trait_view_elements
+      ~PatchDenoiseInputSpec.class_traits
+      ~PatchDenoiseInputSpec.class_visible_traits
+      ~PatchDenoiseInputSpec.clone_traits
+      ~PatchDenoiseInputSpec.configure_traits
+      ~PatchDenoiseInputSpec.copy_traits
+      ~PatchDenoiseInputSpec.copyable_trait_names
+      ~PatchDenoiseInputSpec.default_traits_view
+      ~PatchDenoiseInputSpec.edit_traits
+      ~PatchDenoiseInputSpec.editable_traits
+      ~PatchDenoiseInputSpec.get
+      ~PatchDenoiseInputSpec.get_hashval
+      ~PatchDenoiseInputSpec.get_traitsfree
+      ~PatchDenoiseInputSpec.has_metadata
+      ~PatchDenoiseInputSpec.has_traits_interface
+      ~PatchDenoiseInputSpec.items
+      ~PatchDenoiseInputSpec.observe
+      ~PatchDenoiseInputSpec.on_trait_change
+      ~PatchDenoiseInputSpec.on_trait_event
+      ~PatchDenoiseInputSpec.print_traits
+      ~PatchDenoiseInputSpec.remove_trait
+      ~PatchDenoiseInputSpec.remove_trait_listener
+      ~PatchDenoiseInputSpec.reset_traits
+      ~PatchDenoiseInputSpec.set
+      ~PatchDenoiseInputSpec.set_trait_dispatch_handler
+      ~PatchDenoiseInputSpec.sync_trait
+      ~PatchDenoiseInputSpec.trait
+      ~PatchDenoiseInputSpec.trait_context
+      ~PatchDenoiseInputSpec.trait_get
+      ~PatchDenoiseInputSpec.trait_items_event
+      ~PatchDenoiseInputSpec.trait_names
+      ~PatchDenoiseInputSpec.trait_property_changed
+      ~PatchDenoiseInputSpec.trait_set
+      ~PatchDenoiseInputSpec.trait_setq
+      ~PatchDenoiseInputSpec.trait_subclasses
+      ~PatchDenoiseInputSpec.trait_view
+      ~PatchDenoiseInputSpec.trait_view_elements
+      ~PatchDenoiseInputSpec.trait_views
+      ~PatchDenoiseInputSpec.traits
+      ~PatchDenoiseInputSpec.traits_init
+      ~PatchDenoiseInputSpec.traits_inited
+      ~PatchDenoiseInputSpec.validate_trait
+      ~PatchDenoiseInputSpec.visible_traits
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~PatchDenoiseInputSpec.package_version
+      ~PatchDenoiseInputSpec.wrappers
+      ~PatchDenoiseInputSpec.trait_added
+      ~PatchDenoiseInputSpec.trait_modified
+   
+   

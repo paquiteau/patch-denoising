@@ -1,0 +1,6 @@
+patch\_denoise.space\_time.utils.estimate\_noise
+================================================
+
+.. currentmodule:: patch_denoise.space_time.utils
+
+.. autofunction:: estimate_noise

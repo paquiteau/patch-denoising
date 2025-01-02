@@ -1,0 +1,34 @@
+patch\_denoise.simulation.phantom
+=================================
+
+.. automodule:: patch_denoise.simulation.phantom
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+      :nosignatures:
+   
+      g_factor_map
+      mr_ellipsoid_parameters
+      mr_shepp_logan
+      mr_shepp_logan_t2_star
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,86 @@
+NoiseStdMapInputSpec
+====================
+
+.. currentmodule:: patch_denoise.bindings.nipype
+
+.. autoclass:: NoiseStdMapInputSpec
+   :members:
+   :private-members:
+   :show-inheritance:
+   :special-members: __call__, __add__, __mul__, __matmul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~NoiseStdMapInputSpec.__init__
+      ~NoiseStdMapInputSpec.add_class_trait
+      ~NoiseStdMapInputSpec.add_trait
+      ~NoiseStdMapInputSpec.add_trait_listener
+      ~NoiseStdMapInputSpec.all_trait_names
+      ~NoiseStdMapInputSpec.base_trait
+      ~NoiseStdMapInputSpec.class_default_traits_view
+      ~NoiseStdMapInputSpec.class_editable_traits
+      ~NoiseStdMapInputSpec.class_trait_names
+      ~NoiseStdMapInputSpec.class_trait_view
+      ~NoiseStdMapInputSpec.class_trait_view_elements
+      ~NoiseStdMapInputSpec.class_traits
+      ~NoiseStdMapInputSpec.class_visible_traits
+      ~NoiseStdMapInputSpec.clone_traits
+      ~NoiseStdMapInputSpec.configure_traits
+      ~NoiseStdMapInputSpec.copy_traits
+      ~NoiseStdMapInputSpec.copyable_trait_names
+      ~NoiseStdMapInputSpec.default_traits_view
+      ~NoiseStdMapInputSpec.edit_traits
+      ~NoiseStdMapInputSpec.editable_traits
+      ~NoiseStdMapInputSpec.get
+      ~NoiseStdMapInputSpec.get_hashval
+      ~NoiseStdMapInputSpec.get_traitsfree
+      ~NoiseStdMapInputSpec.has_metadata
+      ~NoiseStdMapInputSpec.has_traits_interface
+      ~NoiseStdMapInputSpec.items
+      ~NoiseStdMapInputSpec.observe
+      ~NoiseStdMapInputSpec.on_trait_change
+      ~NoiseStdMapInputSpec.on_trait_event
+      ~NoiseStdMapInputSpec.print_traits
+      ~NoiseStdMapInputSpec.remove_trait
+      ~NoiseStdMapInputSpec.remove_trait_listener
+      ~NoiseStdMapInputSpec.reset_traits
+      ~NoiseStdMapInputSpec.set
+      ~NoiseStdMapInputSpec.set_trait_dispatch_handler
+      ~NoiseStdMapInputSpec.sync_trait
+      ~NoiseStdMapInputSpec.trait
+      ~NoiseStdMapInputSpec.trait_context
+      ~NoiseStdMapInputSpec.trait_get
+      ~NoiseStdMapInputSpec.trait_items_event
+      ~NoiseStdMapInputSpec.trait_names
+      ~NoiseStdMapInputSpec.trait_property_changed
+      ~NoiseStdMapInputSpec.trait_set
+      ~NoiseStdMapInputSpec.trait_setq
+      ~NoiseStdMapInputSpec.trait_subclasses
+      ~NoiseStdMapInputSpec.trait_view
+      ~NoiseStdMapInputSpec.trait_view_elements
+      ~NoiseStdMapInputSpec.trait_views
+      ~NoiseStdMapInputSpec.traits
+      ~NoiseStdMapInputSpec.traits_init
+      ~NoiseStdMapInputSpec.traits_inited
+      ~NoiseStdMapInputSpec.validate_trait
+      ~NoiseStdMapInputSpec.visible_traits
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~NoiseStdMapInputSpec.package_version
+      ~NoiseStdMapInputSpec.wrappers
+      ~NoiseStdMapInputSpec.trait_added
+      ~NoiseStdMapInputSpec.trait_modified
+   
+   

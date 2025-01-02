@@ -1,0 +1,32 @@
+patch\_denoise.bindings.modopt
+==============================
+
+.. automodule:: patch_denoise.bindings.modopt
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      LLRDenoiserOperator
+   
+   
+
+   
+   
+   
+
+
+

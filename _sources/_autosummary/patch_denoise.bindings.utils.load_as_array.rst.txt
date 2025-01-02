@@ -1,0 +1,6 @@
+patch\_denoise.bindings.utils.load\_as\_array
+=============================================
+
+.. currentmodule:: patch_denoise.bindings.utils
+
+.. autofunction:: load_as_array

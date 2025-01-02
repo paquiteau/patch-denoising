@@ -1,0 +1,32 @@
+patch\_denoise.simulation.noise
+===============================
+
+.. automodule:: patch_denoise.simulation.noise
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+      :nosignatures:
+   
+      add_temporal_gaussian_noise
+      add_temporal_rician_noise
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

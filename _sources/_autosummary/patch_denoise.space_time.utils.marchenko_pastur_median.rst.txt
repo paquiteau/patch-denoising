@@ -1,0 +1,6 @@
+patch\_denoise.space\_time.utils.marchenko\_pastur\_median
+==========================================================
+
+.. currentmodule:: patch_denoise.space_time.utils
+
+.. autofunction:: marchenko_pastur_median

@@ -1,0 +1,39 @@
+NoiseStdMap
+===========
+
+.. currentmodule:: patch_denoise.bindings.nipype
+
+.. autoclass:: NoiseStdMap
+   :members:
+   :private-members:
+   :show-inheritance:
+   :special-members: __call__, __add__, __mul__, __matmul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~NoiseStdMap.__init__
+      ~NoiseStdMap.aggregate_outputs
+      ~NoiseStdMap.help
+      ~NoiseStdMap.load_inputs_from_json
+      ~NoiseStdMap.run
+      ~NoiseStdMap.save_inputs_to_json
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~NoiseStdMap.always_run
+      ~NoiseStdMap.can_resume
+      ~NoiseStdMap.resource_monitor
+      ~NoiseStdMap.version
+   
+   

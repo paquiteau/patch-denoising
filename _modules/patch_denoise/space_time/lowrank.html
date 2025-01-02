@@ -1,0 +1,1068 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" data-theme="light">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>patch_denoise.space_time.lowrank &#8212; patch-denoise 1.4.3.dev17 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../_static/documentation_options.js?v=bd4cb489"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/patch_denoise/space_time/lowrank';</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="1.4" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="light">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">patch-denoise 1.4.3.dev17 documentation</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../denoisers.html">
+    LLR Denoising Methods
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../usage.html">
+    Command line
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../denoisers.html">
+    LLR Denoising Methods
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../usage.html">
+    Command line
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">patch_denoise.space_time.lowrank</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for patch_denoise.space_time.lowrank</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Low Rank methods.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">types</span> <span class="kn">import</span> <span class="n">MappingProxyType</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.linalg</span> <span class="kn">import</span> <span class="n">svd</span>
+<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">minimize</span>
+
+<span class="kn">from</span> <span class="nn">.base</span> <span class="kn">import</span> <span class="n">BaseSpaceTimeDenoiser</span><span class="p">,</span> <span class="n">PatchedArray</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">eig_analysis</span><span class="p">,</span>
+    <span class="n">eig_synthesis</span><span class="p">,</span>
+    <span class="n">marchenko_pastur_median</span><span class="p">,</span>
+    <span class="n">svd_analysis</span><span class="p">,</span>
+    <span class="n">svd_synthesis</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.._docs</span> <span class="kn">import</span> <span class="n">fill_doc</span>
+
+<span class="n">NUMBA_AVAILABLE</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">numba</span> <span class="k">as</span> <span class="nn">nb</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">NUMBA_AVAILABLE</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">pass</span>
+
+
+<div class="viewcode-block" id="MPPCADenoiser">
+<a class="viewcode-back" href="../../../_autosummary/patch_denoise.space_time.lowrank.MPPCADenoiser.html#patch_denoise.space_time.lowrank.MPPCADenoiser">[docs]</a>
+<span class="nd">@fill_doc</span>
+<span class="k">class</span> <span class="nc">MPPCADenoiser</span><span class="p">(</span><span class="n">BaseSpaceTimeDenoiser</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Denoising using Marchenko-Pastur principal components analysis thresholding.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    $patch_config</span>
+<span class="sd">    threshold_scale: float</span>
+<span class="sd">        An extra factor multiplying the threshold.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">patch_shape</span><span class="p">,</span> <span class="n">patch_overlap</span><span class="p">,</span> <span class="n">threshold_scale</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">patch_shape</span><span class="p">,</span> <span class="n">patch_overlap</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_denoising_kwargs</span><span class="p">[</span><span class="s2">&quot;threshold_scale&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">threshold_scale</span>
+
+<div class="viewcode-block" id="MPPCADenoiser._patch_processing">
+<a class="viewcode-back" href="../../../_autosummary/patch_denoise.space_time.lowrank.MPPCADenoiser.html#patch_denoise.space_time.lowrank.MPPCADenoiser._patch_processing">[docs]</a>
+    <span class="k">def</span> <span class="nf">_patch_processing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">patch</span><span class="p">,</span> <span class="n">patch_idx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">threshold_scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process a patch with the MP-PCA method.&quot;&quot;&quot;</span>
+        <span class="n">p_center</span><span class="p">,</span> <span class="n">eig_vals</span><span class="p">,</span> <span class="n">eig_vec</span><span class="p">,</span> <span class="n">p_tmean</span> <span class="o">=</span> <span class="n">eig_analysis</span><span class="p">(</span><span class="n">patch</span><span class="p">)</span>
+        <span class="n">maxidx</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">meanvar</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">eig_vals</span><span class="p">)</span>
+        <span class="n">meanvar</span> <span class="o">*=</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">eig_vals</span><span class="p">)</span> <span class="o">-</span> <span class="n">maxidx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">patch</span><span class="p">))</span>
+        <span class="k">while</span> <span class="n">maxidx</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">eig_vals</span><span class="p">)</span> <span class="ow">and</span> <span class="n">meanvar</span> <span class="o">&lt;</span> <span class="n">eig_vals</span><span class="p">[</span><span class="o">~</span><span class="n">maxidx</span><span class="p">]</span> <span class="o">-</span> <span class="n">eig_vals</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">maxidx</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">meanvar</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">eig_vals</span><span class="p">[:</span><span class="o">-</span><span class="n">maxidx</span><span class="p">])</span>
+            <span class="n">meanvar</span> <span class="o">*=</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">eig_vec</span><span class="p">)</span> <span class="o">-</span> <span class="n">maxidx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">patch</span><span class="p">))</span>
+        <span class="n">var_noise</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">eig_vals</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">eig_vals</span><span class="p">)</span> <span class="o">-</span> <span class="n">maxidx</span><span class="p">])</span>
+
+        <span class="n">maxidx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">eig_vals</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">var_noise</span> <span class="o">*</span> <span class="n">threshold_scale</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">maxidx</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">patch_new</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">patch</span><span class="p">)</span> <span class="o">+</span> <span class="n">p_tmean</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">patch_new</span> <span class="o">=</span> <span class="n">eig_synthesis</span><span class="p">(</span><span class="n">p_center</span><span class="p">,</span> <span class="n">eig_vec</span><span class="p">,</span> <span class="n">p_tmean</span><span class="p">,</span> <span class="n">maxidx</span><span class="p">)</span>
+
+        <span class="c1"># Equation (3) of Manjon 2013</span>
+
+        <span class="k">return</span> <span class="n">patch_new</span><span class="p">,</span> <span class="n">maxidx</span><span class="p">,</span> <span class="n">var_noise</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="HybridPCADenoiser">
+<a class="viewcode-back" href="../../../_autosummary/patch_denoise.space_time.lowrank.HybridPCADenoiser.html#patch_denoise.space_time.lowrank.HybridPCADenoiser">[docs]</a>
+<span class="nd">@fill_doc</span>
+<span class="k">class</span> <span class="nc">HybridPCADenoiser</span><span class="p">(</span><span class="n">BaseSpaceTimeDenoiser</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Denoising using the Hybrid-PCA thresholding method.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    $patch_config</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="HybridPCADenoiser.denoise">
+<a class="viewcode-back" href="../../../_autosummary/patch_denoise.space_time.lowrank.HybridPCADenoiser.html#patch_denoise.space_time.lowrank.HybridPCADenoiser.denoise">[docs]</a>
+    <span class="nd">@fill_doc</span>
+    <span class="k">def</span> <span class="nf">denoise</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mask_threshold</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">noise_std</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">progbar</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Denoise using the Hybrid-PCA method.</span>
+
+<span class="sd">        Along with the input data a noise std map or value should be provided.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        $input_config</span>
+<span class="sd">        $mask_config</span>
+<span class="sd">        $noise_std</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        $denoise_return</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">p_s</span><span class="p">,</span> <span class="n">p_o</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_patch_param</span><span class="p">(</span><span class="n">input_data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">noise_std</span><span class="p">,</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">)):</span>
+            <span class="n">var_apriori</span> <span class="o">=</span> <span class="n">noise_std</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">input_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">var_apriori</span> <span class="o">=</span> <span class="n">noise_std</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">var_apriori</span> <span class="o">=</span> <span class="n">PatchedArray</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">var_apriori</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">input_data</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span> <span class="n">p_s</span><span class="p">,</span> <span class="n">p_o</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_denoising_kwargs</span><span class="p">[</span><span class="s2">&quot;var_apriori&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">var_apriori</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">denoise</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">mask_threshold</span><span class="p">,</span> <span class="n">progbar</span><span class="o">=</span><span class="n">progbar</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="HybridPCADenoiser._patch_processing">
+<a class="viewcode-back" href="../../../_autosummary/patch_denoise.space_time.lowrank.HybridPCADenoiser.html#patch_denoise.space_time.lowrank.HybridPCADenoiser._patch_processing">[docs]</a>
+    <span class="k">def</span> <span class="nf">_patch_processing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">patch</span><span class="p">,</span> <span class="n">patch_idx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">var_apriori</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process a patch with the Hybrid-PCA method.&quot;&quot;&quot;</span>
+        <span class="n">varest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">var_apriori</span><span class="o">.</span><span class="n">get_patch</span><span class="p">(</span><span class="n">patch_idx</span><span class="p">))</span>
+        <span class="n">p_center</span><span class="p">,</span> <span class="n">eig_vals</span><span class="p">,</span> <span class="n">eig_vec</span><span class="p">,</span> <span class="n">p_tmean</span> <span class="o">=</span> <span class="n">eig_analysis</span><span class="p">(</span><span class="n">patch</span><span class="p">)</span>
+        <span class="n">maxidx</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">var_noise</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">eig_vals</span><span class="p">)</span>
+        <span class="k">while</span> <span class="n">var_noise</span> <span class="o">&gt;</span> <span class="n">varest</span> <span class="ow">and</span> <span class="n">maxidx</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">eig_vals</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">maxidx</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">var_noise</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">eig_vals</span><span class="p">[:</span><span class="o">-</span><span class="n">maxidx</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">maxidx</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># all eigen values are noise</span>
+            <span class="n">patch_new</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">patch</span><span class="p">)</span> <span class="o">+</span> <span class="n">p_tmean</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">patch_new</span> <span class="o">=</span> <span class="n">eig_synthesis</span><span class="p">(</span><span class="n">p_center</span><span class="p">,</span> <span class="n">eig_vec</span><span class="p">,</span> <span class="n">p_tmean</span><span class="p">,</span> <span class="n">maxidx</span><span class="p">)</span>
+        <span class="c1"># Equation (3) of Manjon2013</span>
+
+        <span class="k">return</span> <span class="n">patch_new</span><span class="p">,</span> <span class="n">maxidx</span><span class="p">,</span> <span class="n">var_noise</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="RawSVDDenoiser">
+<a class="viewcode-back" href="../../../_autosummary/patch_denoise.space_time.lowrank.RawSVDDenoiser.html#patch_denoise.space_time.lowrank.RawSVDDenoiser">[docs]</a>
+<span class="nd">@fill_doc</span>
+<span class="k">class</span> <span class="nc">RawSVDDenoiser</span><span class="p">(</span><span class="n">BaseSpaceTimeDenoiser</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Classical Patch wise singular value thresholding denoiser.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    $patch_config</span>
+<span class="sd">    threshold_vlue: float</span>
+<span class="sd">        threshold value for the singular values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">patch_shape</span><span class="p">,</span> <span class="n">patch_overlap</span><span class="p">,</span> <span class="n">threshold_value</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">recombination</span><span class="o">=</span><span class="s2">&quot;weighted&quot;</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_threshold_val</span> <span class="o">=</span> <span class="n">threshold_value</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">patch_shape</span><span class="p">,</span> <span class="n">patch_overlap</span><span class="p">,</span> <span class="n">recombination</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RawSVDDenoiser.denoise">
+<a class="viewcode-back" href="../../../_autosummary/patch_denoise.space_time.lowrank.RawSVDDenoiser.html#patch_denoise.space_time.lowrank.RawSVDDenoiser.denoise">[docs]</a>
+    <span class="nd">@fill_doc</span>
+    <span class="k">def</span> <span class="nf">denoise</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">input_data</span><span class="p">,</span>
+        <span class="n">mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">mask_threshold</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+        <span class="n">threshold_scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">progbar</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Denoise the input_data, according to mask.</span>
+
+<span class="sd">        Patches are extracted sequentially and process by the implemented</span>
+<span class="sd">        `_patch_processing` function.</span>
+<span class="sd">        Only patches which have at least a voxel in the mask ROI are processed.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        $input_config</span>
+<span class="sd">        $mask_config</span>
+<span class="sd">        threshold_scale: float</span>
+<span class="sd">            Extra factor for the threshold of singular values.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        $denoise_return</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_threshold</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_threshold_val</span> <span class="o">*</span> <span class="n">threshold_scale</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">denoise</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">mask_threshold</span><span class="p">,</span> <span class="n">progbar</span><span class="o">=</span><span class="n">progbar</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RawSVDDenoiser._patch_processing">
+<a class="viewcode-back" href="../../../_autosummary/patch_denoise.space_time.lowrank.RawSVDDenoiser.html#patch_denoise.space_time.lowrank.RawSVDDenoiser._patch_processing">[docs]</a>
+    <span class="k">def</span> <span class="nf">_patch_processing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">patch</span><span class="p">,</span> <span class="n">patch_idx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process a patch with the simple SVT method.&quot;&quot;&quot;</span>
+        <span class="c1"># Centering for better precision in SVD</span>
+        <span class="n">u_vec</span><span class="p">,</span> <span class="n">s_values</span><span class="p">,</span> <span class="n">v_vec</span><span class="p">,</span> <span class="n">p_tmean</span> <span class="o">=</span> <span class="n">svd_analysis</span><span class="p">(</span><span class="n">patch</span><span class="p">)</span>
+
+        <span class="n">maxidx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">s_values</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_threshold</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">maxidx</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">p_new</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">patch</span><span class="p">)</span> <span class="o">+</span> <span class="n">p_tmean</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">s_values</span><span class="p">[</span><span class="n">s_values</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_threshold</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">p_new</span> <span class="o">=</span> <span class="n">svd_synthesis</span><span class="p">(</span><span class="n">u_vec</span><span class="p">,</span> <span class="n">s_values</span><span class="p">,</span> <span class="n">v_vec</span><span class="p">,</span> <span class="n">p_tmean</span><span class="p">,</span> <span class="n">maxidx</span><span class="p">)</span>
+
+        <span class="c1"># Equation (3) in Manjon 2013</span>
+
+        <span class="k">return</span> <span class="n">p_new</span><span class="p">,</span> <span class="n">maxidx</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="NordicDenoiser">
+<a class="viewcode-back" href="../../../_autosummary/patch_denoise.space_time.lowrank.NordicDenoiser.html#patch_denoise.space_time.lowrank.NordicDenoiser">[docs]</a>
+<span class="nd">@fill_doc</span>
+<span class="k">class</span> <span class="nc">NordicDenoiser</span><span class="p">(</span><span class="n">RawSVDDenoiser</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Denoising using the NORDIC method.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    $patch_config</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="NordicDenoiser.denoise">
+<a class="viewcode-back" href="../../../_autosummary/patch_denoise.space_time.lowrank.NordicDenoiser.html#patch_denoise.space_time.lowrank.NordicDenoiser.denoise">[docs]</a>
+    <span class="nd">@fill_doc</span>
+    <span class="k">def</span> <span class="nf">denoise</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">input_data</span><span class="p">,</span>
+        <span class="n">mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">mask_threshold</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+        <span class="n">noise_std</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">n_iter_threshold</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="n">progbar</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Denoise using the NORDIC method.</span>
+
+<span class="sd">        Along with the input data a noise std map or value should be provided.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        $input_config</span>
+<span class="sd">        $mask_config</span>
+<span class="sd">        $noise_std</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        $denoise_return</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">patch_shape</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_patch_param</span><span class="p">(</span><span class="n">input_data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="c1"># compute the threshold using Monte-Carlo Simulations.</span>
+        <span class="n">max_sval</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="nb">max</span><span class="p">(</span>
+                <span class="n">svd</span><span class="p">(</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">patch_shape</span><span class="p">),</span> <span class="n">input_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span>
+                    <span class="n">compute_uv</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_iter_threshold</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">max_sval</span> <span class="o">/=</span> <span class="n">n_iter_threshold</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">noise_std</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="n">noise_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">noise_std</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">noise_std</span><span class="p">,</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;For NORDIC the noise level must be either an&quot;</span>
+                <span class="o">+</span> <span class="s2">&quot; array or a float specifying the std in the volume.&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_threshold</span> <span class="o">=</span> <span class="n">noise_std</span> <span class="o">*</span> <span class="n">max_sval</span>
+
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">RawSVDDenoiser</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">denoise</span><span class="p">(</span>
+            <span class="n">input_data</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">mask_threshold</span><span class="o">=</span><span class="n">mask_threshold</span><span class="p">,</span> <span class="n">progbar</span><span class="o">=</span><span class="n">progbar</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<span class="c1"># From MATLAB implementation</span>
+<span class="k">def</span> <span class="nf">_opt_loss_x</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">beta</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute (8) of donoho2017.&quot;&quot;&quot;</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">y</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">beta</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">tmp</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">tmp</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">beta</span><span class="p">))))</span> <span class="o">*</span> <span class="p">(</span>
+        <span class="n">y</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">beta</span><span class="p">))</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_opt_ope_shrink</span><span class="p">(</span><span class="n">singvals</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Perform optimal threshold of singular values for operator norm.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">_opt_loss_x</span><span class="p">(</span><span class="n">singvals</span><span class="p">,</span> <span class="n">beta</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_opt_nuc_shrink</span><span class="p">(</span><span class="n">singvals</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Perform optimal threshold of singular values for nuclear norm.&quot;&quot;&quot;</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">_opt_loss_x</span><span class="p">(</span><span class="n">singvals</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">tmp</span> <span class="o">**</span> <span class="mi">4</span> <span class="o">-</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">beta</span><span class="p">)</span> <span class="o">*</span> <span class="n">tmp</span> <span class="o">*</span> <span class="n">singvals</span><span class="p">)</span> <span class="o">-</span> <span class="n">beta</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="o">/</span> <span class="p">((</span><span class="n">tmp</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">singvals</span><span class="p">)</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_opt_fro_shrink</span><span class="p">(</span><span class="n">singvals</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Perform optimal threshold of singular values for frobenius norm.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span>
+            <span class="p">(((</span><span class="n">singvals</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">beta</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">-</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">beta</span><span class="p">),</span>
+            <span class="mi">0</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="o">/</span> <span class="n">singvals</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="OptimalSVDDenoiser">
+<a class="viewcode-back" href="../../../_autosummary/patch_denoise.space_time.lowrank.OptimalSVDDenoiser.html#patch_denoise.space_time.lowrank.OptimalSVDDenoiser">[docs]</a>
+<span class="nd">@fill_doc</span>
+<span class="k">class</span> <span class="nc">OptimalSVDDenoiser</span><span class="p">(</span><span class="n">BaseSpaceTimeDenoiser</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Optimal Shrinkage of singular values for a specific norm.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    $patch_config</span>
+<span class="sd">    loss: str</span>
+<span class="sd">        The loss determines the choice of the optimal thresholding function</span>
+<span class="sd">        associated to it. The losses `&quot;fro&quot;`, `&quot;nuc&quot;` and `&quot;op&quot;` are supported,</span>
+<span class="sd">        for the frobenius, nuclear and operator norm, respectively.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_OPT_LOSS_SHRINK</span> <span class="o">=</span> <span class="n">MappingProxyType</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;fro&quot;</span><span class="p">:</span> <span class="n">_opt_fro_shrink</span><span class="p">,</span>
+            <span class="s2">&quot;nuc&quot;</span><span class="p">:</span> <span class="n">_opt_nuc_shrink</span><span class="p">,</span>
+            <span class="s2">&quot;ope&quot;</span><span class="p">:</span> <span class="n">_opt_ope_shrink</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">patch_shape</span><span class="p">,</span>
+        <span class="n">patch_overlap</span><span class="p">,</span>
+        <span class="n">loss</span><span class="o">=</span><span class="s2">&quot;fro&quot;</span><span class="p">,</span>
+        <span class="n">recombination</span><span class="o">=</span><span class="s2">&quot;weighted&quot;</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">patch_shape</span><span class="p">,</span> <span class="n">patch_overlap</span><span class="p">,</span> <span class="n">recombination</span><span class="o">=</span><span class="n">recombination</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_denoising_kwargs</span><span class="p">[</span>
+            <span class="s2">&quot;shrink_func&quot;</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="n">OptimalSVDDenoiser</span><span class="o">.</span><span class="n">_OPT_LOSS_SHRINK</span><span class="p">[</span><span class="n">loss</span><span class="p">]</span>
+
+<div class="viewcode-block" id="OptimalSVDDenoiser.denoise">
+<a class="viewcode-back" href="../../../_autosummary/patch_denoise.space_time.lowrank.OptimalSVDDenoiser.html#patch_denoise.space_time.lowrank.OptimalSVDDenoiser.denoise">[docs]</a>
+    <span class="nd">@fill_doc</span>
+    <span class="k">def</span> <span class="nf">denoise</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">input_data</span><span class="p">,</span>
+        <span class="n">mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">mask_threshold</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+        <span class="n">noise_std</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">eps_marshenko_pastur</span><span class="o">=</span><span class="mf">1e-7</span><span class="p">,</span>
+        <span class="n">progbar</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Optimal thresholing denoising method.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        $input_config</span>
+<span class="sd">        $mask_config</span>
+<span class="sd">        $noise_std</span>
+<span class="sd">        loss: str</span>
+<span class="sd">            The loss for which the optimal thresholding is performed.</span>
+<span class="sd">        eps_marshenko_pastur: float</span>
+<span class="sd">            The precision with which the optimal threshold is computed.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        $denoise_return</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        Reimplementation of the original Matlab code [#]_ in python.</span>
+
+<span class="sd">        References</span>
+<span class="sd">        ----------</span>
+<span class="sd">        .. [#] Gavish, Matan, and David L. Donoho. \</span>
+<span class="sd">            &quot;Optimal Shrinkage of Singular Values.&quot;</span>
+<span class="sd">            IEEE Transactions on Information Theory 63, no. 4 (April 2017): 2137–52.</span>
+<span class="sd">            https://doi.org/10.1109/TIT.2017.2653801.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">p_s</span><span class="p">,</span> <span class="n">p_o</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_patch_param</span><span class="p">(</span><span class="n">input_data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_denoising_kwargs</span><span class="p">[</span><span class="s2">&quot;mp_median&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">marchenko_pastur_median</span><span class="p">(</span>
+            <span class="n">beta</span><span class="o">=</span><span class="n">input_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">p_s</span><span class="p">),</span>
+            <span class="n">eps</span><span class="o">=</span><span class="n">eps_marshenko_pastur</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">noise_std</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">input_denoising_kwargs</span><span class="p">[</span><span class="s2">&quot;var_apriori&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">noise_std</span><span class="p">,</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">)):</span>
+                <span class="n">var_apriori</span> <span class="o">=</span> <span class="n">noise_std</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">input_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">var_apriori</span> <span class="o">=</span> <span class="n">noise_std</span> <span class="o">**</span> <span class="mi">2</span>
+            <span class="n">var_apriori</span> <span class="o">=</span> <span class="n">PatchedArray</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">var_apriori</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">input_data</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span> <span class="n">p_s</span><span class="p">,</span> <span class="n">p_o</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">input_denoising_kwargs</span><span class="p">[</span><span class="s2">&quot;var_apriori&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">var_apriori</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">denoise</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">mask_threshold</span><span class="p">,</span> <span class="n">progbar</span><span class="o">=</span><span class="n">progbar</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OptimalSVDDenoiser._patch_processing">
+<a class="viewcode-back" href="../../../_autosummary/patch_denoise.space_time.lowrank.OptimalSVDDenoiser.html#patch_denoise.space_time.lowrank.OptimalSVDDenoiser._patch_processing">[docs]</a>
+    <span class="k">def</span> <span class="nf">_patch_processing</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">patch</span><span class="p">,</span>
+        <span class="n">patch_idx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">shrink_func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">mp_median</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">var_apriori</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">u_vec</span><span class="p">,</span> <span class="n">s_values</span><span class="p">,</span> <span class="n">v_vec</span><span class="p">,</span> <span class="n">p_tmean</span> <span class="o">=</span> <span class="n">svd_analysis</span><span class="p">(</span><span class="n">patch</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">var_apriori</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">var_apriori</span><span class="o">.</span><span class="n">get_patch</span><span class="p">(</span><span class="n">patch_idx</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">s_values</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">patch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">mp_median</span><span class="p">)</span>
+
+        <span class="n">scale_factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">patch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="n">sigma</span>
+        <span class="n">thresh_s_values</span> <span class="o">=</span> <span class="n">scale_factor</span> <span class="o">*</span> <span class="n">shrink_func</span><span class="p">(</span>
+            <span class="n">s_values</span> <span class="o">/</span> <span class="n">scale_factor</span><span class="p">,</span>
+            <span class="n">beta</span><span class="o">=</span><span class="n">patch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">patch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="n">thresh_s_values</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">thresh_s_values</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">thresh_s_values</span><span class="p">):</span>
+            <span class="n">maxidx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">thresh_s_values</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="n">p_new</span> <span class="o">=</span> <span class="n">svd_synthesis</span><span class="p">(</span><span class="n">u_vec</span><span class="p">,</span> <span class="n">thresh_s_values</span><span class="p">,</span> <span class="n">v_vec</span><span class="p">,</span> <span class="n">p_tmean</span><span class="p">,</span> <span class="n">maxidx</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">maxidx</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">p_new</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">patch</span><span class="p">)</span> <span class="o">+</span> <span class="n">p_tmean</span>
+
+        <span class="k">return</span> <span class="n">p_new</span><span class="p">,</span> <span class="n">maxidx</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span></div>
+</div>
+
+
+
+<span class="k">def</span> <span class="nf">_sure_atn_cost</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">sing_vals</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tau</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the SURE cost function.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    X: np.ndarray</span>
+<span class="sd">    sing_vals : singular values of X</span>
+<span class="sd">    gamma: float</span>
+<span class="sd">    sigma: float</span>
+<span class="sd">    tau: float</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;qut&quot;</span><span class="p">:</span>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">gamma</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">tau</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">tau</span><span class="p">)</span>
+
+    <span class="n">sing_vals2</span> <span class="o">=</span> <span class="n">sing_vals</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="n">n_vals</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sing_vals</span><span class="p">)</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_vals</span><span class="p">,</span> <span class="n">n_vals</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">dhat</span> <span class="o">=</span> <span class="n">sing_vals</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="p">((</span><span class="n">tau</span> <span class="o">/</span> <span class="n">sing_vals</span><span class="p">)</span> <span class="o">**</span> <span class="n">gamma</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">sing_vals</span> <span class="o">*</span> <span class="n">dhat</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_vals</span><span class="p">):</span>
+        <span class="n">diff2i</span> <span class="o">=</span> <span class="n">sing_vals2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">sing_vals2</span>
+        <span class="n">diff2i</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+        <span class="n">D</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">diff2i</span>
+
+    <span class="n">gradd</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="n">gamma</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">tau</span> <span class="o">/</span> <span class="n">sing_vals</span><span class="p">)</span> <span class="o">**</span> <span class="n">gamma</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">sing_vals</span> <span class="o">&gt;=</span> <span class="n">tau</span><span class="p">)</span>
+    <span class="n">div</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">gradd</span> <span class="o">+</span> <span class="nb">abs</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="n">p</span><span class="p">)</span> <span class="o">*</span> <span class="n">dhat</span> <span class="o">/</span> <span class="n">sing_vals</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">D</span><span class="p">)</span>
+
+    <span class="n">rss</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">dhat</span> <span class="o">-</span> <span class="n">sing_vals</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;gsure&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">rss</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">div</span> <span class="o">/</span> <span class="n">n</span> <span class="o">/</span> <span class="n">p</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">sigma</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="p">((</span><span class="o">-</span><span class="n">n</span> <span class="o">*</span> <span class="n">p</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">div</span><span class="p">))</span> <span class="o">+</span> <span class="n">rss</span>
+
+
+<span class="k">if</span> <span class="n">NUMBA_AVAILABLE</span><span class="p">:</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">float32</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">float64</span>
+    <span class="n">sure_atn_cost</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">njit</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">s</span><span class="p">(</span><span class="n">s</span><span class="p">[:,</span> <span class="p">:],</span> <span class="n">nb</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">unicode_type</span><span class="p">,</span> <span class="n">s</span><span class="p">[:],</span> <span class="n">s</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">s</span><span class="p">),</span>
+            <span class="n">s</span><span class="p">(</span><span class="n">s</span><span class="p">[:,</span> <span class="p">:],</span> <span class="n">nb</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">unicode_type</span><span class="p">,</span> <span class="n">s</span><span class="p">[:],</span> <span class="n">s</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">d</span><span class="p">),</span>
+        <span class="p">],</span>
+        <span class="n">fastmath</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)(</span><span class="n">_sure_atn_cost</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_atn_shrink</span><span class="p">(</span><span class="n">singvals</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">tau</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adaptive trace norm shrinkage.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">singvals</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="n">tau</span> <span class="o">/</span> <span class="n">singvals</span><span class="p">)</span> <span class="o">**</span> <span class="n">gamma</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_get_gamma_tau_qut</span><span class="p">(</span><span class="n">patch</span><span class="p">,</span> <span class="n">sing_vals</span><span class="p">,</span> <span class="n">stdest</span><span class="p">,</span> <span class="n">gamma0</span><span class="p">,</span> <span class="n">nbsim</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Estimate gamma and tau using the quantile method.&quot;&quot;&quot;</span>
+    <span class="n">maxd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">nbsim</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nbsim</span><span class="p">):</span>
+        <span class="n">maxd</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span>
+            <span class="n">svd</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="o">*</span><span class="n">patch</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">*</span> <span class="n">stdest</span><span class="p">,</span>
+                <span class="n">compute_uv</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">overwrite_a</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="c1"># auto estimation of tau.</span>
+    <span class="n">tau</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">maxd</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="o">*</span><span class="n">patch</span><span class="o">.</span><span class="n">shape</span><span class="p">))))</span>
+    <span class="c1"># single value for gamma not provided, estimating it.</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">gamma0</span><span class="p">,</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">)):</span>
+
+        <span class="k">def</span> <span class="nf">sure_gamma</span><span class="p">(</span><span class="n">gamma</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">_sure_atn_cost</span><span class="p">(</span>
+                <span class="n">X</span><span class="o">=</span><span class="n">patch</span><span class="p">,</span>
+                <span class="n">method</span><span class="o">=</span><span class="s2">&quot;qut&quot;</span><span class="p">,</span>
+                <span class="n">sing_vals</span><span class="o">=</span><span class="n">sing_vals</span><span class="p">,</span>
+                <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span>
+                <span class="n">sigma</span><span class="o">=</span><span class="n">stdest</span><span class="p">,</span>
+                <span class="n">tau</span><span class="o">=</span><span class="n">tau</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">res_opti</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="n">sure_gamma</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">res_opti</span><span class="o">.</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="n">gamma0</span>
+    <span class="k">return</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">tau</span>
+
+
+<span class="k">def</span> <span class="nf">_get_gamma_tau</span><span class="p">(</span><span class="n">patch</span><span class="p">,</span> <span class="n">sing_vals</span><span class="p">,</span> <span class="n">stdest</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">gamma0</span><span class="p">,</span> <span class="n">tau0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Estimate gamma and tau.&quot;&quot;&quot;</span>
+    <span class="c1"># estimation of tau</span>
+    <span class="k">def</span> <span class="nf">sure_tau</span><span class="p">(</span><span class="n">tau</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">_sure_atn_cost</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">tau</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">tau0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">tau0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">sing_vals</span><span class="p">))</span>
+    <span class="n">cost_glob</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+    <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">gamma0</span><span class="p">:</span>
+        <span class="n">res_opti</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">_sure_atn_cost</span><span class="p">(</span>
+                <span class="n">X</span><span class="o">=</span><span class="n">patch</span><span class="p">,</span>
+                <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
+                <span class="n">gamma</span><span class="o">=</span><span class="n">g</span><span class="p">,</span>  <span class="c1"># noqa: B023</span>
+                <span class="n">sing_vals</span><span class="o">=</span><span class="n">sing_vals</span><span class="p">,</span>
+                <span class="n">sigma</span><span class="o">=</span><span class="n">stdest</span><span class="p">,</span>
+                <span class="n">tau</span><span class="o">=</span><span class="n">x</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">tau0</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># get cost value.</span>
+        <span class="n">cost</span> <span class="o">=</span> <span class="n">_sure_atn_cost</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">patch</span><span class="p">,</span>
+            <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
+            <span class="n">gamma</span><span class="o">=</span><span class="n">g</span><span class="p">,</span>
+            <span class="n">sing_vals</span><span class="o">=</span><span class="n">sing_vals</span><span class="p">,</span>
+            <span class="n">sigma</span><span class="o">=</span><span class="n">stdest</span><span class="p">,</span>
+            <span class="n">tau</span><span class="o">=</span><span class="n">res_opti</span><span class="o">.</span><span class="n">x</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">cost</span> <span class="o">&lt;</span> <span class="n">cost_glob</span><span class="p">:</span>
+            <span class="n">gamma</span> <span class="o">=</span> <span class="n">g</span>
+            <span class="n">tau</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">res_opti</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+            <span class="n">cost_glob</span> <span class="o">=</span> <span class="n">cost</span>
+    <span class="k">return</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">tau</span>
+
+
+<div class="viewcode-block" id="AdaptiveDenoiser">
+<a class="viewcode-back" href="../../../_autosummary/patch_denoise.space_time.lowrank.AdaptiveDenoiser.html#patch_denoise.space_time.lowrank.AdaptiveDenoiser">[docs]</a>
+<span class="nd">@fill_doc</span>
+<span class="k">class</span> <span class="nc">AdaptiveDenoiser</span><span class="p">(</span><span class="n">BaseSpaceTimeDenoiser</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adaptive Denoiser.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    $patch_config</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_SUPPORTED_METHOD</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;sure&quot;</span><span class="p">,</span> <span class="s2">&quot;qut&quot;</span><span class="p">,</span> <span class="s2">&quot;gsure&quot;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">patch_shape</span><span class="p">,</span>
+        <span class="n">patch_overlap</span><span class="p">,</span>
+        <span class="n">method</span><span class="o">=</span><span class="s2">&quot;SURE&quot;</span><span class="p">,</span>
+        <span class="n">recombination</span><span class="o">=</span><span class="s2">&quot;weighted&quot;</span><span class="p">,</span>
+        <span class="n">nbsim</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">patch_shape</span><span class="p">,</span> <span class="n">patch_overlap</span><span class="p">,</span> <span class="n">recombination</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_SUPPORTED_METHOD</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Unsupported method: &#39;</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">&#39;, use any of </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_SUPPORTED_METHOD</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_denoising_kwargs</span><span class="p">[</span><span class="s2">&quot;method&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_denoising_kwargs</span><span class="p">[</span><span class="s2">&quot;nbsim&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">nbsim</span>
+
+<div class="viewcode-block" id="AdaptiveDenoiser.denoise">
+<a class="viewcode-back" href="../../../_autosummary/patch_denoise.space_time.lowrank.AdaptiveDenoiser.html#patch_denoise.space_time.lowrank.AdaptiveDenoiser.denoise">[docs]</a>
+    <span class="nd">@fill_doc</span>
+    <span class="k">def</span> <span class="nf">denoise</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">input_data</span><span class="p">,</span>
+        <span class="n">mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">mask_threshold</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+        <span class="n">tau0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">noise_std</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">gamma0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">progbar</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adaptive denoiser.</span>
+
+<span class="sd">        Perform the denoising using the adaptive trace norm estimator. [#]_</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        $input_config</span>
+<span class="sd">        $mask_config</span>
+<span class="sd">        $noise_std</span>
+
+
+<span class="sd">        References</span>
+<span class="sd">        ----------</span>
+<span class="sd">        .. [#] J. Josse and S. Sardy, “Adaptive Shrinkage of singular values.”</span>
+<span class="sd">            arXiv, Nov. 22, 2014.</span>
+<span class="sd">            doi: 10.48550/arXiv.1310.6602.</span>
+
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_denoising_kwargs</span><span class="p">[</span><span class="s2">&quot;gamma0&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gamma0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_denoising_kwargs</span><span class="p">[</span><span class="s2">&quot;tau0&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tau0</span>
+
+        <span class="n">p_s</span><span class="p">,</span> <span class="n">p_o</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_patch_param</span><span class="p">(</span><span class="n">input_data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">noise_std</span><span class="p">,</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">)):</span>
+            <span class="n">var_apriori</span> <span class="o">=</span> <span class="n">noise_std</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">input_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">var_apriori</span> <span class="o">=</span> <span class="n">noise_std</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">var_apriori</span> <span class="o">=</span> <span class="n">PatchedArray</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">var_apriori</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">input_data</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span> <span class="n">p_s</span><span class="p">,</span> <span class="n">p_o</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_denoising_kwargs</span><span class="p">[</span><span class="s2">&quot;var_apriori&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">var_apriori</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">denoise</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">mask_threshold</span><span class="p">,</span> <span class="n">progbar</span><span class="o">=</span><span class="n">progbar</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AdaptiveDenoiser._patch_processing">
+<a class="viewcode-back" href="../../../_autosummary/patch_denoise.space_time.lowrank.AdaptiveDenoiser.html#patch_denoise.space_time.lowrank.AdaptiveDenoiser._patch_processing">[docs]</a>
+    <span class="k">def</span> <span class="nf">_patch_processing</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">patch</span><span class="p">,</span>
+        <span class="n">patch_idx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">gamma0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">tau0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">var_apriori</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">method</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">nbsim</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">stdest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">var_apriori</span><span class="o">.</span><span class="n">get_patch</span><span class="p">(</span><span class="n">patch_idx</span><span class="p">)))</span>
+
+        <span class="n">u_vec</span><span class="p">,</span> <span class="n">sing_vals</span><span class="p">,</span> <span class="n">v_vec</span><span class="p">,</span> <span class="n">p_tmean</span> <span class="o">=</span> <span class="n">svd_analysis</span><span class="p">(</span><span class="n">patch</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;qut&quot;</span><span class="p">:</span>
+            <span class="n">gamma</span><span class="p">,</span> <span class="n">tau</span> <span class="o">=</span> <span class="n">_get_gamma_tau_qut</span><span class="p">(</span><span class="n">patch</span><span class="p">,</span> <span class="n">sing_vals</span><span class="p">,</span> <span class="n">stdest</span><span class="p">,</span> <span class="n">gamma0</span><span class="p">,</span> <span class="n">nbsim</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">gamma</span><span class="p">,</span> <span class="n">tau</span> <span class="o">=</span> <span class="n">_get_gamma_tau</span><span class="p">(</span><span class="n">patch</span><span class="p">,</span> <span class="n">sing_vals</span><span class="p">,</span> <span class="n">stdest</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">gamma0</span><span class="p">,</span> <span class="n">tau0</span><span class="p">)</span>
+        <span class="c1"># end of parameter selection</span>
+        <span class="c1"># Perform thresholding</span>
+
+        <span class="n">thresh_s_values</span> <span class="o">=</span> <span class="n">_atn_shrink</span><span class="p">(</span><span class="n">sing_vals</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span> <span class="n">tau</span><span class="o">=</span><span class="n">tau</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">thresh_s_values</span><span class="p">):</span>
+            <span class="n">maxidx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">thresh_s_values</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="n">p_new</span> <span class="o">=</span> <span class="n">svd_synthesis</span><span class="p">(</span><span class="n">u_vec</span><span class="p">,</span> <span class="n">thresh_s_values</span><span class="p">,</span> <span class="n">v_vec</span><span class="p">,</span> <span class="n">p_tmean</span><span class="p">,</span> <span class="n">maxidx</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">maxidx</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">p_new</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">patch</span><span class="p">)</span> <span class="o">+</span> <span class="n">p_tmean</span>
+
+        <span class="k">return</span> <span class="n">p_new</span><span class="p">,</span> <span class="n">maxidx</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span></div>
+</div>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2022, Pierre-Antoine Comby.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

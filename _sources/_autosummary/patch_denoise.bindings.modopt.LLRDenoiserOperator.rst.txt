@@ -1,0 +1,32 @@
+LLRDenoiserOperator
+===================
+
+.. currentmodule:: patch_denoise.bindings.modopt
+
+.. autoclass:: LLRDenoiserOperator
+   :members:
+   :private-members:
+   :show-inheritance:
+   :special-members: __call__, __add__, __mul__, __matmul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~LLRDenoiserOperator.__init__
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~LLRDenoiserOperator.cost
+      ~LLRDenoiserOperator.op
+   
+   

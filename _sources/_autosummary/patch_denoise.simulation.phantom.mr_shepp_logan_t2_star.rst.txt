@@ -1,0 +1,6 @@
+patch\_denoise.simulation.phantom.mr\_shepp\_logan\_t2\_star
+============================================================
+
+.. currentmodule:: patch_denoise.simulation.phantom
+
+.. autofunction:: mr_shepp_logan_t2_star
