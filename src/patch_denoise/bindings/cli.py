@@ -2,13 +2,14 @@
 """Cli interface."""
 
 import argparse
+import re
 import logging
 from functools import partial
 from pathlib import Path
 
 import numpy as np
 
-from .utils import (
+from patch_denoise.bindings.utils import (
     DENOISER_MAP,
     DenoiseParameters,
     compute_mask,
@@ -53,6 +54,18 @@ def _positive_int(string, is_parser=True):
     return intarg
 
 
+def _tuple_positive_int(string, is_parser=True):
+    """Parse patch size/overlap argument from string."""
+    # find the separator (any non-digit character)
+    sep = re.search(r"\D", string)
+    if sep is not None:
+        sep = sep.group(0)
+        values = tuple(_positive_int(s, is_parser=is_parser) for s in string.split(sep))
+    else:
+        values = _positive_int(string, is_parser=is_parser)
+    return values
+
+
 class ToDict(argparse.Action):
     """A custom argparse "store" action to handle a list of key=value pairs."""
 
@@ -83,6 +96,7 @@ def _get_parser():
     )
     IsFile = partial(_is_file, parser=parser)
     PositiveInt = partial(_positive_int, is_parser=True)
+    TuplePositiveInt = partial(_tuple_positive_int, is_parser=True)
 
     parser.add_argument(
         "input_file",
@@ -118,6 +132,9 @@ def _get_parser():
         help=(
             "Patch shape.\n"
             "If int, this is the size of the patch in each dimension.\n"
+            "If of format NxMx..., this is the size of the patch in each dimension\n"
+            "Missing dimensions will be set to the size of the input data in that "
+            "dimension.\n"
             "If not specified, the default value is used.\n"
             "Note: setting a low aspect ratio will increase the number of "
             "patches to be processed, "
@@ -126,7 +143,7 @@ def _get_parser():
             "is mutually exclusive with --conf."
         ),
         default=11,
-        type=PositiveInt,
+        type=TuplePositiveInt,
         metavar="INT",
     )
     denoising_group.add_argument(
@@ -142,7 +159,7 @@ def _get_parser():
             "is mutually exclusive with --conf."
         ),
         default=5,
-        type=PositiveInt,
+        type=TuplePositiveInt,
         metavar="INT",
     )
     denoising_group.add_argument(
@@ -197,10 +214,7 @@ def _get_parser():
         "--mask",
         metavar="FILE|auto",
         default=None,
-        help=(
-            "mask file, if auto or not provided"
-            " it would be determined from the average image."
-        ),
+        help=("mask file, if auto, it would be determined from the average image."),
     )
     data_group.add_argument(
         "--noise-map",
@@ -231,19 +245,6 @@ def _get_parser():
     )
 
     misc_group = parser.add_argument_group("Miscellaneous options")
-    misc_group.add_argument(
-        "--time-slice",
-        help=(
-            "Slice across time. \n"
-            "If <N>x the patch will be N times longer in space than in time \n"
-            "If int, this is the size of the time dimension patch. \n"
-            "If not specified, the whole time series is used. \n"
-            "Note: setting a low aspect ratio will increase the number of patch to be"
-            "processed, and will increase memory usage and computation times."
-        ),
-        default=None,
-        type=str,
-    )
     misc_group.add_argument(
         "--output-noise-map",
         metavar="FILE",
@@ -301,6 +302,7 @@ def main():
     if args.nan_to_num is not None:
         input_data = np.nan_to_num(input_data, nan=args.nan_to_num)
 
+    logging.info(f"Input data shape: {input_data.shape}")
     n_nans = np.isnan(input_data).sum()
     if n_nans > 0:
         logging.warning(
@@ -351,15 +353,7 @@ def main():
         args.recombination = d_par.recombination
         args.mask_threshold = d_par.mask_threshold
 
-    if isinstance(args.time_slice, str):
-        if args.time_slice.endswith("x"):
-            t = float(args.time_slice[:-1])
-            t = int(args.patch_shape ** (input_data.ndim - 1) / t)
-        else:
-            t = int(args.time_slice)
-
-        args.patch_shape = (args.patch_shape,) * (input_data.ndim - 1) + (t,)
-
+    logging.info(f"Current Setup {args}")
     denoise_func = DENOISER_MAP[args.method]
 
     if args.method in [
