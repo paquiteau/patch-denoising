@@ -173,7 +173,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         if mask is None:
             process_mask = np.full(data_shape, True)
         elif mask.shape == input_data.shape[:-1]:
-            process_mask = np.broadcast_to(mask, input_data.shape)
+            process_mask = np.broadcast_to(mask[..., None], input_data.shape)
 
         process_mask = PatchedArray(
             process_mask, p_s, p_o, padding_mode="constant", constant_values=0

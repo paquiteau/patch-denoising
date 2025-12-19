@@ -95,7 +95,6 @@ def _get_parser():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     IsFile = partial(_is_file, parser=parser)
-    PositiveInt = partial(_positive_int, is_parser=True)
     TuplePositiveInt = partial(_tuple_positive_int, is_parser=True)
 
     parser.add_argument(
