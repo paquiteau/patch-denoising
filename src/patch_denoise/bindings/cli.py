@@ -9,6 +9,13 @@ from pathlib import Path
 
 import numpy as np
 
+GPU_AVAILABLE = True
+try:
+    from patch_denoise.gpu import main_gpu
+except ImportError:
+    GPU_AVAILABLE = False
+    main_gpu = None
+
 from patch_denoise.bindings.utils import (
     DENOISER_MAP,
     DenoiseParameters,
@@ -18,7 +25,6 @@ from patch_denoise.bindings.utils import (
     load_complex_nifti,
 )
 from patch_denoise import __version__
-
 
 DENOISER_NAMES = ", ".join(d for d in DENOISER_MAP if d)
 
@@ -111,6 +117,10 @@ def _get_parser():
     )
 
     parser.add_argument("--version", action="version", version=__version__)
+
+    parser.add_argument(
+        "--gpu", action="store_true", help="Use GPU for computation if available."
+    )
 
     denoising_group = parser.add_argument_group("Denoising parameters")
 
@@ -353,27 +363,39 @@ def main():
         args.mask_threshold = d_par.mask_threshold
 
     logging.info(f"Current Setup {args}")
-    denoise_func = DENOISER_MAP[args.method]
 
-    if args.method in [
-        "nordic",
-        "hybrid-pca",
-        "adaptive-qut",
-        "optimal-fro-noise",
-    ]:
-        kwargs["noise_std"] = noise_map
-        if noise_map is None:
-            raise RuntimeError("A noise map must be specified for this method.")
+    if args.gpu:
+        if GPU_AVAILABLE:
+            logging.info("Using GPU for computation.")
+            denoised_data, _, noise_std_map = main_gpu(
+                args, input_data, mask, noise_map, **kwargs
+            )
+        else:
+            raise RuntimeError(
+                "GPU support is not available. Please ensure that the "
+                "patch_denoise.gpu module is installed and that you have a compatible GPU."
+            )
+    else:
+        if args.method in [
+            "nordic",
+            "hybrid-pca",
+            "adaptive-qut",
+            "optimal-fro-noise",
+        ]:
+            if noise_map is None:
+                raise RuntimeError("A noise map must be specified for this method.")
+            kwargs["noise_std"] = noise_map
 
-    denoised_data, _, noise_std_map, _ = denoise_func(
-        input_data,
-        patch_shape=args.patch_shape,
-        patch_overlap=args.patch_overlap,
-        mask=mask,
-        mask_threshold=args.mask_threshold,
-        recombination=args.recombination,
-        **kwargs,
-    )
+        denoise_func = DENOISER_MAP[args.method]
+        denoised_data, _, noise_std_map, _ = denoise_func(
+            input_data,
+            patch_shape=args.patch_shape,
+            patch_overlap=args.patch_overlap,
+            mask=mask,
+            mask_threshold=args.mask_threshold,
+            recombination=args.recombination,
+            **kwargs,
+        )
 
     save_array(denoised_data, affine, args.output_file)
     save_array(noise_std_map, affine, args.output_noise_map)

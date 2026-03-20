@@ -27,6 +27,7 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
+gpu = ["cupy-cuda13x"]
 optional = ["modopt", "nipype", "numba"]
 test = ["pytest", "pytest-cov", "pytest-xdist", "pytest-sugar"]
 

@@ -16,7 +16,6 @@ from patch_denoise.denoise import (
     adaptive_thresholding,
 )
 
-
 DENOISER_MAP = {
     None: None,
     "mp-pca": mp_pca,
@@ -47,7 +46,7 @@ _RECOMBINATION = {"w": "weighted", "c": "center", "a": "average"}
 class DenoiseParameters:
     """Denoise Parameters data structure."""
 
-    method: str = None
+    method: str | None = None
     patch_shape: int | tuple[int, ...] = 11
     patch_overlap: int | tuple[int, ...] = 0
     recombination: str = "weighted"  # "center" is also available
