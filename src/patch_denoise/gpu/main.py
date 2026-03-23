@@ -11,6 +11,7 @@ import cupy as cp
 import numba as nb
 
 from .dataloader import PatchDataset
+from ..space_time.base import PatchedArray
 
 
 @nb.njit(parallel=True, cache=True)
@@ -29,9 +30,19 @@ def _accumulator(out_acc, out_weights, batch_data, batch_weights, batch_indices)
 
 def make_denoiser(args, noise_map, **kwargs) -> torch.nn.Module:
     """Create a denoiser model on GPU."""
-    pass
+    from .denoiser import OptimalSVDDenoiser
+
+    print(args)
+    denoiser = OptimalSVDDenoiser(
+        patch_shape=args.patch_shape,
+        recombination=args.recombination,
+        loss=args.opt_loss,
+        **kwargs,
+    )
+    return denoiser
 
 
+@torch.inference_mode()
 def main_gpu(args, input_data, mask, noise_map, batch_size=32, **kwargs):
     """Denoise loop for the gpu version of patch-denoise."""
     # Create the Dataset
@@ -71,9 +82,23 @@ def main_gpu(args, input_data, mask, noise_map, batch_size=32, **kwargs):
             if item is None:  # Sentinel to stop the thread
                 break
             cpu_out, cpu_weights, indices, event = item
+
+            # convert linear indices back to 4D patch indices
+            batch_indices = np.array(
+                [
+                    PatchedArray.linear_to_patch_indices(
+                        idx, input_data.shape, args.patch_shape, args.patch_overlap
+                    )
+                    for idx in indices
+                ]
+            )
             event.synchronize()  # Wait for GPU to finish
             _accumulator(
-                out_acc, out_weights, cpu_out.numpy(), cpu_weights, indices.numpy()
+                out_acc,
+                out_weights,
+                cpu_out.numpy(),
+                cpu_weights,
+                batch_indices,
             )
 
     worker_thread = threading.Thread(target=_worker)

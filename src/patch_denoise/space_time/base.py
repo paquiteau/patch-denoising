@@ -1,5 +1,7 @@
 """Base Structure for patch-based denoising on spatio-temporal dimension."""
 
+from numpy.typing import NDArray, DTypeLike
+
 import abc
 import logging
 
@@ -22,11 +24,11 @@ class PatchedArray:
 
     def __init__(
         self,
-        array,
-        patch_shape,
-        patch_overlap,
-        dtype=None,
-        padding_mode="edge",
+        array: NDArray,
+        patch_shape: tuple[int, ...],
+        patch_overlap: tuple[int, ...],
+        dtype: DTypeLike = None,
+        padding_mode: str = "edge",
         **kwargs,
     ):
         if isinstance(array, tuple):
@@ -81,17 +83,45 @@ class PatchedArray:
         self._grid_shape = grid_shape
 
     @property
-    def n_patches(self):
+    def n_patches(self) -> int:
         """Get number of patches."""
-        return np.prod(self._grid_shape)
+        return int(np.prod(self._grid_shape))
 
-    def get_patch(self, idx):
+    def get_patch(self, idx) -> NDArray:
         """Get patch at linear index ``idx``."""
         return self.sliding_view[np.unravel_index(idx, self._grid_shape)]
 
     def set_patch(self, idx, value):
         """Set patch at linear index ``idx`` with value."""
         self.sliding_view[np.unravel_index(idx, self._grid_shape)]
+
+    def idx2slice(self, idx):
+        """Convert linear patch index to slice."""
+        grid_idx = np.unravel_index(idx, self._grid_shape)
+        return tuple(
+            slice(g * (ps - po), g * (ps - po) + ps)
+            for g, ps, po in zip(grid_idx, self._ps, self._po)
+        )
+
+    @classmethod
+    def linear_to_patch_indices(cls, idx, data_shape, patch_shape, patch_overlap):
+        """Convert linear patch index to patch indices."""
+        grid_shape = tuple(
+            (
+                (
+                    (data_shape[i] - patch_shape[i])
+                    // (patch_shape[i] - patch_overlap[i])
+                    + 1
+                )
+                if patch_shape[i] < data_shape[i]
+                else 1
+            )
+            for i in range(len(data_shape))
+        )
+        grid_idx = np.unravel_index(idx, grid_shape)
+        return tuple(
+            g * (ps - po) for g, ps, po in zip(grid_idx, patch_shape, patch_overlap)
+        )
 
     def add2patch(self, idx, value):
         """Add to patch, in place."""
