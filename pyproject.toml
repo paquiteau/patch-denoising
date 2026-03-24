@@ -6,7 +6,7 @@ authors = [{name="Pierre-antoine Comby", email="pierre-antoine.comby@crans.org"}
 readme = "README.rst"
 license = {file = "LICENSE.txt"}
 dependencies = ["numpy", "scipy", "matplotlib", "scikit-image", "tqdm", "nibabel"]
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 
 dynamic = ["version"]
 
@@ -27,9 +27,9 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-gpu = ["cupy-cuda13x"]
 optional = ["modopt", "nipype", "numba"]
 test = ["pytest", "pytest-cov", "pytest-xdist", "pytest-sugar"]
+gpu = ["torch"]
 
 doc = [
   "pydata-sphinx-theme",
@@ -91,3 +91,18 @@ skip = '.git*'
 check-hidden = true
 ignore-regex = '\bND\b'
 ignore-words-list = 'fro'
+
+
+
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cu130", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
+torchvision = [
+  { index = "pytorch-cu130", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]

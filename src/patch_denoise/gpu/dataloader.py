@@ -42,7 +42,7 @@ class PatchDataset(torch.utils.data.Dataset):
         self.select_patch = [
             i
             for i in range(self.input_data.n_patches)
-            if 100 * process_mask.get_patch(i) < mask_threshold
+            if 100 * process_mask.get_patch(i).mean() < mask_threshold
         ]
 
     def __len__(self):
@@ -54,4 +54,4 @@ class PatchDataset(torch.utils.data.Dataset):
         patch_idx = self.select_patch[idx]
         patch_data = self.input_data.get_patch(patch_idx)
 
-        return patch_data.reshape, patch_idx
+        return patch_data, patch_idx

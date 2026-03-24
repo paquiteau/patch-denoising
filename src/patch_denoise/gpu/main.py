@@ -7,14 +7,21 @@ import logging
 from tqdm.auto import tqdm
 import torch
 import numpy as np
-import cupy as cp
 import numba as nb
 
 from .dataloader import PatchDataset
 from ..space_time.base import PatchedArray
 
 
-@nb.njit(parallel=True, cache=True)
+@nb.njit(
+    [
+        "float32[:,:,:,:],float32[:,:,:,:],float32[:,:,:,:,:], float32[::1],int64[:,::1]",
+        "complex64[:,:,:,:],complex64[:,:,:,:],complex64[:,:,:,:,:], complex64[::1],int64[:,::1]",
+    ],
+    parallel=True,
+    cache=True,
+    nogil=True,
+)
 def _accumulator(out_acc, out_weights, batch_data, batch_weights, batch_indices):
     """Accumulate resulted denoised data asynchronously.
 
@@ -28,7 +35,7 @@ def _accumulator(out_acc, out_weights, batch_data, batch_weights, batch_indices)
         out_weights[i : i + PH, j : j + PW, k : k + PD, l : l + PT] += batch_weights[b]
 
 
-def make_denoiser(args, noise_map, **kwargs) -> torch.nn.Module:
+def make_denoiser(args, noise_map, batch_size, **kwargs) -> torch.nn.Module:
     """Create a denoiser model on GPU."""
     from .denoiser import OptimalSVDDenoiser
 
@@ -36,7 +43,8 @@ def make_denoiser(args, noise_map, **kwargs) -> torch.nn.Module:
     denoiser = OptimalSVDDenoiser(
         patch_shape=args.patch_shape,
         recombination=args.recombination,
-        loss=args.opt_loss,
+        loss="fro",
+        batch_size=batch_size,
         **kwargs,
     )
     return denoiser
@@ -46,8 +54,8 @@ def make_denoiser(args, noise_map, **kwargs) -> torch.nn.Module:
 def main_gpu(args, input_data, mask, noise_map, batch_size=32, **kwargs):
     """Denoise loop for the gpu version of patch-denoise."""
     # Create the Dataset
-    out_weights = torch.zeros_like(input_data).pin_memory_()
-    out_acc = torch.zeros_like(input_data).pin_memory_()
+    out_weights = np.zeros_like(input_data)
+    out_acc = np.zeros_like(input_data)
 
     # setup dataset and dataloader using pytorch api:
     patch_dataset = PatchDataset(
@@ -60,15 +68,22 @@ def main_gpu(args, input_data, mask, noise_map, batch_size=32, **kwargs):
     )
     loader = torch.utils.data.DataLoader(
         patch_dataset,
-        batch_size=args.batch_size,
+        batch_size=int(batch_size),
         shuffle=False,
-        num_workers=0,  # No multiprocessing to avoid GPU contention
+        num_workers=4,  # No multiprocessing to avoid GPU contention
         pin_memory=True,  # Pin memory for faster CPU-GPU transfer
     )
 
     # Setup the denoiser model on GPU
-    denoiser = make_denoiser(args, noise_map, **kwargs).cuda()
-
+    torch.set_float32_matmul_precision("high")
+    torch.backends.cuda.preferred_linalg_library()
+    denoiser = (
+        make_denoiser(args, noise_map, batch_size=batch_size, **kwargs).cuda().eval()
+    )
+    denoiser = torch.compile(
+        denoiser,
+        fullgraph=True,
+    )  # Compile the model for faster inference
     # Scheduling with double buffering and a worker thread to accumulate results asynchronously
     res_queue = queue.Queue(maxsize=10)  # To hold results from GPU threads
     N_STREAMS = 2
@@ -96,8 +111,8 @@ def main_gpu(args, input_data, mask, noise_map, batch_size=32, **kwargs):
             _accumulator(
                 out_acc,
                 out_weights,
-                cpu_out.numpy(),
-                cpu_weights,
+                cpu_out.numpy().reshape(-1, *args.patch_shape),
+                cpu_weights.numpy(),
                 batch_indices,
             )
 
@@ -105,9 +120,9 @@ def main_gpu(args, input_data, mask, noise_map, batch_size=32, **kwargs):
     worker_thread.start()
 
     logging.info(
-        f"Processing {len(loader.dataset)} patches with batch size {args.batch_size}..."
+        f"Processing {len(loader.dataset)} patches with batch size {batch_size}..."
     )
-    for i, (patches, indices) in enumerate(tqdm(loader)):
+    for i, (patches, indices) in enumerate(tqdm(loader, unit_scale=batch_size)):
         slot = i % 2
         stream = streams[slot]
         event = events[slot]
@@ -115,12 +130,13 @@ def main_gpu(args, input_data, mask, noise_map, batch_size=32, **kwargs):
         with torch.cuda.stream(stream):
             # H2D -> Compute -> D2H (All Asynchronous)
             gpu_in = patches.cuda(non_blocking=True)
-            gpu_out = denoiser(gpu_in)
+            gpu_out, gpu_weight = denoiser(gpu_in)
             cpu_out = gpu_out.to("cpu", non_blocking=True)
-
+            cpu_weight = gpu_weight.to("cpu", non_blocking=True)
             event.record()  # Mark when this slot is done
 
-        res_queue.put((cpu_out, indices, event))
+        res_queue.put((cpu_out, cpu_weight, indices, event))
 
     res_queue.put(None)
     worker_thread.join()
+    return out_acc, out_weights, None
