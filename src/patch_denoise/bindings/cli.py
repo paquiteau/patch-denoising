@@ -2,7 +2,6 @@
 """Cli interface."""
 
 import argparse
-import re
 import logging
 import re
 from functools import partial
@@ -10,6 +9,7 @@ from pathlib import Path
 
 import numpy as np
 
+from patch_denoise._version import __version__
 from patch_denoise.bindings.utils import (
     DENOISER_MAP,
     DenoiseParameters,
