@@ -1,5 +1,4 @@
 """Provides a functional entry point for denoising methods."""
-
 from ._docs import fill_doc
 from .space_time.lowrank import (
     AdaptiveDenoiser,

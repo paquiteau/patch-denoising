@@ -1,5 +1,5 @@
-import numpy as np
 import pytest
+import numpy as np
 
 from patch_denoise.simulation.activations import add_frames
 from patch_denoise.simulation.noise import add_temporal_gaussian_noise

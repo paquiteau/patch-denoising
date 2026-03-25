@@ -1,5 +1,4 @@
 """Functions to add different source of temporal noise to data."""
-
 import numpy as np
 from numpy.random import default_rng
 

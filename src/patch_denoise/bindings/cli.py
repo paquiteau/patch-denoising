@@ -2,22 +2,23 @@
 """Cli interface."""
 
 import argparse
-import logging
 import re
+import logging
 from functools import partial
 from pathlib import Path
 
 import numpy as np
 
-from patch_denoise import __version__
 from patch_denoise.bindings.utils import (
     DENOISER_MAP,
     DenoiseParameters,
     compute_mask,
     load_as_array,
-    load_complex_nifti,
     save_array,
+    load_complex_nifti,
 )
+from patch_denoise import __version__
+
 
 DENOISER_NAMES = ", ".join(d for d in DENOISER_MAP if d)
 
