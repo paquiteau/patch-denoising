@@ -1,4 +1,5 @@
 """Test for the different denoising methods."""
+
 import numpy as np
 import numpy.testing as npt
 import pytest
@@ -11,7 +12,6 @@ from patch_denoise.denoise import (
     optimal_thresholding,
     raw_svt,
 )
-
 from patch_denoise.simulation.phantom import g_factor_map
 
 

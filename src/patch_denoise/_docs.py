@@ -10,7 +10,6 @@ substitute by their definition (see docdict items).
 import inspect
 from string import Template
 
-
 docdict = dict(
     patch_config="""
 patch_shape: tuple
