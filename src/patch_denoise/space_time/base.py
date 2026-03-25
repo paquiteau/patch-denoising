@@ -53,17 +53,21 @@ class PatchedArray:
 
         # Calculate the shape and strides of the sliding view
         grid_shape = tuple(
-            ((self._arr.shape[i] - self._ps[i]) // step[i] + 1)
-            if self._ps[i] < self._arr.shape[i]
-            else 1
+            (
+                ((self._arr.shape[i] - self._ps[i]) // step[i] + 1)
+                if self._ps[i] < self._arr.shape[i]
+                else 1
+            )
             for i in range(dimensions)
         )
         shape = grid_shape + tuple(self._ps)
         strides = (
             tuple(
-                self._arr.strides[i] * step[i]
-                if self._ps[i] < self._arr.shape[i]
-                else 0
+                (
+                    self._arr.strides[i] * step[i]
+                    if self._ps[i] < self._arr.shape[i]
+                    else 0
+                )
                 for i in range(dimensions)
             )
             + self._arr.strides
@@ -169,7 +173,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         if mask is None:
             process_mask = np.full(data_shape, True)
         elif mask.shape == input_data.shape[:-1]:
-            process_mask = np.broadcast_to(mask, input_data.shape)
+            process_mask = np.broadcast_to(mask[..., None], input_data.shape)
 
         process_mask = PatchedArray(
             process_mask, p_s, p_o, padding_mode="constant", constant_values=0
@@ -333,7 +337,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
             if len(p) == len(data_shape) - 1:
                 # add the time dimension
                 p = (*p, data_shape[-1])
-                pp[i] = p
+            pp[i] = p
 
         if np.prod(pp[0][:-1]) < data_shape[-1]:
             logging.warning(

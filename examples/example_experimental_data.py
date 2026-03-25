@@ -1,6 +1,0 @@
-"""
-Experimental Data denoising
-===========================
-"""
-
-
