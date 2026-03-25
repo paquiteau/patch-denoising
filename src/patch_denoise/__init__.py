@@ -1,13 +1,13 @@
 """Collection of patch-based denoising methods."""
-
 from patch_denoise.denoise import (
-    adaptive_thresholding,
-    hybrid_pca,
     mp_pca,
-    nordic,
+    hybrid_pca,
     optimal_thresholding,
+    adaptive_thresholding,
     raw_svt,
+    nordic,
 )
+
 from patch_denoise.space_time.lowrank import (
     AdaptiveDenoiser,
     HybridPCADenoiser,
@@ -39,9 +39,8 @@ try:
 except ImportError:
     # -- Source mode --
     # use setuptools_scm to get the current version from src using git
-    from os import path as _path
-
     from setuptools_scm import get_version as _gv
+    from os import path as _path
 
     try:
         __version__ = _gv(_path.join(_path.dirname(__file__), _path.pardir))
