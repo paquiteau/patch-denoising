@@ -1,5 +1,6 @@
 """Main loop for the gpu version of patch-denoise."""
 
+import os
 import queue
 import threading
 import logging
@@ -15,8 +16,8 @@ from ..space_time.base import PatchedArray
 
 @nb.njit(
     [
-        "float32[:,:,:,:],float32[:,:,:,:],float32[:,:,:,:,:], float32[::1],int64[:,::1]",
-        "complex64[:,:,:,:],complex64[:,:,:,:],complex64[:,:,:,:,:], complex64[::1],int64[:,::1]",
+        "(float32[:,:,:,:],float32[:,:,:,:],float32[:,:,:,:,:], float32[::1],int64[:,::1])",
+        "(complex64[:,:,:,:],complex64[:,:,:,:],complex64[:,:,:,:,:], complex64[::1],int64[:,::1])",
     ],
     parallel=True,
     cache=True,
@@ -35,7 +36,9 @@ def _accumulator(out_acc, out_weights, batch_data, batch_weights, batch_indices)
         out_weights[i : i + PH, j : j + PW, k : k + PD, l : l + PT] += batch_weights[b]
 
 
-def make_denoiser(args, noise_map, batch_size, **kwargs) -> torch.nn.Module:
+def make_denoiser(
+    args, noise_map, batch_size, compile=True, **kwargs
+) -> torch.nn.Module:
     """Create a denoiser model on GPU."""
     from .denoiser import OptimalSVDDenoiser
 
@@ -44,19 +47,48 @@ def make_denoiser(args, noise_map, batch_size, **kwargs) -> torch.nn.Module:
         patch_shape=args.patch_shape,
         recombination=args.recombination,
         loss="fro",
-        batch_size=batch_size,
         **kwargs,
-    )
+    ).cuda()  # Move model to GPU
+
+    # cache compilation
+    os.environ["TORCHINDUCTOR_CACHE_DIR"] = "./torch_cache"
+    os.environ["TORCHINDUCTOR_CACHE_ENABLED"] = "1"
+    torch.set_float32_matmul_precision("high")
+    #   torch.backends.cuda.preferred_linalg_library("cusolver")
+
+    if compile:
+        logging.info("starting module compilation.")
+        dummy_input = torch.randn(
+            batch_size, *args.patch_shape, device="cuda", dtype=torch.float32
+        )
+        # warm up to create working memory
+        with torch.inference_mode():
+            denoiser(dummy_input)
+            denoiser = torch.compile(
+                denoiser,
+                fullgraph=True,
+                # mode="reduce-overhead",
+                # options={
+                #     "triton.cudagraphs": False,  # incompatible with svd
+                # },
+            )  # Compile the model for faster inference
+        # warm up the model with a dummy input to trigger compilation before timing
+        with torch.inference_mode():
+            denoiser(dummy_input)
+        # Clear overhead memory from autotuning benchmarks
+        logging.info("Model compiled and warmed up on GPU.")
+    torch.cuda.empty_cache()
+
     return denoiser
 
 
 @torch.inference_mode()
-def main_gpu(args, input_data, mask, noise_map, batch_size=32, **kwargs):
+def main_gpu(args, input_data, mask, noise_map, batch_size=32, compile=False, **kwargs):
     """Denoise loop for the gpu version of patch-denoise."""
     # Create the Dataset
     out_weights = np.zeros_like(input_data)
     out_acc = np.zeros_like(input_data)
-
+    batch_size = int(batch_size)
     # setup dataset and dataloader using pytorch api:
     patch_dataset = PatchDataset(
         input_data,
@@ -75,15 +107,10 @@ def main_gpu(args, input_data, mask, noise_map, batch_size=32, **kwargs):
     )
 
     # Setup the denoiser model on GPU
-    torch.set_float32_matmul_precision("high")
-    torch.backends.cuda.preferred_linalg_library()
-    denoiser = (
-        make_denoiser(args, noise_map, batch_size=batch_size, **kwargs).cuda().eval()
+    denoiser = make_denoiser(
+        args, noise_map, batch_size=batch_size, compile=compile, **kwargs
     )
-    denoiser = torch.compile(
-        denoiser,
-        fullgraph=True,
-    )  # Compile the model for faster inference
+
     # Scheduling with double buffering and a worker thread to accumulate results asynchronously
     res_queue = queue.Queue(maxsize=10)  # To hold results from GPU threads
     N_STREAMS = 2
