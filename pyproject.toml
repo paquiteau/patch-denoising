@@ -38,7 +38,7 @@ doc = [
   "sphinx",
 ]
 
-dev = ["black", "ruff"]
+dev = ["ruff"]
 
 [project.scripts]
 patch-denoise = "patch_denoise.bindings.cli:main"
@@ -58,12 +58,10 @@ omit = ["*tests*"]
 precision = 2
 exclude_lines = ["pragma: no cover", "raise NotImplementedError"]
 
-# Formatting using black.
-[tool.black]
 
 #linting using ruff
 [tool.ruff]
-src = ["src", "tests"]
+src = ["src", "tests", "docs"]
 
 [tool.ruff.lint]
 ignore = ["B905"]

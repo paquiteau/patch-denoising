@@ -6,6 +6,7 @@ import numpy as np
 from scipy.linalg import svd
 from scipy.optimize import minimize
 
+from .._docs import fill_doc
 from .base import BaseSpaceTimeDenoiser, PatchedArray
 from .utils import (
     eig_analysis,
@@ -14,7 +15,6 @@ from .utils import (
     svd_analysis,
     svd_synthesis,
 )
-from .._docs import fill_doc
 
 NUMBA_AVAILABLE = True
 try:
@@ -51,7 +51,7 @@ class MPPCADenoiser(BaseSpaceTimeDenoiser):
             meanvar *= 4 * np.sqrt((len(eig_vec) - maxidx + 1) / len(patch))
         var_noise = np.mean(eig_vals[: len(eig_vals) - maxidx])
 
-        maxidx = np.sum(eig_vals > (var_noise * threshold_scale ** 2))
+        maxidx = np.sum(eig_vals > (var_noise * threshold_scale**2))
 
         if maxidx == 0:
             patch_new = np.zeros_like(patch) + p_tmean
@@ -92,9 +92,9 @@ class HybridPCADenoiser(BaseSpaceTimeDenoiser):
         """
         p_s, p_o = self._get_patch_param(input_data.shape)
         if isinstance(noise_std, (float, np.floating)):
-            var_apriori = noise_std ** 2 * np.ones(input_data.shape[:-1])
+            var_apriori = noise_std**2 * np.ones(input_data.shape[:-1])
         else:
-            var_apriori = noise_std ** 2
+            var_apriori = noise_std**2
         var_apriori = PatchedArray(
             np.broadcast_to(var_apriori[..., None], input_data.shape), p_s, p_o
         )
@@ -249,8 +249,8 @@ class NordicDenoiser(RawSVDDenoiser):
 # From MATLAB implementation
 def _opt_loss_x(y, beta):
     """Compute (8) of donoho2017."""
-    tmp = y ** 2 - beta - 1
-    return np.sqrt(0.5 * (tmp + np.sqrt((tmp ** 2) - (4 * beta)))) * (
+    tmp = y**2 - beta - 1
+    return np.sqrt(0.5 * (tmp + np.sqrt((tmp**2) - (4 * beta)))) * (
         y >= (1 + np.sqrt(beta))
     )
 
@@ -263,20 +263,17 @@ def _opt_ope_shrink(singvals, beta=1):
 def _opt_nuc_shrink(singvals, beta=1):
     """Perform optimal threshold of singular values for nuclear norm."""
     tmp = _opt_loss_x(singvals, beta)
-    return (
-        np.maximum(
-            0,
-            (tmp ** 4 - (np.sqrt(beta) * tmp * singvals) - beta),
-        )
-        / ((tmp ** 2) * singvals)
-    )
+    return np.maximum(
+        0,
+        (tmp**4 - (np.sqrt(beta) * tmp * singvals) - beta),
+    ) / ((tmp**2) * singvals)
 
 
 def _opt_fro_shrink(singvals, beta=1):
     """Perform optimal threshold of singular values for frobenius norm."""
     return np.sqrt(
         np.maximum(
-            (((singvals ** 2) - beta - 1) ** 2 - 4 * beta),
+            (((singvals**2) - beta - 1) ** 2 - 4 * beta),
             0,
         )
         / singvals
@@ -313,9 +310,9 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         recombination="weighted",
     ):
         super().__init__(patch_shape, patch_overlap, recombination=recombination)
-        self.input_denoising_kwargs[
-            "shrink_func"
-        ] = OptimalSVDDenoiser._OPT_LOSS_SHRINK[loss]
+        self.input_denoising_kwargs["shrink_func"] = (
+            OptimalSVDDenoiser._OPT_LOSS_SHRINK[loss]
+        )
 
     @fill_doc
     def denoise(
@@ -366,9 +363,9 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
             self.input_denoising_kwargs["var_apriori"] = None
         else:
             if isinstance(noise_std, (float, np.floating)):
-                var_apriori = noise_std ** 2 * np.ones(input_data.shape[:-1])
+                var_apriori = noise_std**2 * np.ones(input_data.shape[:-1])
             else:
-                var_apriori = noise_std ** 2
+                var_apriori = noise_std**2
             var_apriori = PatchedArray(
                 np.broadcast_to(var_apriori[..., None], input_data.shape), p_s, p_o
             )
@@ -424,7 +421,7 @@ def _sure_atn_cost(X, method, sing_vals, gamma, sigma=None, tau=None):
     else:
         tau = np.exp(tau)
 
-    sing_vals2 = sing_vals ** 2
+    sing_vals2 = sing_vals**2
     n_vals = len(sing_vals)
     D = np.zeros((n_vals, n_vals), dtype=np.float32)
     dhat = sing_vals * np.maximum(1 - ((tau / sing_vals) ** gamma), 0)
@@ -440,7 +437,7 @@ def _sure_atn_cost(X, method, sing_vals, gamma, sigma=None, tau=None):
     rss = np.sum((dhat - sing_vals) ** 2)
     if method == "gsure":
         return rss / (1 - div / n / p) ** 2
-    return (sigma ** 2) * ((-n * p) + (2 * div)) + rss
+    return (sigma**2) * ((-n * p) + (2 * div)) + rss
 
 
 if NUMBA_AVAILABLE:
@@ -495,6 +492,7 @@ def _get_gamma_tau_qut(patch, sing_vals, stdest, gamma0, nbsim):
 
 def _get_gamma_tau(patch, sing_vals, stdest, method, gamma0, tau0):
     """Estimate gamma and tau."""
+
     # estimation of tau
     def sure_tau(tau, *args):
         return _sure_atn_cost(*args, tau[0])
@@ -593,9 +591,9 @@ class AdaptiveDenoiser(BaseSpaceTimeDenoiser):
 
         p_s, p_o = self._get_patch_param(input_data.shape)
         if isinstance(noise_std, (float, np.floating)):
-            var_apriori = noise_std ** 2 * np.ones(input_data.shape[:-1])
+            var_apriori = noise_std**2 * np.ones(input_data.shape[:-1])
         else:
-            var_apriori = noise_std ** 2
+            var_apriori = noise_std**2
         var_apriori = PatchedArray(
             np.broadcast_to(var_apriori[..., None], input_data.shape), p_s, p_o
         )
