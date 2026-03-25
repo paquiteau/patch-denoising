@@ -1,0 +1,6 @@
+patch\_denoise.bindings.cli.parse\_args
+=======================================
+
+.. currentmodule:: patch_denoise.bindings.cli
+
+.. autofunction:: parse_args

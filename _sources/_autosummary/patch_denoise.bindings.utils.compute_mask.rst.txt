@@ -1,0 +1,6 @@
+patch\_denoise.bindings.utils.compute\_mask
+===========================================
+
+.. currentmodule:: patch_denoise.bindings.utils
+
+.. autofunction:: compute_mask

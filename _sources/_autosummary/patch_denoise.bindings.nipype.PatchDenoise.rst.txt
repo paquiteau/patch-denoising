@@ -1,0 +1,39 @@
+PatchDenoise
+============
+
+.. currentmodule:: patch_denoise.bindings.nipype
+
+.. autoclass:: PatchDenoise
+   :members:
+   :private-members:
+   :show-inheritance:
+   :special-members: __call__, __add__, __mul__, __matmul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~PatchDenoise.__init__
+      ~PatchDenoise.aggregate_outputs
+      ~PatchDenoise.help
+      ~PatchDenoise.load_inputs_from_json
+      ~PatchDenoise.run
+      ~PatchDenoise.save_inputs_to_json
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~PatchDenoise.always_run
+      ~PatchDenoise.can_resume
+      ~PatchDenoise.resource_monitor
+      ~PatchDenoise.version
+   
+   

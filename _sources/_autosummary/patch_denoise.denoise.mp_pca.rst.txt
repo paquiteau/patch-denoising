@@ -1,0 +1,6 @@
+patch\_denoise.denoise.mp\_pca
+==============================
+
+.. currentmodule:: patch_denoise.denoise
+
+.. autofunction:: mp_pca
