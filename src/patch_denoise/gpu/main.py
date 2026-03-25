@@ -102,7 +102,7 @@ def main_gpu(args, input_data, mask, noise_map, batch_size=32, compile=False, **
         patch_dataset,
         batch_size=int(batch_size),
         shuffle=False,
-        num_workers=4,  # No multiprocessing to avoid GPU contention
+        num_workers=4,
         pin_memory=True,  # Pin memory for faster CPU-GPU transfer
     )
 
