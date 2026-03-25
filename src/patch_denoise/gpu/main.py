@@ -2,38 +2,131 @@
 
 import os
 import queue
-import threading
 import logging
 
 from tqdm.auto import tqdm
 import torch
 import numpy as np
-import numba as nb
+from numpy.typing import NDArray
+import triton
+import triton.language as tl
 
 from .dataloader import PatchDataset
-from ..space_time.base import PatchedArray
 
 
-@nb.njit(
-    [
-        "(float32[:,:,:,:],float32[:,:,:,:],float32[:,:,:,:,:], float32[::1],int64[:,::1])",
-        "(complex64[:,:,:,:],complex64[:,:,:,:],complex64[:,:,:,:,:], complex64[::1],int64[:,::1])",
-    ],
-    parallel=True,
-    cache=True,
-    nogil=True,
-)
-def _accumulator(out_acc, out_weights, batch_data, batch_weights, batch_indices):
-    """Accumulate resulted denoised data asynchronously.
+@triton.jit
+def atomic_accumulate_kernel(
+    global_out_ptr,  # Interpreted as float*
+    global_weights_ptr,  # Interpreted as float*
+    recon_ptr,  # Interpreted as float*
+    weights_ptr,  # Interpreted as float*
+    coords_ptr,
+    stride_out0,
+    stride_out1,
+    stride_out2,
+    stride_out3,
+    stride_rep_b,
+    stride_rep_h,
+    stride_rep_w,
+    stride_rep_d,
+    stride_rep_t,
+    PH,
+    PW,
+    PD,
+    PT,
+    BATCH_SIZE,
+    BLOCK_SIZE: tl.constexpr,
+    IS_COMPLEX: tl.constexpr,
+):
+    pid = tl.program_id(0)
+    if pid >= BATCH_SIZE:
+        return
 
-    Bypass the GIL with Numba
-    """
-    B, PH, PW, PD, PT = batch_data.shape
-    for b in nb.prange(B):
-        i, j, k, l = batch_indices[b]
-        # In-place addition into the large pinned RAM buffer
-        out_acc[i : i + PH, j : j + PW, k : k + PD, l : l + PT] += batch_data[b]
-        out_weights[i : i + PH, j : j + PW, k : k + PD, l : l + PT] += batch_weights[b]
+    # 1. Load coordinates and weight (Scalars)
+    off_i = tl.load(coords_ptr + pid * 4 + 0)
+    off_j = tl.load(coords_ptr + pid * 4 + 1)
+    off_k = tl.load(coords_ptr + pid * 4 + 2)
+    off_l = tl.load(coords_ptr + pid * 4 + 3)
+    w = tl.load(weights_ptr + pid)
+
+    for p_idx in range(0, PH * PW * PD * PT, BLOCK_SIZE):
+        offsets = p_idx + tl.arange(0, BLOCK_SIZE)
+        mask = offsets < (PH * PW * PD * PT)
+
+        # 4D index logic
+        curr_l = offsets % PT
+        curr_k = (offsets // PT) % PD
+        curr_j = (offsets // (PT * PD)) % PW
+        curr_i = offsets // (PT * PD * PW)
+
+        # Logical element index
+        g_idx = (
+            (off_i + curr_i) * stride_out0
+            + (off_j + curr_j) * stride_out1
+            + (off_k + curr_k) * stride_out2
+            + (off_l + curr_l) * stride_out3
+        )
+
+        r_idx = (
+            pid * stride_rep_b
+            + curr_i * stride_rep_h
+            + curr_j * stride_rep_w
+            + curr_k * stride_rep_d
+            + curr_l * stride_rep_t
+        )
+
+        if IS_COMPLEX:
+            # We are using float32 pointers, so we multiply logical index by 2
+            # to hit the interleaved Real/Imag parts.
+            r_ptr_real = recon_ptr + 2 * r_idx
+            g_ptr_real = global_out_ptr + 2 * g_idx
+
+            # Atomic Add Real
+            val_r = tl.load(r_ptr_real, mask=mask)
+            tl.atomic_add(g_ptr_real, val_r * w, mask=mask)
+
+            # Atomic Add Imaginary (Next float32 over)
+            val_i = tl.load(r_ptr_real + 1, mask=mask)
+            tl.atomic_add(g_ptr_real + 1, val_i * w, mask=mask)
+        else:
+            tl.atomic_add(
+                global_out_ptr + g_idx,
+                tl.load(recon_ptr + r_idx, mask=mask) * w,
+                mask=mask,
+            )
+
+        # Weights are always 1 float per logical pixel
+        tl.atomic_add(global_weights_ptr + g_idx, w, mask=mask)
+
+
+def launch_triton(out_acc, out_weights, recon, weights, coords, patch_shape):
+    # Determine type
+    is_complex = recon.is_complex()
+
+    # TRICK: Interpret the tensors as float32 regardless of actual type.
+    # This ensures Triton's pointer arithmetic is in 4-byte increments.
+    # .view(torch.float32) does not copy; it just re-interprets the pointer.
+    if is_complex:
+        p_out = out_acc.view(torch.float32)
+        p_recon = recon.view(torch.float32)
+    else:
+        p_out = out_acc
+        p_recon = recon
+
+    grid = (recon.shape[0],)
+    atomic_accumulate_kernel[grid](
+        p_out,
+        out_weights,
+        p_recon,
+        weights,
+        coords,
+        *out_acc.stride(),  # Use ORIGINAL complex strides
+        *recon.stride(),  # Use ORIGINAL complex strides
+        *patch_shape,
+        BATCH_SIZE=recon.shape[0],
+        BLOCK_SIZE=1024,
+        IS_COMPLEX=is_complex,
+    )
 
 
 def make_denoiser(
@@ -67,6 +160,7 @@ def make_denoiser(
             denoiser = torch.compile(
                 denoiser,
                 fullgraph=True,
+                mode="max-autotune",
                 # mode="reduce-overhead",
                 # options={
                 #     "triton.cudagraphs": False,  # incompatible with svd
@@ -83,15 +177,22 @@ def make_denoiser(
 
 
 @torch.inference_mode()
-def main_gpu(args, input_data, mask, noise_map, batch_size=32, compile=False, **kwargs):
+def main_gpu(
+    args,
+    input_data: NDArray,
+    mask: NDArray,
+    noise_map: NDArray,
+    batch_size: int = 32,
+    compile: bool = False,
+    **kwargs,
+):
     """Denoise loop for the gpu version of patch-denoise."""
     # Create the Dataset
-    out_weights = np.zeros_like(input_data)
-    out_acc = np.zeros_like(input_data)
     batch_size = int(batch_size)
     # setup dataset and dataloader using pytorch api:
+    input_data_ = torch.from_numpy(input_data)
     patch_dataset = PatchDataset(
-        input_data,
+        input_data_,
         patch_shape=args.patch_shape,
         patch_overlap=args.patch_overlap,
         mask=mask,
@@ -111,59 +212,30 @@ def main_gpu(args, input_data, mask, noise_map, batch_size=32, compile=False, **
         args, noise_map, batch_size=batch_size, compile=compile, **kwargs
     )
 
-    # Scheduling with double buffering and a worker thread to accumulate results asynchronously
-    res_queue = queue.Queue(maxsize=10)  # To hold results from GPU threads
     N_STREAMS = 2
     streams = [torch.cuda.Stream() for _ in range(N_STREAMS)]
-    events = [torch.cuda.Event() for _ in range(N_STREAMS)]
-
-    def _worker():
-        """Worker thread to accumulate results return from GPU asynchronously."""
-        while True:
-            item = res_queue.get()
-            if item is None:  # Sentinel to stop the thread
-                break
-            cpu_out, cpu_weights, indices, event = item
-
-            # convert linear indices back to 4D patch indices
-            batch_indices = np.array(
-                [
-                    PatchedArray.linear_to_patch_indices(
-                        idx, input_data.shape, args.patch_shape, args.patch_overlap
-                    )
-                    for idx in indices
-                ]
-            )
-            event.synchronize()  # Wait for GPU to finish
-            _accumulator(
-                out_acc,
-                out_weights,
-                cpu_out.numpy().reshape(-1, *args.patch_shape),
-                cpu_weights.numpy(),
-                batch_indices,
-            )
-
-    worker_thread = threading.Thread(target=_worker)
-    worker_thread.start()
-
     logging.info(
         f"Processing {len(loader.dataset)} patches with batch size {batch_size}..."
     )
+
+    out_weights = torch.zeros(input_data_.shape, dtype=input_data_.dtype, device="cuda")
+    out_acc = torch.zeros(input_data_.shape, dtype=torch.float32, device="cuda")
     for i, (patches, indices) in enumerate(tqdm(loader, unit_scale=batch_size)):
         slot = i % 2
         stream = streams[slot]
-        event = events[slot]
-
         with torch.cuda.stream(stream):
             # H2D -> Compute -> D2H (All Asynchronous)
             gpu_in = patches.cuda(non_blocking=True)
+            gpu_indices = indices.cuda(non_blocking=True)
             gpu_out, gpu_weight = denoiser(gpu_in)
-            cpu_out = gpu_out.to("cpu", non_blocking=True)
-            cpu_weight = gpu_weight.to("cpu", non_blocking=True)
-            event.record()  # Mark when this slot is done
-
-        res_queue.put((cpu_out, cpu_weight, indices, event))
-
-    res_queue.put(None)
-    worker_thread.join()
+            launch_triton(
+                out_acc,
+                out_weights,
+                gpu_out,
+                gpu_weight,
+                gpu_indices,
+                args.patch_shape,
+            )
+    out_acc = out_acc.cpu()
+    out_weights = out_weights.cpu()
     return out_acc, out_weights, None

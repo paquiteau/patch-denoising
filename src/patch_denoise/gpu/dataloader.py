@@ -156,7 +156,7 @@ class PatchDataset(torch.utils.data.Dataset):
 
     def __init__(
         self,
-        input_data: NDArray | torch.Tensor,
+        input_data: torch.Tensor,
         *,
         patch_shape: tuple[int, ...],
         patch_overlap: tuple[int, ...],
@@ -178,10 +178,10 @@ class PatchDataset(torch.utils.data.Dataset):
         self.patch_locs = select_patches_to_process(
             mask, patch_shape, patch_overlap, mask_threshold
         )
+        self.patch_shape = patch_shape
+        self.patch_overlap = patch_overlap
 
-        self.input_data = patchify_tensor(
-            torch.from_numpy(input_data), patch_shape, patch_overlap
-        )
+        self.input_data = patchify_tensor(input_data, patch_shape, patch_overlap)
         self.grid_shape = self.input_data.shape[: len(data_shape)]
 
     def __len__(self):
@@ -190,6 +190,15 @@ class PatchDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):  # type: ignore
         """Get the patch and its corresponding indices."""
-        patch_idx = self.patch_locs[idx]
-        patch_data = self.input_data[torch.unravel_index(patch_idx, self.grid_shape)]
-        return patch_data, patch_idx
+        patch_grid_idx = torch.unravel_index(self.patch_locs[idx], self.grid_shape)
+        patch_data = self.input_data[patch_grid_idx]
+        patch_top_left_idx = torch.tensor(
+            tuple(
+                idx * (ps - po)
+                for idx, ps, po in zip(
+                    patch_grid_idx, self.patch_shape, self.patch_overlap
+                )
+            ),
+            dtype=torch.int64,
+        )
+        return patch_data, patch_top_left_idx

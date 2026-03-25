@@ -100,6 +100,6 @@ class OptimalSVDDenoiser(torch.nn.Module):
         # u * s_shrink.unsqueeze(1) relies on broadcasting, avoiding large intermediate allocations
         x_denoised = torch.matmul(u * s_shrink.unsqueeze(1), v) + m
 
-        x_denoised = x_denoised * weight.unsqueeze(-1).unsqueeze(-1)
+        #        x_denoised = x_denoised * weight.unsqueeze(-1).unsqueeze(-1)
 
-        return x_denoised, weight
+        return x_denoised.reshape(x.shape), weight
