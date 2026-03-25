@@ -86,7 +86,7 @@ def mr_shepp_logan(N, E=None, B0=3, T2star=False, zlims=(-1, 1)):
 
     # Make sure zlims are appropriate
     assert len(zlims) == 2, (
-        "zlims must be a tuple with 2 entries: upper and lower " "bounds!"
+        "zlims must be a tuple with 2 entries: upper and lower bounds!"
     )
     assert zlims[0] <= zlims[1], "zlims: lower bound must be first entry!"
 

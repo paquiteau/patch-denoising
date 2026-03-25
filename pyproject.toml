@@ -38,7 +38,7 @@ doc = [
   "sphinx",
 ]
 
-dev = ["black", "isort", "ruff"]
+dev = ["ruff"]
 
 [project.scripts]
 patch-denoise = "patch_denoise.bindings.cli:main"
@@ -58,23 +58,23 @@ omit = ["*tests*"]
 precision = 2
 exclude_lines = ["pragma: no cover", "raise NotImplementedError"]
 
-# Formatting using black.
-[tool.black]
 
 #linting using ruff
 [tool.ruff]
-src = ["src", "tests"]
+src = ["src", "tests", "docs"]
 
 [tool.ruff.lint]
 ignore = ["B905"]
 exclude = ["examples/", "tests/"]
-select = ["E", "F", "B", "Q", "UP", "D"]
+select = ["E", "F", "B", "Q", "UP", "D", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/{tests}/*" = ["D100", "D103", "D104", "D205", "F841", "E501", "E402", "F401"]
+"**/{examples}/*" = ["D400", "D205", "E501"]
+
 
 [tool.ruff.lint.pydocstyle]
 convention="numpy"
-
-[tool.isort]
-profile="black"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
