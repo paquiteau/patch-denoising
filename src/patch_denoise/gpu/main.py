@@ -236,6 +236,6 @@ def main_gpu(
                 gpu_indices,
                 args.patch_shape,
             )
-    out_acc = out_acc.cpu()
-    out_weights = out_weights.cpu()
+    out_acc = out_acc.cpu().numpy()
+    out_weights = out_weights.cpu().numpy()
     return out_acc, out_weights, None
