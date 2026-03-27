@@ -103,3 +103,69 @@ class OptimalSVDDenoiser(torch.nn.Module):
         #        x_denoised = x_denoised * weight.unsqueeze(-1).unsqueeze(-1)
 
         return x_denoised.reshape(x.shape), weight
+
+
+class MPPCADenoiser(torch.nn.Module):
+    """MP PCA denoiser."""
+
+    def __init__(
+        self,
+        patch_shape,
+        recombination="weighted",
+        threshold_scale=1.0,
+    ):
+        super().__init__()
+        self.patch_shape = patch_shape
+        self.threshold_scale = threshold_scale
+        self.recombination = recombination
+
+    def forward(self, x: torch.Tensor):
+        """Apply MP PCA denoising to a batch of patches."""
+
+        # Flatten and mean center
+        x_flat = x.reshape(x.shape[0], -1, x.shape[-1])  # (B, N,M)
+
+        xm = torch.mean(x_flat, dim=-1, keepdim=True)
+        xc = x_flat - xm
+
+        u, s, v = torch.linalg.svd(xc, full_matrices=False, driver="gesvda")
+
+        N, M = x_flat.shape[-2], x_flat.shape[-1]
+        # Convert singular values to eigenvalues of covariance
+        eigs = s**2 / (N - 1)
+        # NB: The singular values are returned in descending order.
+        # create a reverse order cum sum
+        cum_eigs = torch.cumsum(eigs, dim=-1)
+        rcum_eigs = eigs - cum_eigs + cum_eigs[:, -1:]
+
+        # [lambda,order] = sort(lambda,'descend');
+        # U = U(:,order);
+        # csum = cumsum(lambda,'reverse');
+        # p = (0:length(lambda)-1)';
+        # p = -1 + find((lambda-lambda(end)).*(M-p).*(N-p) < 4*csum*sqrt(M*N),1);
+        # if p==0
+        #     X = zeros(size(X));
+        # elseif M<N
+        #     X = U(:,1:p)*U(:,1:p)'*X;
+        # else
+        #     X = X*U(:,1:p)*U(:,1:p)';
+        # end
+        # s2 = csum(p+1)/((M-p)*(N-p));
+        # s2_after = s2 - csum(p+1)/(M*N);
+
+        p = torch.arange(M)
+        p = torch.argmax(
+            (eigs - eigs[:, -1]) * (M - p) * (N - p)
+            < 4 * rcum_eigs * torch.sqrt(M * N),
+            dim=-1,
+        )
+        eigs[:, p:] = 0
+        s_shrink = torch.sqrt(eigs * (N - 1))
+        x_denoised = torch.matmul(u * s_shrink.unsqueeze(1), v) + xm
+
+        if self.recombination == "weighted":
+            weight = 1.0 / (2.0 + p)
+        else:
+            weight = torch.ones_like(p, dtype=x.dtype)
+
+        return x_denoised.reshape(x.shape), weight
