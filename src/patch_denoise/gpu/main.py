@@ -12,6 +12,7 @@ import triton
 import triton.language as tl
 
 from .dataloader import PatchDataset
+from .denoiser import OptimalSVDDenoiser, MPPCADenoiser
 
 
 @triton.jit
@@ -133,21 +134,30 @@ def make_denoiser(
     args, noise_map, batch_size, compile=True, **kwargs
 ) -> torch.nn.Module:
     """Create a denoiser model on GPU."""
-    from .denoiser import OptimalSVDDenoiser
 
     print(args)
-    denoiser = OptimalSVDDenoiser(
-        patch_shape=args.patch_shape,
-        recombination=args.recombination,
-        loss="fro",
-        **kwargs,
-    ).cuda()  # Move model to GPU
+    if "optimal" in args.method:
+        denoiser = OptimalSVDDenoiser(
+            patch_shape=args.patch_shape,
+            recombination=args.recombination,
+            loss=args.method.split("-")[-1],
+            **kwargs,
+        )
+    elif args.method == "mppca":
+        denoiser = MPPCADenoiser(
+            patch_shape=args.patch_shape,
+            recombination=args.recombination,
+            **kwargs,
+        )
+    else:
+        raise ValueError(f"method {args.method} is not supported on GPU. ")
+
+    denoiser = denoiser.cuda()  # Move model to GPU
 
     # cache compilation
-    os.environ["TORCHINDUCTOR_CACHE_DIR"] = "./torch_cache"
+    os.environ["TORCHINDUCTOR_CACHE_DIR"] = "./.torch_cache"
     os.environ["TORCHINDUCTOR_CACHE_ENABLED"] = "1"
     torch.set_float32_matmul_precision("high")
-    #   torch.backends.cuda.preferred_linalg_library("cusolver")
 
     if compile:
         logging.info("starting module compilation.")
@@ -161,10 +171,6 @@ def make_denoiser(
                 denoiser,
                 fullgraph=True,
                 mode="max-autotune",
-                # mode="reduce-overhead",
-                # options={
-                #     "triton.cudagraphs": False,  # incompatible with svd
-                # },
             )  # Compile the model for faster inference
         # warm up the model with a dummy input to trigger compilation before timing
         with torch.inference_mode():
