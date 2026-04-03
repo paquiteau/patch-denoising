@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+"""GPU-based patch denoising module."""
 
 from .main import main_gpu
 

@@ -1,12 +1,10 @@
 """Main loop for the gpu version of patch-denoise."""
 
 import os
-import queue
 import logging
 
 from tqdm.auto import tqdm
 import torch
-import numpy as np
 from numpy.typing import NDArray
 import triton
 import triton.language as tl
@@ -16,29 +14,33 @@ from .denoiser import OptimalSVDDenoiser, MPPCADenoiser
 
 
 @triton.jit
-def atomic_accumulate_kernel(
+def __atomic_accumulate_kernel(
     global_out_ptr,  # Interpreted as float*
     global_weights_ptr,  # Interpreted as float*
     recon_ptr,  # Interpreted as float*
     weights_ptr,  # Interpreted as float*
     coords_ptr,
-    stride_out0,
-    stride_out1,
-    stride_out2,
-    stride_out3,
-    stride_rep_b,
-    stride_rep_h,
-    stride_rep_w,
-    stride_rep_d,
-    stride_rep_t,
-    PH,
-    PW,
-    PD,
-    PT,
+    stride_out0: tl.constexpr,
+    stride_out1: tl.constexpr,
+    stride_out2: tl.constexpr,
+    stride_out3: tl.constexpr,
+    stride_rep_b: tl.constexpr,
+    stride_rep_h: tl.constexpr,
+    stride_rep_w: tl.constexpr,
+    stride_rep_d: tl.constexpr,
+    stride_rep_t: tl.constexpr,
+    PH: tl.constexpr,
+    PW: tl.constexpr,
+    PD: tl.constexpr,
+    PT: tl.constexpr,
     BATCH_SIZE,
     BLOCK_SIZE: tl.constexpr,
     IS_COMPLEX: tl.constexpr,
 ):
+    """Atomic accumulation kernel in Triton.
+
+    Process one batch element per launch, with each tread block handling one pixel
+    """
     pid = tl.program_id(0)
     if pid >= BATCH_SIZE:
         return
@@ -101,7 +103,7 @@ def atomic_accumulate_kernel(
 
 
 def launch_triton(out_acc, out_weights, recon, weights, coords, patch_shape):
-    # Determine type
+    """Launch the Triton kernel for atomic accumulation."""
     is_complex = recon.is_complex()
 
     # TRICK: Interpret the tensors as float32 regardless of actual type.
@@ -115,17 +117,17 @@ def launch_triton(out_acc, out_weights, recon, weights, coords, patch_shape):
         p_recon = recon
 
     grid = (recon.shape[0],)
-    atomic_accumulate_kernel[grid](
+    __atomic_accumulate_kernel[grid](
         p_out,
         out_weights,
         p_recon,
         weights,
         coords,
-        *out_acc.stride(),  # Use ORIGINAL complex strides
-        *recon.stride(),  # Use ORIGINAL complex strides
+        *out_acc.stride(),
+        *recon.stride(),
         *patch_shape,
         BATCH_SIZE=recon.shape[0],
-        BLOCK_SIZE=1024,
+        BLOCK_SIZE=1024,  # type: ignore
         IS_COMPLEX=is_complex,
     )
 
@@ -134,7 +136,6 @@ def make_denoiser(
     args, noise_map, batch_size, compile=True, **kwargs
 ) -> torch.nn.Module:
     """Create a denoiser model on GPU."""
-
     print(args)
     if "optimal" in args.method:
         denoiser = OptimalSVDDenoiser(
@@ -161,22 +162,22 @@ def make_denoiser(
 
     if compile:
         logging.info("starting module compilation.")
-        dummy_input = torch.randn(
-            batch_size, *args.patch_shape, device="cuda", dtype=torch.float32
-        )
-        # warm up to create working memory
         with torch.inference_mode():
+
+            # warm up to create working memory
+            dummy_input = torch.randn(
+                batch_size, *args.patch_shape, device="cuda", dtype=torch.float32
+            )
             denoiser(dummy_input)
             denoiser = torch.compile(
                 denoiser,
                 fullgraph=True,
                 mode="max-autotune",
             )  # Compile the model for faster inference
-        # warm up the model with a dummy input to trigger compilation before timing
-        with torch.inference_mode():
+            # warm up the model with a dummy input to trigger compilation before timing
             denoiser(dummy_input)
-        # Clear overhead memory from autotuning benchmarks
         logging.info("Model compiled and warmed up on GPU.")
+    # Clear overhead memory from autotuning benchmarks
     torch.cuda.empty_cache()
 
     return denoiser
@@ -186,8 +187,8 @@ def make_denoiser(
 def main_gpu(
     args,
     input_data: NDArray,
-    mask: NDArray,
-    noise_map: NDArray,
+    mask: NDArray | None,
+    noise_map: NDArray | None,
     batch_size: int = 32,
     compile: bool = False,
     **kwargs,
@@ -221,7 +222,7 @@ def main_gpu(
     N_STREAMS = 2
     streams = [torch.cuda.Stream() for _ in range(N_STREAMS)]
     logging.info(
-        f"Processing {len(loader.dataset)} patches with batch size {batch_size}..."
+        f"Processing {len(patch_dataset)} patches with batch size {batch_size}..."
     )
 
     out_weights = torch.zeros(input_data_.shape, dtype=input_data_.dtype, device="cuda")
@@ -242,6 +243,9 @@ def main_gpu(
                 gpu_indices,
                 args.patch_shape,
             )
+
+    out_acc /= out_weights.clamp(min=1e-8)  # Avoid division by zero
     out_acc = out_acc.cpu().numpy()
     out_weights = out_weights.cpu().numpy()
+
     return out_acc, out_weights, None

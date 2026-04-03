@@ -8,14 +8,6 @@ from functools import partial
 from pathlib import Path
 
 import numpy as np
-
-GPU_AVAILABLE = True
-try:
-    from patch_denoise.gpu import main_gpu
-except ImportError:
-    GPU_AVAILABLE = False
-    main_gpu = None
-
 from patch_denoise.bindings.utils import (
     DENOISER_MAP,
     DenoiseParameters,
@@ -25,6 +17,13 @@ from patch_denoise.bindings.utils import (
     load_complex_nifti,
 )
 from patch_denoise import __version__
+
+GPU_AVAILABLE = True
+try:
+    from patch_denoise.gpu import main_gpu
+except ImportError:
+    GPU_AVAILABLE = False
+
 
 DENOISER_NAMES = ", ".join(d for d in DENOISER_MAP if d)
 
@@ -373,7 +372,8 @@ def main():
         else:
             raise RuntimeError(
                 "GPU support is not available. Please ensure that the "
-                "patch_denoise.gpu module is installed and that you have a compatible GPU."
+                "patch_denoise.gpu module is installed and that you have"
+                "a compatible GPU."
             )
     else:
         if args.method in [
@@ -385,8 +385,9 @@ def main():
             if noise_map is None:
                 raise RuntimeError("A noise map must be specified for this method.")
             kwargs["noise_std"] = noise_map
-
-        denoise_func = DENOISER_MAP[args.method]
+        denoise_func = DENOISER_MAP.get(args.method, None)
+        if denoise_func is None:
+            raise ValueError(f"Method {args.method} is not supported.")
         denoised_data, _, noise_std_map, _ = denoise_func(
             input_data,
             patch_shape=args.patch_shape,

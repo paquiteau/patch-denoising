@@ -5,7 +5,14 @@ authors = [{name="Pierre-antoine Comby", email="pierre-antoine.comby@crans.org"}
 
 readme = "README.rst"
 license = {file = "LICENSE.txt"}
-dependencies = ["numpy", "scipy", "matplotlib", "scikit-image", "tqdm", "nibabel"]
+dependencies = [
+    "numpy",
+    "scipy",
+    "matplotlib",
+    "scikit-image",
+    "tqdm",
+    "nibabel",
+]
 requires-python = ">=3.12"
 
 dynamic = ["version"]
@@ -27,7 +34,7 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-optional = ["modopt", "nipype", "numba"]
+optional = ["modopt", "nipype", "pybids"]
 test = ["pytest", "pytest-cov", "pytest-xdist", "pytest-sugar"]
 gpu = ["torch"]
 

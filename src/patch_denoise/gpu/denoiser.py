@@ -1,5 +1,6 @@
 """Torch module for denoising a batch of patches using local low rank method."""
 
+import logging
 import torch
 import numpy as np
 
@@ -29,23 +30,18 @@ class OptimalSVDDenoiser(torch.nn.Module):
             marchenko_pastur_median(beta=beta, eps=eps_marshenko_pastur)
         )
 
-        # 1. Register buffers so they live on the GPU and move with module.cuda()
         # Precompute all constants to save math ops in the forward pass
-        self.register_buffer("beta", torch.tensor(beta, dtype=torch.float32))
-        self.register_buffer(
-            "mp_median", torch.tensor(mp_median_val, dtype=torch.float32)
+        self.beta = torch.nn.Parameter(torch.tensor(beta, dtype=torch.float32))
+        self.mp_median = torch.nn.Parameter(
+            torch.tensor(mp_median_val, dtype=torch.float32)
         )
-        # Precompute constants for the optimal shrinkage functions to avoid redundant calculations in the forward pass
-        self.register_buffer("sqrt_beta", torch.sqrt(self.beta))
-        self.register_buffer("four_beta", 4.0 * self.beta)
-        self.register_buffer("threshold", 1.0 + self.sqrt_beta)
 
     def _opt_loss_x(self, y):
         """Compute (8) of donoho2017 using precomputed buffers."""
         tmp = y**2 - self.beta - 1.0
         # Use boolean to float conversion instead of boolean indexing
-        mask = (y >= self.threshold).to(y.dtype)
-        return torch.sqrt(0.5 * (tmp + torch.sqrt((tmp**2) - self.four_beta))) * mask
+        mask = (y >= (1 + torch.sqrt(self.beta))).to(y.dtype)
+        return torch.sqrt(0.5 * (tmp + torch.sqrt((tmp**2) - 4 * self.beta))) * mask
 
     def _shrink(self, singvals):
         """Apply the selected shrinkage function."""
@@ -55,28 +51,27 @@ class OptimalSVDDenoiser(torch.nn.Module):
         elif self.loss == "nuc":
             tmp = self._opt_loss_x(singvals)
             return torch.nn.functional.relu(
-                tmp**4 - (self.sqrt_beta * tmp * singvals) - self.beta
+                tmp**4 - (torch.sqrt(self.beta) * tmp * singvals) - self.beta
             ) / ((tmp**2) * singvals)
 
         elif self.loss == "fro":
             return torch.sqrt(
                 torch.nn.functional.relu(
-                    (((singvals**2) - self.beta - 1.0) ** 2 - self.four_beta)
+                    ((singvals**2) - self.beta - 1.0) ** 2 - 4 * self.beta
                 )
                 / singvals
             )
 
     def forward(self, x: torch.Tensor):
+        """Apply optimal SVD denoising to a batch of patches."""
         # Flatten and mean center
         x_flat = x.reshape(x.shape[0], -1, x.shape[-1])  # (B, N, T)
-        m = torch.mean(x_flat, dim=-1, keepdim=True)
+        m = torch.mean(x_flat, dim=-2, keepdim=True)
         xc = x_flat - m
-
         u, s, v = torch.linalg.svd(xc, full_matrices=False, driver="gesvda")
-
         # Calculate noise scale
         median_s = torch.median(s, dim=-1)[0]
-        scale_factor = median_s / self.mp_median
+        scale_factor = median_s / self.mp_median  # type: ignore
 
         # 3. Use unsqueeze for clarity and predictable dimension expansion
         scale_factor_exp = scale_factor.unsqueeze(-1)
@@ -92,15 +87,12 @@ class OptimalSVDDenoiser(torch.nn.Module):
         rank = torch.sum(s_shrink > 0, dim=-1) + 1
 
         if self.recombination == "weighted":
-            weight = 1.0 / (2.0 + rank)
+            weight = 1.0 / rank
         else:
             weight = torch.ones_like(rank, dtype=x.dtype)
 
-        # 6. Reconstruct using matmul (more compile-friendly than @ operator in some edge cases)
-        # u * s_shrink.unsqueeze(1) relies on broadcasting, avoiding large intermediate allocations
+        # unsqueeze does broadcasting, no copies.
         x_denoised = torch.matmul(u * s_shrink.unsqueeze(1), v) + m
-
-        #        x_denoised = x_denoised * weight.unsqueeze(-1).unsqueeze(-1)
 
         return x_denoised.reshape(x.shape), weight
 
@@ -121,7 +113,6 @@ class MPPCADenoiser(torch.nn.Module):
 
     def forward(self, x: torch.Tensor):
         """Apply MP PCA denoising to a batch of patches."""
-
         # Flatten and mean center
         x_flat = x.reshape(x.shape[0], -1, x.shape[-1])  # (B, N,M)
 
@@ -156,7 +147,7 @@ class MPPCADenoiser(torch.nn.Module):
         p = torch.arange(M)
         p = torch.argmax(
             (eigs - eigs[:, -1]) * (M - p) * (N - p)
-            < 4 * rcum_eigs * torch.sqrt(M * N),
+            < 4 * rcum_eigs * torch.sqrt(M * N),  # type: ignore
             dim=-1,
         )
         eigs[:, p:] = 0
@@ -164,7 +155,7 @@ class MPPCADenoiser(torch.nn.Module):
         x_denoised = torch.matmul(u * s_shrink.unsqueeze(1), v) + xm
 
         if self.recombination == "weighted":
-            weight = 1.0 / (2.0 + p)
+            weight = 1.0 / (1.0 + p)
         else:
             weight = torch.ones_like(p, dtype=x.dtype)
 
