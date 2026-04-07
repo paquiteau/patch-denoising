@@ -2,8 +2,8 @@
 """Cli interface."""
 
 import argparse
-import re
 import logging
+import re
 from functools import partial
 from pathlib import Path
 
@@ -13,8 +13,8 @@ from patch_denoise.bindings.utils import (
     DenoiseParameters,
     compute_mask,
     load_as_array,
-    save_array,
     load_complex_nifti,
+    save_array,
 )
 from patch_denoise import __version__
 

@@ -1,0 +1,22 @@
+---
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+
+repos:
+    # Checks for spelling errors
+-   repo: https://github.com/codespell-project/codespell
+    rev: v2.4.2
+    hooks:
+    -   id: codespell
+        args: [--toml, pyproject.toml]
+        additional_dependencies: [tomli]
+
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.7
+    hooks:
+    # Run the linter.
+    -   id: ruff-check
+        # args: [--statistics]
+        args: [--fix, --show-fixes, --unsafe-fixes]
+    # Run the formatter.
+    -   id: ruff-format

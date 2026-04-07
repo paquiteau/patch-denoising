@@ -6,6 +6,7 @@ import numpy as np
 from scipy.linalg import svd
 from scipy.optimize import minimize
 
+from .._docs import fill_doc
 from .base import BaseSpaceTimeDenoiser, PatchedArray
 from .utils import (
     eig_analysis,
@@ -14,7 +15,6 @@ from .utils import (
     svd_analysis,
     svd_synthesis,
 )
-from .._docs import fill_doc
 
 NUMBA_AVAILABLE = True
 try:
