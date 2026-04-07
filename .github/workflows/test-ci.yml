@@ -8,6 +8,14 @@ on:
 
   workflow_dispatch:
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+# Force to use color
+env:
+    FORCE_COLOR: true
+
 jobs:
   linter-check:
     runs-on: ubuntu-latest
@@ -43,7 +51,6 @@ jobs:
       - name: Build API documentation
         run: make -C docs html
 
-
   test-suite:
     runs-on: ${{ matrix.os }}
     needs: linter-check
@@ -52,20 +59,21 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         python-version: ["3.14", "3.13", "3.12"]
+
     steps:
       - uses: actions/checkout@v6
+
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v7
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
-      - name: Install Dependencies
-        shell: bash
-        run: |
-          python --version
-          python -m pip install --upgrade pip
-          python -m pip install .[test,optional]
+
+      - name: Install tox
+        run: uv tool install tox --with=tox-uv --with=tox-gh-actions
+
       - name: Run Tests
-        shell: bash
-        run: |
-          pytest -n auto -x
+        run: tox run -e latest
