@@ -70,8 +70,8 @@ def test_marshenko_pastur_median(beta, rng, n_runs=10000, n_samples=1000):
     assert np.std(samples) <= 0.1 * integral_median
 
 
-@pytest.mark.parametrize("block_dim", range(5, 10))
-@pytest.mark.parametrize("seed", [0, 5, 10])
+@pytest.mark.parametrize("block_dim", [5, 10])
+@pytest.mark.parametrize("seed", range(10))
 def test_noise_estimation(block_dim, seed):
     """Test noise estimation.
 
