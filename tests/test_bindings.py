@@ -69,7 +69,6 @@ def test_cli(nifti_noisy_phantom, tmpdir_factory, denoised_ref):
     tempdir = tmpdir_factory.mktemp("test")
     tempdir.chdir()
     outfile = "out.nii"
-    print(nifti_noisy_phantom, tempdir)
     exit_status = os.system(
         f"patch-denoise {nifti_noisy_phantom} {outfile} --conf mp-pca_6_5_weighted --extra threshold_scale=2.3"
     )

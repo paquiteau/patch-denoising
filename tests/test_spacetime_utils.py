@@ -45,7 +45,6 @@ def matrix(request):
 @pytest.mark.parametrize("beta", np.arange(1, 10) * 0.1)
 def test_marshenko_pastur_median(beta, rng, n_runs=10000, n_samples=1000):
     """Test the median estimation of Marshenko Pastur law."""
-    print(beta)
     beta_p = (1 + np.sqrt(beta)) ** 2
     beta_m = (1 - np.sqrt(beta)) ** 2
 
