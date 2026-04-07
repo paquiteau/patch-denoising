@@ -86,6 +86,7 @@ convention="numpy"
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = [
+    "--showlocals",
     "--cov=patch_denoise",
     "--cov-report=term-missing",
     "--cov-report=xml"
