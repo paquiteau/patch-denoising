@@ -34,7 +34,7 @@ classifiers = [
 
 [project.optional-dependencies]
 optional = ["modopt", "nipype", "pybids"]
-test = ["pytest", "pytest-cov", "pytest-xdist", "pytest-sugar"]
+test = ["pytest", "pytest-cov", "pytest-xdist", "pytest-sugar", "pytest-rerunfailures>=16.1",]
 gpu = ["torch"]
 
 doc = [
