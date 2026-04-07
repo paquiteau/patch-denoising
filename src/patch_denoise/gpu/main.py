@@ -1,16 +1,16 @@
 """Main loop for the gpu version of patch-denoise."""
 
-import os
 import logging
+import os
 
-from tqdm.auto import tqdm
 import torch
-from numpy.typing import NDArray
 import triton
 import triton.language as tl
+from numpy.typing import NDArray
+from tqdm.auto import tqdm
 
 from .dataloader import PatchDataset
-from .denoiser import OptimalSVDDenoiser, MPPCADenoiser
+from .denoiser import MPPCADenoiser, OptimalSVDDenoiser
 
 
 @triton.jit
@@ -39,7 +39,7 @@ def __atomic_accumulate_kernel(
 ):
     """Atomic accumulation kernel in Triton.
 
-    Process one batch element per launch, with each tread block handling one pixel
+    Process one batch element per launch, with each thread block handling one pixel
     """
     pid = tl.program_id(0)
     if pid >= BATCH_SIZE:
@@ -163,7 +163,6 @@ def make_denoiser(
     if compile:
         logging.info("starting module compilation.")
         with torch.inference_mode():
-
             # warm up to create working memory
             dummy_input = torch.randn(
                 batch_size, *args.patch_shape, device="cuda", dtype=torch.float32

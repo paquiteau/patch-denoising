@@ -8,6 +8,8 @@ from functools import partial
 from pathlib import Path
 
 import numpy as np
+
+from patch_denoise import __version__
 from patch_denoise.bindings.utils import (
     DENOISER_MAP,
     DenoiseParameters,
@@ -16,7 +18,6 @@ from patch_denoise.bindings.utils import (
     load_complex_nifti,
     save_array,
 )
-from patch_denoise import __version__
 
 GPU_AVAILABLE = True
 try:

@@ -1,9 +1,10 @@
 """Torch dataloader for the noisy data."""
 
 import gc
+
+import numpy as np
 import torch
 import torch.nn.functional as F
-import numpy as np
 from numpy.typing import NDArray
 
 
@@ -37,8 +38,7 @@ def patchify_tensor(data, patch_shape, patch_overlap):
 
     if _ps.size != dimensions or step.size != dimensions:
         raise ValueError(
-            "_ps and step must have the same number of dimensions as the "
-            "input _array."
+            "_ps and step must have the same number of dimensions as the input _array."
         )
 
     # Ensure patch size is not larger than _array size along each axis

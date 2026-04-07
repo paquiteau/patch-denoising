@@ -1,8 +1,7 @@
 """Torch module for denoising a batch of patches using local low rank method."""
 
-import logging
-import torch
 import numpy as np
+import torch
 
 from ..space_time.utils import marchenko_pastur_median
 

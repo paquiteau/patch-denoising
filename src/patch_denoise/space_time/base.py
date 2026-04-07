@@ -1,11 +1,10 @@
 """Base Structure for patch-based denoising on spatio-temporal dimension."""
 
-from numpy.typing import NDArray, DTypeLike
-
 import abc
 import logging
 
 import numpy as np
+from numpy.typing import DTypeLike, NDArray
 from tqdm.auto import tqdm
 
 from .._docs import fill_doc
