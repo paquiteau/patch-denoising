@@ -8,14 +8,13 @@ from dataclasses import dataclass
 import numpy as np
 
 from patch_denoise.denoise import (
+    adaptive_thresholding,
     hybrid_pca,
     mp_pca,
     nordic,
     optimal_thresholding,
     raw_svt,
-    adaptive_thresholding,
 )
-
 
 DENOISER_MAP = {
     None: None,

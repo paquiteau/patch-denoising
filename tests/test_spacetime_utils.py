@@ -1,4 +1,5 @@
 """Test space-times utilities."""
+
 from itertools import product
 
 import numpy as np
