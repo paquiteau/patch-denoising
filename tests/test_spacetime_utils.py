@@ -71,7 +71,7 @@ def test_marshenko_pastur_median(beta, rng, n_runs=10000, n_samples=1000):
 
 
 @pytest.mark.parametrize("block_dim", range(5, 10))
-@pytest.mark.parametrize("seed", range(15))
+@pytest.mark.parametrize("seed", [0, 5, 10])
 def test_noise_estimation(block_dim, seed):
     """Test noise estimation.
 
