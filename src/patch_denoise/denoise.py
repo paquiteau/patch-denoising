@@ -33,7 +33,9 @@ def mp_pca(
 
     Returns
     -------
-    $denoise_return
+    $denoise_return    "numpy",
+    "scipy",
+    "matplotlib",
 
     Notes
     -----

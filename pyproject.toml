@@ -10,12 +10,8 @@ authors = [{name="Pierre-antoine Comby", email="pierre-antoine.comby@crans.org"}
 readme = "README.rst"
 license = {file = "LICENSE.txt"}
 dependencies = [
-    "numpy",
-    "scipy",
-    "matplotlib",
-    "scikit-image",
     "tqdm",
-    "nibabel",
+    "nilearn[plotting]"
 ]
 requires-python = ">=3.12"
 

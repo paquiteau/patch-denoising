@@ -8,12 +8,12 @@ from functools import partial
 from pathlib import Path
 
 import numpy as np
+from nilearn.maskers import NiftiMasker
 
 from patch_denoise import __version__
 from patch_denoise.bindings.utils import (
     DENOISER_MAP,
     DenoiseParameters,
-    compute_mask,
     load_as_array,
     load_complex_nifti,
     save_array,
@@ -320,11 +320,13 @@ def main():
             stacklevel=0,
         )
 
-    if args.mask == "auto":
-        mask = compute_mask(input_data)
-        affine_mask = None
-    else:
-        mask, affine_mask = load_as_array(args.mask)
+    masker = NiftiMasker(verbose=args.verbose, mask_strategy="epi")
+    if args.mask != "auto":
+        NiftiMasker.mask_img = args.mask
+
+    masker.fit(args.input_file)
+    mask = masker.mask_img_.get_fdata().astype(bool)
+    affine_mask = masker.mask_img_.affine
 
     if args.noise_map is not None and args.noise_map_phase is not None:
         noise_map, affine_noise_map = load_complex_nifti(
@@ -372,6 +374,12 @@ def main():
         if not Path(args.output_file).exists():
             logging.warn(f"{Path(args.output_file).parent} will be overwritten")
 
+    report = masker.generate_report()
+    report.save_as_html(Path(args.output_file).with_suffix(".html"))
+
+    mask_filename = args.output_file.with_stem("mask_" + args.output_file.stem)
+    masker.mask_img_.to_filename(mask_filename)
+
     if args.gpu:
         if GPU_AVAILABLE:
             logging.info("Using GPU for computation.")
@@ -397,6 +405,7 @@ def main():
         denoise_func = DENOISER_MAP.get(args.method, None)
         if denoise_func is None:
             raise ValueError(f"Method {args.method} is not supported.")
+
         denoised_data, _, noise_std_map, _ = denoise_func(
             input_data,
             patch_shape=args.patch_shape,
