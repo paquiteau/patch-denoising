@@ -1,10 +1,13 @@
 """Test for the binding module."""
 
 import os
+from pathlib import Path
 
 import numpy as np
 import numpy.testing as npt
 import pytest
+
+from patch_denoise.bindings.cli import main
 
 MODOPT_AVAILABLE = True
 NIPYPE_AVAILABLE = True
@@ -18,6 +21,8 @@ try:
 except ImportError as e:
     NIPYPE_AVAILABLE = False
 
+
+from patch_denoise.bindings.cli import GPU_AVAILABLE
 from patch_denoise.bindings.modopt import LLRDenoiserOperator
 from patch_denoise.bindings.nipype import PatchDenoise
 from patch_denoise.bindings.utils import DenoiseParameters
@@ -124,3 +129,37 @@ def test_denoise_parameter_pretty():
     pretty_name = DenoiseParameters.from_str(pretty_string).pretty_name
 
     assert pretty_name == pretty_string
+
+
+@pytest.fixture
+def data() -> Path:
+    """Path to real data."""
+    return Path(__file__).parent / "data"
+
+
+@pytest.fixture
+def ds001168(data) -> Path:
+    """Real BIDS dataset used for end to end testing.
+
+    run 'tox run -e data' to datalad install and get the relevant files
+    """
+    return data / "ds001168"
+
+
+@pytest.mark.e2e
+def test_e2e(data, ds001168):
+    input_file = f"{ds001168}/sub-01/ses-1/func/sub-01_ses-1_task-rest_acq-fullbrain_run-1_bold.nii.gz"
+    output_file = f"{data}/derivatives/sub-01/ses-1/func/sub-01_ses-1_task-rest_acq-fullbrain_run-1_desc-denoised_bold.nii.gz"
+    exit_status = os.system(
+        f"patch-denoise {input_file} {output_file} --conf mp-pca_10_3_weighted"
+    )
+
+    assert exit_status == 0
+
+    if GPU_AVAILABLE:
+        output_file = f"{data}/derivatives/sub-01/ses-1/func/sub-01_ses-1_task-rest_acq-fullbrain_run-1_desc-denoised+gpu_bold.nii.gz"
+        exit_status = os.system(
+            f"patch-denoise {input_file} {output_file} --conf mp-pca_10_3_weighted --gpu"
+        )
+
+        assert exit_status == 0

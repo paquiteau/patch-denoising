@@ -52,12 +52,11 @@ jobs:
         run: make -C docs html
 
   test-suite:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     needs: linter-check
     strategy:
       fail-fast: true
       matrix:
-        os: [ubuntu-latest]
         python-version: ["3.14", "3.13", "3.12"]
 
     steps:
@@ -77,3 +76,33 @@ jobs:
 
       - name: Run Tests
         run: tox run -e latest
+
+
+  test-e2e:
+      runs-on: ubuntu-latest
+      needs: linter-check
+      strategy:
+        fail-fast: true
+        matrix:
+          python-version: ["3.14", "3.13", "3.12"]
+
+      steps:
+        - uses: actions/checkout@v6
+
+        - name: Install the latest version of uv
+          uses: astral-sh/setup-uv@v7
+
+        - name: Set up Python ${{ matrix.python-version }}
+          uses: actions/setup-python@v6
+          with:
+            python-version: ${{ matrix.python-version }}
+            allow-prereleases: true
+
+        - name: Install tox
+          run: uv tool install tox --with=tox-uv --with=tox-gh-actions
+
+        - name: Get data
+          run: tox run -e data
+
+        - name: Run Tests
+          run: tox run -e e2e

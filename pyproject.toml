@@ -91,6 +91,9 @@ addopts = [
     "--cov-report=term-missing",
     "--cov-report=xml"
 ]
+markers = [
+    "e2e",  # end to end tests that can be slow
+]
 
 [tool.codespell]
 # Ref: https://github.com/codespell-project/codespell#using-a-config-file

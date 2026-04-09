@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 
+import nibabel as nib
 import numpy as np
 
 from patch_denoise.denoise import (
@@ -129,8 +130,6 @@ def load_as_array(input):
 
 def save_array(data, affine, filename):
     """Save array to file, with affine matrix if required."""
-    import nibabel as nib
-
     if filename is None:
         return None
 

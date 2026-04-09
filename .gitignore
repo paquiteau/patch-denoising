@@ -18,3 +18,5 @@ docs/auto_examples/
 docs_build/
 
 src/patch_denoise/_version.py
+
+tests/data

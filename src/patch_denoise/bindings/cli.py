@@ -364,6 +364,14 @@ def main():
 
     logging.info(f"Current Setup {args}")
 
+    if args.output_file is not None:
+        parent_dir = Path(args.output_file).parent
+        if not Path(args.output_file).parent.exists():
+            parent_dir.mkdir(exist_ok=True, parents=True)
+            logging.info(f"{Path(args.output_file).parent} created")
+        if not Path(args.output_file).exists():
+            logging.warn(f"{Path(args.output_file).parent} will be overwritten")
+
     if args.gpu:
         if GPU_AVAILABLE:
             logging.info("Using GPU for computation.")
