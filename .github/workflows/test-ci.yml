@@ -47,7 +47,7 @@ jobs:
         shell: bash -l {0}
         run: |
           python -m pip install --upgrade pip
-          python -m pip install .[optional,doc]
+          python -m pip install .[optional] --group doc
       - name: Build API documentation
         run: make -C docs html
 

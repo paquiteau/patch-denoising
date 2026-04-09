@@ -38,9 +38,23 @@ classifiers = [
 
 [project.optional-dependencies]
 optional = ["modopt", "nipype", "pybids"]
-test = ["pytest>=6.0", "pytest-cov", "pytest-xdist", "pytest-sugar", "pytest-rerunfailures>=16.1",]
 gpu = ["torch"]
 
+[dependency-groups]
+# A combination of dependencies useful for developers
+dev = [
+    {include-group = "test"},
+    {include-group = "doc"},
+    "tox>=4",
+    "tox-uv"
+]
+test = [
+  "pytest>=6.0",
+  "pytest-cov",
+  "pytest-xdist",
+  "pytest-sugar",
+  "pytest-rerunfailures>=16.1"
+]
 doc = [
   "pydata-sphinx-theme",
   "numpydoc",
@@ -49,12 +63,8 @@ doc = [
   "sphinx",
 ]
 
-dev = ["ruff"]
-
 [project.scripts]
 patch-denoise = "patch_denoise.bindings.cli:main"
-
-
 
 [tool.setuptools_scm]
 write_to = "src/patch_denoise/_version.py"
