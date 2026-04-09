@@ -74,7 +74,7 @@ jobs:
         run: uv tool install tox --with=tox-uv --with=tox-gh-actions
 
       - name: Run Tests
-        run: tox run -e latest
+        run: tox run -e latest -- -n auto
 
 
   test-e2e:

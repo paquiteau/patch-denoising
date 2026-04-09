@@ -3,6 +3,7 @@
 import os
 from pathlib import Path
 
+import nibabel as nib
 import numpy as np
 import numpy.testing as npt
 import pytest
@@ -16,7 +17,6 @@ try:
 except ImportError as e:
     MODOPT_AVAILABLE = False
 try:
-    import nibabel as nib
     import nipype
 except ImportError as e:
     NIPYPE_AVAILABLE = False
@@ -70,12 +70,21 @@ def test_entrypoint():
     assert exit_status == 0
 
 
-def test_cli(nifti_noisy_phantom, tmpdir_factory, denoised_ref):
+def test_cli(noisy_phantom, nifti_noisy_phantom, tmpdir_factory, denoised_ref):
     tempdir = tmpdir_factory.mktemp("test")
     tempdir.chdir()
     outfile = "out.nii"
+
+    # we need an explicit mask
+    # otherwise the implicit mask will exclude
+    # all voxels from the noisy_phantom
+    mask = np.ones(noisy_phantom.shape)
+    mask_img = nib.Nifti1Image(mask, affine=np.eye(4))
+    nib.nifti1.save(mask_img, "mask.nii")
+
     exit_status = os.system(
-        f"patch-denoise {nifti_noisy_phantom} {outfile} --conf mp-pca_6_5_weighted --extra threshold_scale=2.3"
+        f"patch-denoise {nifti_noisy_phantom} {outfile} --mask mask.nii "
+        "--conf mp-pca_6_5_weighted --extra threshold_scale=2.3"
     )
     assert exit_status == 0
     npt.assert_allclose(
