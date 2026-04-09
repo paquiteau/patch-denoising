@@ -98,6 +98,11 @@ jobs:
             python-version: ${{ matrix.python-version }}
             allow-prereleases: true
 
+        - name: Install dependencies
+          run: |
+                sudo apt-get -y -qq update
+                sudo apt-get -y install git-annex
+
         - name: Install tox
           run: uv tool install tox --with=tox-uv --with=tox-gh-actions
 
