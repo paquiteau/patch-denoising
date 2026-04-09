@@ -157,9 +157,17 @@ def test_e2e(data, ds001168):
     assert exit_status == 0
 
     if GPU_AVAILABLE:
-        output_file = f"{data}/derivatives/sub-01/ses-1/func/sub-01_ses-1_task-rest_acq-fullbrain_run-1_desc-denoised+gpu_bold.nii.gz"
-        exit_status = os.system(
-            f"patch-denoise {input_file} {output_file} --conf mp-pca_10_3_weighted --gpu"
-        )
+        import torch
 
-        assert exit_status == 0
+        try:
+            torch._C._cuda_init()
+            output_file = f"{data}/derivatives/sub-01/ses-1/func/sub-01_ses-1_task-rest_acq-fullbrain_run-1_desc-denoised+gpu_bold.nii.gz"
+            exit_status = os.system(
+                f"patch-denoise {input_file} {output_file} --conf mp-pca_10_3_weighted --gpu"
+            )
+
+            assert exit_status == 0
+        except RuntimeError:
+            print("skipping GPU test")
+    else:
+        print("skipping GPU test")
