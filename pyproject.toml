@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm[toml]"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "patch-denoise"
 description = "Denoising method for sequence of images or volumes. Primarily targeting fMRI data."
@@ -34,7 +38,7 @@ classifiers = [
 
 [project.optional-dependencies]
 optional = ["modopt", "nipype", "pybids"]
-test = ["pytest", "pytest-cov", "pytest-xdist", "pytest-sugar", "pytest-rerunfailures>=16.1",]
+test = ["pytest>=6.0", "pytest-cov", "pytest-xdist", "pytest-sugar", "pytest-rerunfailures>=16.1",]
 gpu = ["torch"]
 
 doc = [
@@ -50,8 +54,7 @@ dev = ["ruff"]
 [project.scripts]
 patch-denoise = "patch_denoise.bindings.cli:main"
 
-[build-system]
-requires = ["setuptools", "setuptools-scm[toml]", "wheel"]
+
 
 [tool.setuptools_scm]
 write_to = "src/patch_denoise/_version.py"
@@ -84,16 +87,22 @@ select = ["E", "F", "B", "Q", "UP", "D", "I"]
 convention="numpy"
 
 [tool.pytest.ini_options]
+log_level = "INFO" 
 minversion = "6.0"
+xfail_strict = true
 addopts = [
     "--showlocals",
     "--cov=patch_denoise",
     "--cov-report=term-missing",
-    "--cov-report=xml"
+    "--cov-report=xml",
+    "-ra",
+    "--strict-config",
+    "--strict-markers"
 ]
 markers = [
     "e2e",  # end to end tests that can be slow
 ]
+testpaths = ["tests"] 
 
 [tool.codespell]
 # Ref: https://github.com/codespell-project/codespell#using-a-config-file
