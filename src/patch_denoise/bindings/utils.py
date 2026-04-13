@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 
+import nibabel as nib
 import numpy as np
 
 from patch_denoise.denoise import (
@@ -46,7 +47,7 @@ _RECOMBINATION = {"w": "weighted", "c": "center", "a": "average"}
 class DenoiseParameters:
     """Denoise Parameters data structure."""
 
-    method: str = None
+    method: str | None = None
     patch_shape: int | tuple[int, ...] = 11
     patch_overlap: int | tuple[int, ...] = 0
     recombination: str = "weighted"  # "center" is also available
@@ -129,8 +130,6 @@ def load_as_array(input):
 
 def save_array(data, affine, filename):
     """Save array to file, with affine matrix if required."""
-    import nibabel as nib
-
     if filename is None:
         return None
 
@@ -172,35 +171,3 @@ def load_complex_nifti(mag_file, phase_file, filename=None):  # pragma: no cover
     if filename is not None:
         np.save(filename, img)
     return img, mag_affine
-
-
-def compute_mask(array, convex=False):
-    """Compute mask for array using the Otzu's method.
-
-    The time axis is assumed to be the last one.
-
-    The mask is computed slice-wise on the time average of the array.
-
-    Parameters
-    ----------
-    array : numpy.ndarray
-        Array to compute mask for.
-    convex : bool, default False
-        If True, the mask is convex for each slice.
-
-    Returns
-    -------
-    numpy.ndarray
-        Mask for array.
-    """
-    from skimage.filters import threshold_otsu
-    from skimage.morphology import convex_hull_image
-
-    mean = array.mean(axis=-1)
-    mask = np.zeros(mean.shape, dtype=bool)
-    for i in range(mean.shape[-1]):
-        mask[..., i] = mean[..., i] > threshold_otsu(mean[..., i])
-    if convex:
-        for i in range(mean.shape[-1]):
-            mask[..., i] = convex_hull_image(mask[..., i])
-    return mask

@@ -76,7 +76,7 @@ Development version
 .. code::
 
    $ git clone https://github.com/paquiteau/patch-denoising
-   $ pip install -e patch-denoising[dev,doc,test,optional]
+   $ pip install -e patch-denoising[optional] --group dev
    
 Citation
 ========

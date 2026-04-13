@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm[toml]"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "patch-denoise"
 description = "Denoising method for sequence of images or volumes. Primarily targeting fMRI data."
@@ -5,8 +9,11 @@ authors = [{name="Pierre-antoine Comby", email="pierre-antoine.comby@crans.org"}
 
 readme = "README.rst"
 license = {file = "LICENSE.txt"}
-dependencies = ["numpy", "scipy", "matplotlib", "scikit-image", "tqdm", "nibabel"]
-requires-python = ">=3.10"
+dependencies = [
+    "tqdm",
+    "nilearn[plotting]"
+]
+requires-python = ">=3.12"
 
 dynamic = ["version"]
 
@@ -17,8 +24,6 @@ classifiers = [
   "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
   "Programming Language :: Python",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
@@ -28,9 +33,24 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-optional = ["modopt", "nipype", "numba"]
-test = ["pytest", "pytest-cov", "pytest-xdist", "pytest-sugar"]
+optional = ["modopt", "nipype"]
+gpu = ["torch"]
 
+[dependency-groups]
+# A combination of dependencies useful for developers
+dev = [
+    {include-group = "test"},
+    {include-group = "doc"},
+    "tox>=4",
+    "tox-uv"
+]
+test = [
+  "pytest>=6.0",
+  "pytest-cov",
+  "pytest-xdist",
+  "pytest-sugar",
+  "pytest-rerunfailures>=16.1"
+]
 doc = [
   "pydata-sphinx-theme",
   "numpydoc",
@@ -39,13 +59,9 @@ doc = [
   "sphinx",
 ]
 
-dev = ["ruff"]
-
 [project.scripts]
 patch-denoise = "patch_denoise.bindings.cli:main"
-
-[build-system]
-requires = ["setuptools", "setuptools-scm[toml]", "wheel"]
+patch-denoise-bids = "patch_denoise.bindings.cli:bids_app"
 
 [tool.setuptools_scm]
 write_to = "src/patch_denoise/_version.py"
@@ -78,12 +94,22 @@ select = ["E", "F", "B", "Q", "UP", "D", "I"]
 convention="numpy"
 
 [tool.pytest.ini_options]
+log_level = "INFO" 
 minversion = "6.0"
+xfail_strict = true
 addopts = [
+    "--showlocals",
     "--cov=patch_denoise",
     "--cov-report=term-missing",
-    "--cov-report=xml"
+    "--cov-report=xml",
+    "-ra",
+    "--strict-config",
+    "--strict-markers"
 ]
+markers = [
+    "e2e",  # end to end tests that can be slow
+]
+testpaths = ["tests"] 
 
 [tool.codespell]
 # Ref: https://github.com/codespell-project/codespell#using-a-config-file
@@ -91,3 +117,18 @@ skip = '.git*'
 check-hidden = true
 ignore-regex = '\bND\b'
 ignore-words-list = 'fro'
+
+
+
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cu130", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
+torchvision = [
+  { index = "pytorch-cu130", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]

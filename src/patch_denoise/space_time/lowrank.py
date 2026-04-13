@@ -355,7 +355,11 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         p_s, p_o = self._get_patch_param(input_data.shape)
 
         self.input_denoising_kwargs["mp_median"] = marchenko_pastur_median(
-            beta=input_data.shape[-1] / np.prod(p_s),
+            beta=(
+                p_s[-1] / np.prod(p_s[:-1])
+                if len(p_s) == len(input_data.shape)
+                else input_data.shape[-1] / np.prod(p_s)
+            ),
             eps=eps_marshenko_pastur,
         )
 
