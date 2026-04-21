@@ -1,0 +1,34 @@
+PatchedArray
+============
+
+.. currentmodule:: patch_denoise.space_time.base
+
+.. autoclass:: PatchedArray
+   :members:
+   :private-members:
+   :show-inheritance:
+   :special-members: __call__, __add__, __mul__, __matmul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~PatchedArray.__init__
+      ~PatchedArray.add2patch
+      ~PatchedArray.get_patch
+      ~PatchedArray.set_patch
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~PatchedArray.n_patches
+   
+   

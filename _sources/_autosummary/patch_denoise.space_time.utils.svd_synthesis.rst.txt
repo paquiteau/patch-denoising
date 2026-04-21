@@ -1,0 +1,6 @@
+patch\_denoise.space\_time.utils.svd\_synthesis
+===============================================
+
+.. currentmodule:: patch_denoise.space_time.utils
+
+.. autofunction:: svd_synthesis

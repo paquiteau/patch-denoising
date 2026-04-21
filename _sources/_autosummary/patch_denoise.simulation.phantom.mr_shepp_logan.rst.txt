@@ -1,0 +1,6 @@
+patch\_denoise.simulation.phantom.mr\_shepp\_logan
+==================================================
+
+.. currentmodule:: patch_denoise.simulation.phantom
+
+.. autofunction:: mr_shepp_logan

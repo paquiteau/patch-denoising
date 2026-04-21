@@ -1,0 +1,39 @@
+DenoiseParameters
+=================
+
+.. currentmodule:: patch_denoise.bindings.utils
+
+.. autoclass:: DenoiseParameters
+   :members:
+   :private-members:
+   :show-inheritance:
+   :special-members: __call__, __add__, __mul__, __matmul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~DenoiseParameters.__init__
+      ~DenoiseParameters.from_str
+      ~DenoiseParameters.get_str
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~DenoiseParameters.mask_threshold
+      ~DenoiseParameters.method
+      ~DenoiseParameters.patch_overlap
+      ~DenoiseParameters.patch_shape
+      ~DenoiseParameters.pretty_name
+      ~DenoiseParameters.pretty_par
+      ~DenoiseParameters.recombination
+   
+   
