@@ -33,7 +33,6 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-optional = ["modopt", "nipype"]
 gpu = ["torch"]
 
 [dependency-groups]

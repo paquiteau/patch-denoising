@@ -104,7 +104,3 @@ Related Packages
 - https://github.com/paquiteau/retino-pypeline
 
   For the application of the denoising in an fMRI pipeline using Nipype
-
-- https://github.com/CEA-COSMIC/ModOpt
-
-  For the integration of the patch-denoising in convex optimisation algorithms.

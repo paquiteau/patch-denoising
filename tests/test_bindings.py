@@ -10,12 +10,7 @@ import pytest
 
 from patch_denoise.bindings.cli import main
 
-MODOPT_AVAILABLE = True
 NIPYPE_AVAILABLE = True
-try:
-    import modopt
-except ImportError as e:
-    MODOPT_AVAILABLE = False
 try:
     import nipype
 except ImportError as e:
@@ -23,7 +18,6 @@ except ImportError as e:
 
 
 from patch_denoise.bindings.cli import GPU_AVAILABLE
-from patch_denoise.bindings.modopt import LLRDenoiserOperator
 from patch_denoise.bindings.nipype import PatchDenoise
 from patch_denoise.bindings.utils import DenoiseParameters
 from patch_denoise.denoise import mp_pca
@@ -47,21 +41,6 @@ def nifti_noisy_phantom(noisy_phantom, tmpdir_factory):
     nii_img = nib.Nifti1Image(noisy_phantom, affine=np.eye(4))
     nib.nifti1.save(nii_img, "noisy_phantom.nii")
     return os.path.abspath("noisy_phantom.nii")
-
-
-def test_modopt(noisy_phantom, denoised_ref):
-    """Test the Modopt Operator."""
-    operator = LLRDenoiserOperator(
-        "mp-pca",
-        patch_shape=6,
-        patch_overlap=5,
-        threshold_scale=2.3,
-        recombination="weighted",
-    )
-
-    denoised_modopt = operator.op(noisy_phantom)
-
-    npt.assert_allclose(denoised_modopt, denoised_ref)
 
 
 def test_entrypoint():
