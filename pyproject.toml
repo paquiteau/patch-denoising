@@ -33,6 +33,7 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
+optional = ["nipype"]
 gpu = ["torch"]
 
 [dependency-groups]
@@ -135,4 +136,3 @@ torch = [
 torchvision = [
   { index = "pytorch-cu130", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
 ]
-

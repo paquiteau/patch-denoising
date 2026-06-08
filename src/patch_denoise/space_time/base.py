@@ -201,8 +201,14 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         # Create Default mask
         if mask is None:
             process_mask = np.full(data_shape, True)
-        elif mask.shape == input_data.shape[:-1]:
+        elif mask.shape == data_shape:
+            process_mask = mask
+        elif mask.shape == data_shape[:-1]:
             process_mask = np.broadcast_to(mask[..., None], input_data.shape)
+        else:
+            raise ValueError(
+                f"Mask shape {mask.shape} is incompatible with input shape {data_shape}."
+            )
 
         process_mask = PatchedArray(
             process_mask, p_s, p_o, padding_mode="constant", constant_values=0

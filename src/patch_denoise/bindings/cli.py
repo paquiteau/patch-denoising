@@ -311,7 +311,7 @@ def _extend_parser(parser, bids_app=False):
         data_group.add_argument(
             "--mask",
             metavar="FILE|auto",
-            type=partial(_is_file_or_value, parser=parser, values=["auto"]),
+            type=lambda path: _is_file_or_value(path, parser, "auto"),
             default=None,
             help=("mask file, if auto, it would be determined from the average image."),
         )
@@ -409,7 +409,7 @@ def main():
 
     masker = NiftiMasker(verbose=args.verbose, mask_strategy="epi")
     if args.mask != "auto":
-        NiftiMasker.mask_img = args.mask
+        masker.mask_img = args.mask
 
     masker.fit(args.input_file)
     mask = masker.mask_img_.get_fdata().astype(bool)
