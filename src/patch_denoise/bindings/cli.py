@@ -51,14 +51,14 @@ def _is_file(path, parser):
 
 
 def _is_file_or_value(path, parser, *values):
-    """Ensure a given path exists and it is a file, or it is one of the provided values."""
+    """Ensure a given path exists and is a file, or it is one of the provided values."""
     if path in values:
         return path
     try:
         return _is_file(path, parser)
     except argparse.ArgumentTypeError:
         raise parser.error(
-            f"Path should point to a file (or symlink of file), or be one of {values}: <{path}>."
+            f"Path should point to a file, or be one of {values}: <{path}>."
         ) from None
 
 
@@ -311,7 +311,7 @@ def _extend_parser(parser, bids_app=False):
         data_group.add_argument(
             "--mask",
             metavar="FILE|auto",
-            type=partial(_is_file_or_value, parser=parser, values=["auto"])
+            type=partial(_is_file_or_value, parser=parser, values=["auto"]),
             default=None,
             help=("mask file, if auto, it would be determined from the average image."),
         )
