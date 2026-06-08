@@ -459,7 +459,7 @@ def main():
             parent_dir.mkdir(exist_ok=True, parents=True)
             logging.info(f"{Path(args.output_file).parent} created")
         if not Path(args.output_file).exists():
-            logging.warn(f"{Path(args.output_file).parent} will be overwritten")
+            logging.warning(f"{Path(args.output_file).parent} will be overwritten")
 
     report = masker.generate_report()
     report.save_as_html(Path(args.output_file).with_suffix(".html"))
