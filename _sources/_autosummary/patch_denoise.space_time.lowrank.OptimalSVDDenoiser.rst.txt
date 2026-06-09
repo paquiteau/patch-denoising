@@ -1,0 +1,26 @@
+OptimalSVDDenoiser
+==================
+
+.. currentmodule:: patch_denoise.space_time.lowrank
+
+.. autoclass:: OptimalSVDDenoiser
+   :members:
+   :private-members:
+   :show-inheritance:
+   :special-members: __call__, __add__, __mul__, __matmul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~OptimalSVDDenoiser.__init__
+      ~OptimalSVDDenoiser.denoise
+   
+   
+
+   
+   
+   

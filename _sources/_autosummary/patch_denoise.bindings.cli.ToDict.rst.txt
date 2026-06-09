@@ -1,0 +1,26 @@
+ToDict
+======
+
+.. currentmodule:: patch_denoise.bindings.cli
+
+.. autoclass:: ToDict
+   :members:
+   :private-members:
+   :show-inheritance:
+   :special-members: __call__, __add__, __mul__, __matmul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~ToDict.__init__
+      ~ToDict.format_usage
+   
+   
+
+   
+   
+   

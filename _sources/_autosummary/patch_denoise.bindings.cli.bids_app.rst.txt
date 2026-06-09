@@ -1,0 +1,6 @@
+patch\_denoise.bindings.cli.bids\_app
+=====================================
+
+.. currentmodule:: patch_denoise.bindings.cli
+
+.. autofunction:: bids_app

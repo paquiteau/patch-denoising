@@ -1,0 +1,26 @@
+RawSVDDenoiser
+==============
+
+.. currentmodule:: patch_denoise.space_time.lowrank
+
+.. autoclass:: RawSVDDenoiser
+   :members:
+   :private-members:
+   :show-inheritance:
+   :special-members: __call__, __add__, __mul__, __matmul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~RawSVDDenoiser.__init__
+      ~RawSVDDenoiser.denoise
+   
+   
+
+   
+   
+   

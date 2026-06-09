@@ -1,0 +1,6 @@
+patch\_denoise.denoise.raw\_svt
+===============================
+
+.. currentmodule:: patch_denoise.denoise
+
+.. autofunction:: raw_svt

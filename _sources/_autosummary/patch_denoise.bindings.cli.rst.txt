@@ -1,0 +1,42 @@
+patch\_denoise.bindings.cli
+===========================
+
+.. automodule:: patch_denoise.bindings.cli
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+      :nosignatures:
+   
+      bids_app
+      main
+      parse_args
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      ToDict
+   
+   
+
+   
+   
+   
+
+
+

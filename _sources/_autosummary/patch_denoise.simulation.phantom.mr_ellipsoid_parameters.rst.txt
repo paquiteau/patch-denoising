@@ -1,0 +1,6 @@
+patch\_denoise.simulation.phantom.mr\_ellipsoid\_parameters
+===========================================================
+
+.. currentmodule:: patch_denoise.simulation.phantom
+
+.. autofunction:: mr_ellipsoid_parameters

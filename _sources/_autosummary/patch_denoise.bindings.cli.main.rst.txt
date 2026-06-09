@@ -1,0 +1,6 @@
+patch\_denoise.bindings.cli.main
+================================
+
+.. currentmodule:: patch_denoise.bindings.cli
+
+.. autofunction:: main
