@@ -573,10 +573,10 @@ def bids_app():
 
     ds_json = output_dir / "dataset_description.json"
     GeneratedBy = {
-        "Name": "nilearn",
+        "Name": "patch-denoise",
         "Version": __version__,
         "Description": ("A dataset denoised with patch-denoise."),
-        "CodeURL": "",
+        "CodeURL": "https://github.com/paquiteau/patch-denoising",
     }
     if ds_json.exists():
         with ds_json.open() as f_obj:
