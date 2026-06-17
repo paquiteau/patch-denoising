@@ -97,9 +97,9 @@ convention="numpy"
 
 [tool.ruff.format]
 
-[tool.pytest.ini_options]
+[tool.pytest]
 log_level = "INFO" 
-minversion = "6.0"
+minversion = "9.0"
 xfail_strict = true
 addopts = [
     "--showlocals",
@@ -114,6 +114,7 @@ markers = [
     "e2e",  # end to end tests that can be slow
 ]
 testpaths = ["tests"] 
+filterwarnings = ["error"]
 
 [tool.codespell]
 # Ref: https://github.com/codespell-project/codespell#using-a-config-file
