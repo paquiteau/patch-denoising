@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Cli interface."""
+
 import json
 import logging
 import re
@@ -33,7 +34,9 @@ log = logging.getLogger(__name__)
 logging.basicConfig(
     level=logging.WARNING,
     format="%(message)s",
-    handlers=[RichHandler(show_time=False, show_path=True, show_level=True, markup=True)],
+    handlers=[
+        RichHandler(show_time=False, show_path=True, show_level=True, markup=True)
+    ],
 )
 logging.captureWarnings(True)
 
@@ -273,12 +276,18 @@ def _load_validate_input(
 
     if affine is not None:
         if (affine_mask is not None) and not np.allclose(affine, affine_mask):
-            log.warning("Affine matrix of input and mask does not match, mask will be resampled", stacklevel=2)
+            log.warning(
+                "Affine matrix of input and mask does not match, it will be resampled",
+                stacklevel=2,
+            )
 
             masker.mask_img_ = resample_img(
-                masker.mask_img_, target_affine=affine, target_shape=input_data.shape[:3], interpolation="nearest"
+                masker.mask_img_,
+                target_affine=affine,
+                target_shape=input_data.shape[:3],
+                interpolation="nearest",
             )
-            
+
         if (affine_noise is not None) and not np.allclose(affine, affine_noise):
             log.warning(
                 "Affine matrix of input and noise map does not match", stacklevel=2
@@ -430,14 +439,13 @@ def main(
 
     if gpu:
         if method not in [
-                DenoiserEnum.MP_PCA,
-                DenoiserEnum.OPTIMAL_FRO,
-                DenoiserEnum.OPTIMAL_FRO_NOISE,
-                DenoiserEnum.OPTIMAL_NUC,
-                DenoiserEnum.OPTIMAL_OPE
+            DenoiserEnum.MP_PCA,
+            DenoiserEnum.OPTIMAL_FRO,
+            DenoiserEnum.OPTIMAL_FRO_NOISE,
+            DenoiserEnum.OPTIMAL_NUC,
+            DenoiserEnum.OPTIMAL_OPE,
         ]:
-            raise ValueError(
-                f"Method {method} is not supported on GPU. ")
+            raise ValueError(f"Method {method} is not supported on GPU. ")
         if not GPU_AVAILABLE:
             raise RuntimeError(
                 "GPU support is not available. Please ensure that the "
@@ -446,6 +454,7 @@ def main(
             )
         log.info("Using GPU for computation.")
         from patch_denoise.gpu.main import main_gpu as denoise_func
+
         kwargs["method"] = method
     else:
         denoise_func = DENOISER_MAP[method]
@@ -692,17 +701,18 @@ def bids_main(
 
             if gpu:
                 from patch_denoise.gpu.main import main_gpu as denoise_func
+
                 kwargs["method"] = method
-                
+
             denoised_data, _, noise_std_map, _ = denoise_func(
-                    input_data,
-                    patch_shape=patch_shape,
-                    patch_overlap=patch_overlap,
-                    mask=mask,
-                    mask_threshold=mask_threshold,
-                    recombination=recombination,
-                    **kwargs,
-                )
+                input_data,
+                patch_shape=patch_shape,
+                patch_overlap=patch_overlap,
+                mask=mask,
+                mask_threshold=mask_threshold,
+                recombination=recombination,
+                **kwargs,
+            )
 
             print(noise_std_map.shape)
             save_array(denoised_data, affine, output_filename)

@@ -14,6 +14,7 @@ from .denoiser import MPPCADenoiser, OptimalSVDDenoiser
 
 log = logging.getLogger(__name__)
 
+
 @triton.jit
 def __atomic_accumulate_kernel(
     global_out_ptr,  # Interpreted as float*
@@ -139,7 +140,7 @@ def launch_triton(
         weights,
         var_est,
         coords,
-        *out_acc.stride(), # type: ignore  
+        *out_acc.stride(),  # type: ignore
         *recon.stride(),
         *patch_shape,  # type: ignore
         BATCH_SIZE=recon.shape[0],  # type: ignore
@@ -149,12 +150,7 @@ def launch_triton(
 
 
 def make_denoiser(
-    method,
-    patch_shape,
-    recombination,
-    batch_size,
-    compile=True,
-    **kwargs
+    method, patch_shape, recombination, batch_size, compile=True, **kwargs
 ) -> OptimalSVDDenoiser | MPPCADenoiser:
     """Create a denoiser model on GPU."""
     if "optimal" in method:
@@ -250,9 +246,7 @@ def main_gpu(
 
     N_STREAMS = 2
     streams = [torch.cuda.Stream() for _ in range(N_STREAMS)]
-    log.info(
-        f"Processing {len(patch_dataset)} patches with batch size {batch_size}..."
-    )
+    log.info(f"Processing {len(patch_dataset)} patches with batch size {batch_size}...")
 
     out_weights = torch.zeros(input_data_.shape, dtype=input_data_.dtype, device="cuda")
     out_var_map = torch.zeros(input_data_.shape, dtype=input_data_.dtype, device="cuda")
@@ -285,4 +279,4 @@ def main_gpu(
     out_var_map = out_var_map.cpu().numpy()
     out_weights = out_weights.cpu().numpy()
 
-    return out_acc, out_weights, out_var_map, None 
+    return out_acc, out_weights, out_var_map, None

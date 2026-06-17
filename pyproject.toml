@@ -80,6 +80,7 @@ exclude_lines = ["pragma: no cover", "raise NotImplementedError"]
 #linting using ruff
 [tool.ruff]
 src = ["src", "tests", "docs"]
+line-length=88
 
 [tool.ruff.lint]
 ignore = ["B905"]
@@ -93,6 +94,8 @@ select = ["E", "F", "B", "Q", "UP", "D", "I"]
 
 [tool.ruff.lint.pydocstyle]
 convention="numpy"
+
+[tool.ruff.format]
 
 [tool.pytest.ini_options]
 log_level = "INFO" 
