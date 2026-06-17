@@ -197,6 +197,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         -------
         $denoise_return
         """
+        log.debug(f"Starting denoising process. with {self}")
         data_shape = input_data.shape
         p_s, p_o = self._get_patch_param(data_shape)
 
@@ -272,7 +273,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
                 )
             if progbar:
                 progbar.update()
-
+        log.info("Finished processing patches.")
         output_data = output_data._arr
         patch_weights = patch_weights._arr
         with np.errstate(divide="ignore", invalid="ignore"):
