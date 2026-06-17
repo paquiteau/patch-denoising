@@ -6,7 +6,7 @@ import logging
 import re
 from enum import StrEnum
 from pathlib import Path
-from typing import Annotated, Any, cast
+from typing import Annotated, Any
 
 import numpy as np
 import typer
@@ -197,9 +197,7 @@ VerboseOpt = Annotated[
 GpuFlag = Annotated[
     bool,
     typer.Option(
-        ...,
         "--gpu/--cpu",
-        is_flag=True,
         help="Use GPU or CPU for computation. Requires patch_denoise.gpu module. "
         "GPU is enabled  by default if available.",
     ),
