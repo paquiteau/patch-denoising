@@ -10,8 +10,9 @@ authors = [{name="Pierre-antoine Comby", email="pierre-antoine.comby@crans.org"}
 readme = "README.rst"
 license = {file = "LICENSE.txt"}
 dependencies = [
+    "nilearn[plotting]",
+    "typer",
     "tqdm",
-    "nilearn[plotting]"
 ]
 requires-python = ">=3.12"
 
@@ -60,8 +61,8 @@ doc = [
 ]
 
 [project.scripts]
-patch-denoise = "patch_denoise.bindings.cli:main"
-patch-denoise-bids = "patch_denoise.bindings.cli:bids_app"
+patch-denoise = "patch_denoise.bindings.cli:app"
+patch-denoise-bids = "patch_denoise.bindings.bids:app"
 
 [tool.setuptools_scm]
 write_to = "src/patch_denoise/_version.py"
