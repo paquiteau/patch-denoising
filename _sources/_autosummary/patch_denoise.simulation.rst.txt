@@ -1,0 +1,32 @@
+patch\_denoise.simulation
+=========================
+
+.. automodule:: patch_denoise.simulation
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   activations
+   noise
+   phantom
+

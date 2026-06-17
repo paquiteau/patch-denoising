@@ -1,0 +1,6 @@
+patch\_denoise.denoise.optimal\_thresholding
+============================================
+
+.. currentmodule:: patch_denoise.denoise
+
+.. autofunction:: optimal_thresholding

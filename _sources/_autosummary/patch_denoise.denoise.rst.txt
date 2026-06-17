@@ -1,0 +1,36 @@
+patch\_denoise.denoise
+======================
+
+.. automodule:: patch_denoise.denoise
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+      :nosignatures:
+   
+      adaptive_thresholding
+      hybrid_pca
+      mp_pca
+      nordic
+      optimal_thresholding
+      raw_svt
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

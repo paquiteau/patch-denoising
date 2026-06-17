@@ -1,0 +1,6 @@
+patch\_denoise.simulation.noise.add\_temporal\_rician\_noise
+============================================================
+
+.. currentmodule:: patch_denoise.simulation.noise
+
+.. autofunction:: add_temporal_rician_noise
