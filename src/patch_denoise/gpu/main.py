@@ -17,8 +17,10 @@ from .denoiser import MPPCADenoiser, OptimalSVDDenoiser
 def __atomic_accumulate_kernel(
     global_out_ptr,  # Interpreted as float*
     global_weights_ptr,  # Interpreted as float*
+    global_var_est_ptr,  # Interpreted as float*
     recon_ptr,  # Interpreted as float*
     weights_ptr,  # Interpreted as float*
+    varest_ptr,  # Interpreted as float*
     coords_ptr,
     stride_out0: tl.constexpr,
     stride_out1: tl.constexpr,
@@ -51,6 +53,7 @@ def __atomic_accumulate_kernel(
     off_k = tl.load(coords_ptr + pid * 4 + 2)
     off_l = tl.load(coords_ptr + pid * 4 + 3)
     w = tl.load(weights_ptr + pid)
+    v = tl.load(varest_ptr + pid)
 
     for p_idx in range(0, PH * PW * PD * PT, BLOCK_SIZE):
         offsets = p_idx + tl.arange(0, BLOCK_SIZE)
@@ -99,10 +102,20 @@ def __atomic_accumulate_kernel(
             )
 
         # Weights are always 1 float per logical pixel
+        tl.atomic_add(global_var_est_ptr + g_idx, v, mask=mask)
         tl.atomic_add(global_weights_ptr + g_idx, w, mask=mask)
 
 
-def launch_triton(out_acc, out_weights, recon, weights, coords, patch_shape):
+def launch_triton(
+    out_acc: torch.Tensor,
+    out_weights: torch.Tensor,
+    out_var_map: torch.Tensor,
+    recon: torch.Tensor,
+    weights: torch.Tensor,
+    var_est: torch.Tensor,
+    coords: torch.Tensor,
+    patch_shape: tuple[int, int, int, int],
+):
     """Launch the Triton kernel for atomic accumulation."""
     is_complex = recon.is_complex()
 
@@ -120,21 +133,23 @@ def launch_triton(out_acc, out_weights, recon, weights, coords, patch_shape):
     __atomic_accumulate_kernel[grid](
         p_out,
         out_weights,
+        out_var_map,
         p_recon,
         weights,
+        var_est,
         coords,
-        *out_acc.stride(),
-        *recon.stride(),
-        *patch_shape,
-        BATCH_SIZE=recon.shape[0],
+        *out_acc.stride(),  # type: ignore
+        *recon.stride(),  # type: ignore
+        *patch_shape,  # type: ignore
+        BATCH_SIZE=recon.shape[0],  # type: ignore
         BLOCK_SIZE=1024,  # type: ignore
-        IS_COMPLEX=is_complex,
+        IS_COMPLEX=is_complex,  # type: ignore
     )
 
 
 def make_denoiser(
     args, noise_map, batch_size, compile=True, **kwargs
-) -> torch.nn.Module:
+) -> OptimalSVDDenoiser | MPPCADenoiser:
     """Create a denoiser model on GPU."""
     print(args)
     if "optimal" in args.method:
@@ -179,7 +194,7 @@ def make_denoiser(
     # Clear overhead memory from autotuning benchmarks
     torch.cuda.empty_cache()
 
-    return denoiser
+    return denoiser  # type: ignore
 
 
 @torch.inference_mode()
@@ -225,6 +240,7 @@ def main_gpu(
     )
 
     out_weights = torch.zeros(input_data_.shape, dtype=input_data_.dtype, device="cuda")
+    out_var_map = torch.zeros(input_data_.shape, dtype=input_data_.dtype, device="cuda")
     out_acc = torch.zeros(input_data_.shape, dtype=torch.float32, device="cuda")
     for i, (patches, indices) in enumerate(tqdm(loader, unit_scale=batch_size)):
         slot = i % 2
@@ -233,18 +249,24 @@ def main_gpu(
             # H2D -> Compute -> D2H (All Asynchronous)
             gpu_in = patches.cuda(non_blocking=True)
             gpu_indices = indices.cuda(non_blocking=True)
-            gpu_out, gpu_weight = denoiser(gpu_in)
+            gpu_out, gpu_weight, gpu_var_est = denoiser(gpu_in)
             launch_triton(
                 out_acc,
                 out_weights,
                 gpu_out,
                 gpu_weight,
+                gpu_var,
                 gpu_indices,
                 args.patch_shape,
             )
 
     out_acc /= out_weights.clamp(min=1e-8)  # Avoid division by zero
     out_acc = out_acc.cpu().numpy()
+    out_var_map /= out_weights.clamp(min=1e-8)  # Avoid division by zero
+    out_var_map = torch.sqrt(
+        torch.mean(out_var_map, -1)
+    )  # Convert variance to standard deviation
+    out_var_map = out_var_map.cpu().numpy()
     out_weights = out_weights.cpu().numpy()
 
-    return out_acc, out_weights, None
+    return out_acc, out_weights, out_var_map
