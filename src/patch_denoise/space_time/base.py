@@ -7,7 +7,7 @@ from typing import Any
 
 import numpy as np
 from numpy.typing import DTypeLike, NDArray
-from tqdm.auto import tqdm
+from tqdm.rich import tqdm
 
 from .._docs import fill_doc
 
