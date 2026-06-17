@@ -9,7 +9,7 @@ from typing import Annotated, Any, cast
 
 import numpy as np
 import typer
-from nilearn.image import load_img
+from nilearn.image import load_img, resample_img
 from nilearn.interfaces.bids import get_bids_files, parse_bids_filename
 from nilearn.interfaces.bids.utils import bids_entities, create_bids_filename
 from nilearn.maskers import NiftiMasker
@@ -273,8 +273,12 @@ def _load_validate_input(
 
     if affine is not None:
         if (affine_mask is not None) and not np.allclose(affine, affine_mask):
-            log.warning("Affine matrix of input and mask does not match", stacklevel=2)
+            log.warning("Affine matrix of input and mask does not match, mask will be resampled", stacklevel=2)
 
+            masker.mask_img_ = resample_img(
+                masker.mask_img_, target_affine=affine, target_shape=input_data.shape[:3], interpolation="nearest"
+            )
+            
         if (affine_noise is not None) and not np.allclose(affine, affine_noise):
             log.warning(
                 "Affine matrix of input and noise map does not match", stacklevel=2
@@ -421,8 +425,8 @@ def main(
     )
     log.info(f"output file: {output_file}.")
     log.info(f"output noise std map file: {output_noise_std_map_file}.")
-    log.info(f"input affine:\n{affine}.")
-    log.info(f"mask affine: \n{masker.mask_img_.affine}.")
+    log.debug(f"input affine:\n{affine}.")
+    log.debug(f"mask affine: \n{masker.mask_img_.affine}.")
 
     if gpu:
         if method not in [
