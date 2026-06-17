@@ -2,6 +2,7 @@
 
 import abc
 import logging
+import warnings
 from collections.abc import Callable
 from typing import Any
 
@@ -90,13 +91,13 @@ class PatchedArray:
         """Get number of patches."""
         return int(np.prod(self._grid_shape))
 
-    def get_patch(self, idx) -> NDArray:
+    def get_patch(self, idx:int) -> NDArray:
         """Get patch at linear index ``idx``."""
         return self.sliding_view[np.unravel_index(idx, self._grid_shape)]
 
-    def set_patch(self, idx, value):
+    def set_patch(self, idx:int, value: Any):
         """Set patch at linear index ``idx`` with value."""
-        self.sliding_view[np.unravel_index(idx, self._grid_shape)]
+        self.sliding_view[np.unravel_index(idx, self._grid_shape)] = value
 
     def idx2slice(self, idx):
         """Convert linear patch index to slice."""
@@ -180,7 +181,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         self.input_denoising_kwargs = dict()
 
     @fill_doc
-    def denoise(self, input_data, mask=None, mask_threshold=50, progbar=None):
+    def denoise(self, input_data:NDArray, mask:NDArray | None =None, mask_threshold:int=50, progbar=None) -> tuple[NDArray, NDArray, NDArray, NDArray]:
         """Denoise the input_data, according to mask.
 
         Patches are extracted sequentially and process by the implemented
@@ -199,8 +200,8 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         data_shape = input_data.shape
         p_s, p_o = self._get_patch_param(data_shape)
 
-        input_data = PatchedArray(input_data, p_s, p_o)
-        output_data = PatchedArray(data_shape, p_s, p_o, dtype=input_data.dtype)
+        input_data_ = PatchedArray(input_data, p_s, p_o)
+        output_data = PatchedArray(data_shape, p_s, p_o, dtype=input_data_.dtype)
         patch_weights = PatchedArray(data_shape, p_s, p_o, dtype=np.float32)
         patch_counts = PatchedArray(data_shape, p_s, p_o, dtype=np.int32)
         rank_map = PatchedArray(data_shape, p_s, p_o, dtype=np.int32)
@@ -211,7 +212,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         elif mask.shape == data_shape:
             process_mask = mask
         elif mask.shape == data_shape[:-1]:
-            process_mask = np.broadcast_to(mask[..., None], input_data.shape)
+            process_mask = np.broadcast_to(mask[..., None], input_data_.shape)
         else:
             raise ValueError(
                 f"Mask shape {mask.shape} is incompatible with input {data_shape}."
@@ -224,7 +225,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         center_pos = tuple(p // 2 for p in p_s)
         patch_space_size = np.prod(p_s[:-1])
         # select only queue index where process_mask is valid.
-        get_it = np.zeros(input_data.n_patches, dtype=bool)
+        get_it = np.zeros(input_data_.n_patches, dtype=bool)
 
         for i in range(len(get_it)):
             pm = process_mask.get_patch(i)
@@ -234,13 +235,17 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         select_patches = np.nonzero(get_it)[0]
         del get_it
 
+        log.info(f"Processing {len(select_patches)} patches out of {input_data_.n_patches}.")
+        log.info(f"Patch shape: {p_s}, overlap: {p_o}.")
         if progbar is None:
-            progbar = tqdm(total=len(select_patches))
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore")
+                progbar = tqdm(total=len(select_patches))
         elif progbar is not False:
             progbar.reset(total=len(select_patches))
 
         for i in select_patches:
-            input_patch_casorati = input_data.get_patch(i).reshape(patch_space_size, -1)
+            input_patch_casorati = input_data_.get_patch(i).reshape(patch_space_size, -1)
             p_denoise, maxidx, noise_var = self._patch_processing(
                 input_patch_casorati,
                 patch_idx=i,
@@ -270,12 +275,12 @@ class BaseSpaceTimeDenoiser(abc.ABC):
 
         output_data = output_data._arr
         patch_weights = patch_weights._arr
+        with np.errstate(divide="ignore", invalid="ignore"):
+            if self.recombination in ["average", "weighted"]:
+                output_data /= patch_weights
 
-        if self.recombination in ["average", "weighted"]:
-            output_data /= patch_weights
-
-        noise_std_estimate = noise_std_estimate._arr / patch_counts._arr
-        rank_map = rank_map._arr / patch_counts._arr
+            noise_std_estimate = noise_std_estimate._arr / patch_counts._arr
+            rank_map = rank_map._arr / patch_counts._arr
 
         noise_std_estimate[~process_mask._arr] = 0
         output_data[~process_mask._arr] = 0

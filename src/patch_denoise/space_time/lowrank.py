@@ -1,10 +1,10 @@
 """Low Rank methods."""
 
-from typing import override, Callable
-
+from collections.abc import Callable
 from types import MappingProxyType
 
 import numpy as np
+from numpy.typing import NDArray
 from scipy.linalg import svd
 from scipy.optimize import minimize
 
@@ -76,7 +76,7 @@ class HybridPCADenoiser(BaseSpaceTimeDenoiser):
 
     @fill_doc
     def denoise(
-        self, input_data, mask=None, mask_threshold=50, noise_std=1.0, progbar=None
+        self, input_data: NDArray, mask: NDArray | None=None, mask_threshold:int=50, noise_std:float=1.0, progbar=None
     ):
         """Denoise using the Hybrid-PCA method.
 
@@ -103,7 +103,7 @@ class HybridPCADenoiser(BaseSpaceTimeDenoiser):
         self.input_denoising_kwargs["var_apriori"] = var_apriori
         return super().denoise(input_data, mask, mask_threshold, progbar=progbar)
 
-    def _patch_processing(self, patch, patch_idx=None, var_apriori=None):
+    def _patch_processing(self, patch, *, patch_idx:int, var_apriori:PatchedArray):
         """Process a patch with the Hybrid-PCA method."""
         varest = np.mean(var_apriori.get_patch(patch_idx))
         p_center, eig_vals, eig_vec, p_tmean = eig_analysis(patch)
