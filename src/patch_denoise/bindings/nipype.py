@@ -15,7 +15,7 @@ from nipype.interfaces.base import (
 from nipype.utils.filemanip import split_filename
 
 from ..space_time.utils import estimate_noise
-from .utils import DENOISER_MAP, DenoiseParameters
+from .utils import DENOISER_MAP
 
 
 class PatchDenoiseInputSpec(BaseInterfaceInputSpec):
@@ -41,22 +41,18 @@ class PatchDenoiseInputSpec(BaseInterfaceInputSpec):
 
     mask = File(exists=True)
     noise_std_map = File(desc="noise_std_map")
-    denoise_str = traits.Str(desc="string describing the denoiser configuration")
     method = traits.Enum(
         *DENOISER_MAP.keys(),
-        xor=["denoise_str"],
         require=["patch_shape", "patch_overlap"],
     )
     patch_shape = traits.Union(
         traits.Int(),
         traits.List(traits.Int(), minlen=3, maxlen=3),
-        xor=["denoise_str"],
         require=["denoise_method", "patch_overlap"],
     )
     patch_overlap = traits.Union(
         traits.Int(),
         traits.List(traits.Int(), minlen=3, maxlen=3),
-        xor=["denoise_str"],
         require=["patch_shape", "denoise_method"],
     )
     mask_threshold = traits.Int(10)
@@ -78,22 +74,8 @@ class PatchDenoise(SimpleInterface):
     input_spec = PatchDenoiseInputSpec
     output_spec = PatchDenoiseOutputSpec
 
-    _denoise_attrs = [
-        "method",
-        "patch_shape",
-        "patch_overlap",
-        "mask_threshold",
-        "recombination",
-    ]
-
     def _run_interface(self, runtime):
         # INPUT
-        if isdefined(self.inputs.denoise_str):
-            d_par = DenoiseParameters.from_str(self.inputs.denoise_str)
-        else:
-            d_par = DenoiseParameters()
-            for attr in PatchDenoise._denoise_attrs:
-                setattr(d_par, attr, getattr(self.inputs, attr))
 
         if isdefined(self.inputs.in_mag):
             data_mag_nii = nib.load(self.inputs.in_mag)
@@ -115,7 +97,7 @@ class PatchDenoise(SimpleInterface):
             mask = None
 
         try:
-            denoise_func = DENOISER_MAP[d_par.method]
+            denoise_func = DENOISER_MAP[self.inputs.method]
         except KeyError:
             raise ValueError(
                 f"unknown denoising denoise_method '{self.inputs.denoise_method}', "
@@ -126,7 +108,7 @@ class PatchDenoise(SimpleInterface):
             extra_kwargs = self.inputs.extra_kwargs
         else:
             extra_kwargs = dict()
-        if d_par.method in [
+        if self.inputs.method in [
             "nordic",
             "hybrid-pca",
             "adaptive-qut",
@@ -138,11 +120,11 @@ class PatchDenoise(SimpleInterface):
             # CORE CALL
             denoised_data, _, noise_std_map, rank_map = denoise_func(
                 data,
-                patch_shape=d_par.patch_shape,
-                patch_overlap=d_par.patch_overlap,
+                patch_shape=self.inputs.patch_shape,
+                patch_overlap=self.inputs.patch_overlap,
                 mask=mask,
-                mask_threshold=d_par.mask_threshold,
-                recombination=d_par.recombination,
+                mask_threshold=self.inputs.mask_threshold,
+                recombination=self.inputs.recombination,
                 **extra_kwargs,
             )
         else:
@@ -160,7 +142,7 @@ class PatchDenoise(SimpleInterface):
         self._make_results_file("rank_map", f"{base}_rank_map.nii", rank_map)
         self._make_results_file(
             "denoised_file",
-            f"{base}_d_{d_par.method}.nii",
+            f"D{base}.nii",
             denoised_data,
         )
         self._make_results_file("noise_std_map", f"{base}_noise_map.nii", noise_std_map)
