@@ -91,11 +91,11 @@ class PatchedArray:
         """Get number of patches."""
         return int(np.prod(self._grid_shape))
 
-    def get_patch(self, idx:int) -> NDArray:
+    def get_patch(self, idx: int) -> NDArray:
         """Get patch at linear index ``idx``."""
         return self.sliding_view[np.unravel_index(idx, self._grid_shape)]
 
-    def set_patch(self, idx:int, value: Any):
+    def set_patch(self, idx: int, value: Any):
         """Set patch at linear index ``idx`` with value."""
         self.sliding_view[np.unravel_index(idx, self._grid_shape)] = value
 
@@ -181,7 +181,13 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         self.input_denoising_kwargs = dict()
 
     @fill_doc
-    def denoise(self, input_data:NDArray, mask:NDArray | None =None, mask_threshold:int=50, progbar=None) -> tuple[NDArray, NDArray, NDArray, NDArray]:
+    def denoise(
+        self,
+        input_data: NDArray,
+        mask: NDArray | None = None,
+        mask_threshold: int = 50,
+        progbar=None,
+    ) -> tuple[NDArray, NDArray, NDArray, NDArray]:
         """Denoise the input_data, according to mask.
 
         Patches are extracted sequentially and process by the implemented
@@ -236,7 +242,9 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         select_patches = np.nonzero(get_it)[0]
         del get_it
 
-        log.info(f"Processing {len(select_patches)} patches out of {input_data_.n_patches}.")
+        log.info(
+            f"Processing {len(select_patches)} patches out of {input_data_.n_patches}."
+        )
         log.info(f"Patch shape: {p_s}, overlap: {p_o}.")
         if progbar is None:
             with warnings.catch_warnings():
@@ -246,7 +254,9 @@ class BaseSpaceTimeDenoiser(abc.ABC):
             progbar.reset(total=len(select_patches))
 
         for i in select_patches:
-            input_patch_casorati = input_data_.get_patch(i).reshape(patch_space_size, -1)
+            input_patch_casorati = input_data_.get_patch(i).reshape(
+                patch_space_size, -1
+            )
             p_denoise, maxidx, noise_var = self._patch_processing(
                 input_patch_casorati,
                 patch_idx=i,
