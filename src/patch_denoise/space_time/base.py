@@ -2,12 +2,16 @@
 
 import abc
 import logging
+from collections.abc import Callable
+from typing import Any
 
 import numpy as np
 from numpy.typing import DTypeLike, NDArray
 from tqdm.auto import tqdm
 
 from .._docs import fill_doc
+
+log = logging.getLogger(__name__)
 
 
 class PatchedArray:
@@ -26,7 +30,7 @@ class PatchedArray:
         array: NDArray,
         patch_shape: tuple[int, ...],
         patch_overlap: tuple[int, ...],
-        dtype: DTypeLike = None,
+        dtype: DTypeLike | None = None,
         padding_mode: str = "edge",
         **kwargs,
     ):
@@ -160,6 +164,8 @@ class BaseSpaceTimeDenoiser(abc.ABC):
     $patch_config
     """
 
+    _patch_processing: Callable[..., tuple[NDArray, int, float]]
+
     def __init__(self, patch_shape, patch_overlap, recombination="weighted"):
         self.p_shape = patch_shape
         self.p_ovl = patch_overlap
@@ -196,6 +202,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         input_data = PatchedArray(input_data, p_s, p_o)
         output_data = PatchedArray(data_shape, p_s, p_o, dtype=input_data.dtype)
         patch_weights = PatchedArray(data_shape, p_s, p_o, dtype=np.float32)
+        patch_counts = PatchedArray(data_shape, p_s, p_o, dtype=np.int32)
         rank_map = PatchedArray(data_shape, p_s, p_o, dtype=np.int32)
         noise_std_estimate = PatchedArray(data_shape, p_s, p_o, dtype=np.float32)
         # Create Default mask
@@ -241,6 +248,10 @@ class BaseSpaceTimeDenoiser(abc.ABC):
             )
 
             p_denoise = np.reshape(p_denoise, p_s)
+            rank_map.add2patch(i, maxidx)
+            noise_std_estimate.add2patch(i, noise_var)
+            patch_counts.add2patch(i, 1)
+
             if self.recombination == "center":
                 output_data.get_patch(i)[center_pos] = p_denoise[center_pos]
             elif self.recombination == "weighted":
@@ -256,8 +267,6 @@ class BaseSpaceTimeDenoiser(abc.ABC):
                 )
             if progbar:
                 progbar.update()
-        # Averaging the overlapping pixels.
-        # this is only required for averaging recombinations.
 
         output_data = output_data._arr
         patch_weights = patch_weights._arr
@@ -265,120 +274,66 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         if self.recombination in ["average", "weighted"]:
             output_data /= patch_weights
 
+        noise_std_estimate = noise_std_estimate._arr / patch_counts._arr
+        rank_map = rank_map._arr / patch_counts._arr
+
+        noise_std_estimate[~process_mask._arr] = 0
         output_data[~process_mask._arr] = 0
+        rank_map[~process_mask._arr] = 0
 
         return output_data, patch_weights, noise_std_estimate, rank_map
 
-        # if self.recombination == "center":
-        #     patch_center = (
-        #         *(slice(ps // 2, ps // 2 + 1) for ps in patch_shape),
-        #         slice(None, None, None),
-        #     )
-        # patchs_weight = np.zeros(data_shape[:-1], np.float32)
-        # noise_std_estimate = np.zeros(data_shape[:-1], dtype=np.float32)
-
-        # # discard useless patches
-        # patch_locs = get_patch_locs(patch_shape, patch_overlap, data_shape)
-        # get_it = np.zeros(len(patch_locs), dtype=bool)
-
-        # for i, patch_tl in enumerate(patch_locs):
-        #     patch_slice = tuple(
-        #         slice(tl, tl + ps) for tl, ps in zip(patch_tl, patch_shape)
-        #     )
-        #     if 100 * np.sum(process_mask[patch_slice]) / patch_size > mask_threshold:
-        #         get_it[i] = True
-
-        # logging.info(f"Denoise {100 * np.sum(get_it) / len(patch_locs):.2f}% patches")
-        # patch_locs = np.ascontiguousarray(patch_locs[get_it])
-
-        # if progbar is None:
-        #     progbar = tqdm(total=len(patch_locs))
-        # elif progbar is not False:
-        #     progbar.reset(total=len(patch_locs))
-
-        # for patch_tl in patch_locs:
-        #     patch_slice = tuple(
-        #         slice(tl, tl + ps) for tl, ps in zip(patch_tl, patch_shape)
-        #     )
-        #     process_mask[patch_slice] = 1
-        #     # building the casoratti matrix
-        #     patch = np.reshape(input_data[patch_slice], (-1, input_data.shape[-1]))
-
-        #     # Replace all nan by mean value of patch.
-        #     # FIXME this behaviour should be documented
-        #     # And ideally chosen by the user.
-
-        #     patch[np.isnan(patch)] = np.mean(patch)
-        #     p_denoise, maxidx, noise_var = self._patch_processing(
-        #         patch,
-        #         patch_slice=patch_slice,
-        #         **self.input_denoising_kwargs,
-        #     )
-
-        #     p_denoise = np.reshape(p_denoise, (*patch_shape, -1))
-        #     patch_center_img = tuple(
-        #         ptl + ps // 2 for ptl, ps in zip(patch_tl, patch_shape)
-        #     )
-        #     if self.recombination == "center":
-        #         output_data[patch_center_img] = p_denoise[patch_center]
-        #         noise_std_estimate[patch_center_img] += noise_var
-        #     elif self.recombination == "weighted":
-        #         theta = 1 / (2 + maxidx)
-        #         output_data[patch_slice] += p_denoise * theta
-        #         patchs_weight[patch_slice] += theta
-        #     elif self.recombination == "average":
-        #         output_data[patch_slice] += p_denoise
-        #         patchs_weight[patch_slice] += 1
-        #     else:
-        #         raise ValueError(
-        #             "recombination must be one of 'weighted', 'average', 'center'"
-        #         )
-        #     if not np.isnan(noise_var):
-        #         noise_std_estimate[patch_slice] += noise_var
-        #     # the top left corner of the patch is used as id for the patch.
-        #     rank_map[patch_center_img] = maxidx
-        #     if progbar:
-        #         progbar.update()
-        # # Averaging the overlapping pixels.
-        # # this is only required for averaging recombinations.
-        # if self.recombination in ["average", "weighted"]:
-        #     output_data /= patchs_weight[..., None]
-        #     noise_std_estimate /= patchs_weight
-
-        # output_data[~process_mask] = 0
-
-        # return output_data, patchs_weight, noise_std_estimate, rank_map
-
-    @abc.abstractmethod
-    def _patch_processing(self, patch, patch_slice=None, **kwargs):
-        """Process a patch.
-
-        Implemented by child classes.
-        """
-
-    def _get_patch_param(self, data_shape):
+    def _get_patch_param(
+        self, data_shape: tuple[int, int, int, int]
+    ) -> tuple[tuple[int, int, int, int], tuple[int, int, int, int]]:
         """Return tuple for patch_shape and patch_overlap.
 
         It works from whatever the  input format was (int or list).
         This method also ensure that the patch will provide tall and skinny matrices.
         """
-        pp = [None, None]
-        for i, attr in enumerate(["p_shape", "p_ovl"]):
-            p = getattr(self, attr)
-            if isinstance(p, list):
-                p = tuple(p)
-            elif isinstance(p, (int, np.integer)):
-                p = (p,) * (len(data_shape) - 1)
-            if len(p) == len(data_shape) - 1:
-                # add the time dimension
-                p = (*p, data_shape[-1])
-            pp[i] = p
+        return _patch_param(self.p_shape, data_shape), _patch_param(
+            self.p_ovl, data_shape
+        )
 
-        if np.prod(pp[0][:-1]) < data_shape[-1]:
-            logging.warning(
-                f"the number of voxel in patch ({np.prod(pp[0])}) is smaller than the"
-                f" last dimension ({data_shape[-1]}), this makes an ill-conditioned"
-                "matrix for SVD.",
-                stacklevel=2,
+
+def _patch_param(
+    patch_param: Any, data_shape: tuple[int, int, int, int]
+) -> tuple[int, int, int, int]:
+    """Return tuple for patch_param.
+
+    It works from whatever the  input format was (int or list).
+    This method also ensure that the patch will provide tall and skinny matrices.
+    """
+    if isinstance(patch_param, int):
+        patch_param = (patch_param,) * len(data_shape)
+    elif isinstance(patch_param, tuple | list):
+        if len(patch_param) == 1:
+            patch_param = (patch_param[0],) * len(data_shape)
+        elif len(patch_param) == len(data_shape) - 1:
+            patch_param = tuple(patch_param) + (data_shape[-1],)
+        elif len(patch_param) == len(data_shape):
+            patch_param = tuple(patch_param)
+        else:
+            raise ValueError(
+                f"patch_param must have the same number of dimensions as data_shape. "
+                f"Got {len(patch_param)} and {len(data_shape)}."
             )
-        return tuple(pp)
+    else:
+        raise ValueError(
+            f"patch_param must be an int or a sequence. Got {type(patch_param)}."
+        )
+
+    for i, (p, s) in enumerate(zip(patch_param, data_shape)):
+        if p > s:
+            log.warning(
+                f"patch_param[{i}] is larger than data_shape[{i}]. "
+                f"Reducing patch_param[{i}] from {p} to {s}."
+            )
+            patch_param = patch_param[:i] + (s,) + patch_param[i + 1 :]
+        if p < 1:
+            log.warning(f"patch_param[{i}]<1 using the data_shape[{i}]. ")
+            patch_param = patch_param[:i] + (s,) + patch_param[i + 1 :]
+    # Ensure patch size is not larger than data size along each axis
+    patch_param = tuple(min(p, s) for p, s in zip(patch_param, data_shape))
+
+    return patch_param  # type: ignore

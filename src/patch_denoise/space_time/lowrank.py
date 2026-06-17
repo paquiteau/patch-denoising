@@ -1,5 +1,7 @@
 """Low Rank methods."""
 
+from typing import override, Callable
+
 from types import MappingProxyType
 
 import numpy as np
@@ -379,14 +381,16 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
     def _patch_processing(
         self,
         patch,
-        patch_idx=None,
-        shrink_func=None,
-        mp_median=None,
-        var_apriori=None,
+        *,
+        patch_idx,
+        shrink_func: Callable,
+        mp_median,
+        var_apriori,
+        **kwargs,
     ):
         u_vec, s_values, v_vec, p_tmean = svd_analysis(patch)
         if var_apriori is not None:
-            sigma = np.mean(np.sqrt(var_apriori.get_patch(patch_idx)))
+            sigma = np.sqrt(np.mean(var_apriori.get_patch(patch_idx)))
         else:
             sigma = np.median(s_values) / np.sqrt(patch.shape[1] * mp_median)
 
@@ -404,7 +408,7 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
             maxidx = 0
             p_new = np.zeros_like(patch) + p_tmean
 
-        return p_new, maxidx, np.nan
+        return p_new, maxidx, sigma**2
 
 
 def _sure_atn_cost(X, method, sing_vals, gamma, sigma=None, tau=None):
