@@ -19,7 +19,6 @@ except ImportError as e:
 
 from patch_denoise.bindings.cli import GPU_AVAILABLE
 from patch_denoise.bindings.nipype import PatchDenoise
-from patch_denoise.bindings.utils import DenoiseParameters
 from patch_denoise.denoise import mp_pca
 
 
@@ -74,18 +73,14 @@ def test_cli(noisy_phantom, nifti_noisy_phantom, tmpdir_factory, denoised_ref):
     )
 
 
-def test_denoise_param():
-    """Test the Denoise parameter structure."""
-    d = DenoiseParameters("optimal-fro", 11, 10, "weighted", 10)
-    d2 = DenoiseParameters.from_str(str(d))
-    assert d2 == d
-
-
 def test_nipype_mag(nifti_noisy_phantom, denoised_ref):
     """Test the Nipye Interfaces."""
     interface = PatchDenoise()
     interface.inputs.in_mag = nifti_noisy_phantom
-    interface.inputs.denoise_str = "mp-pca_6_5_weighted"
+    interface.inputs.method = "mp-pca"
+    interface.inputs.patch_shape = 6
+    interface.inputs.patch_overlap = 5
+    interface.inputs.recombination = "weighted"
     interface.inputs.extra_kwargs = {"threshold_scale": 2.3}
 
     output_file = interface.run().outputs.denoised_file
@@ -99,24 +94,13 @@ def test_nipype_cpx(nifti_noisy_phantom):
     interface = PatchDenoise()
     interface.inputs.in_real = nifti_noisy_phantom
     interface.inputs.in_imag = nifti_noisy_phantom
-    interface.inputs.denoise_str = "mp-pca_6_5_weighted"
+    interface.inputs.method = "mp-pca"
+    interface.inputs.patch_shape = 6
+    interface.inputs.patch_overlap = 5
+    interface.inputs.recombination = "weighted"
     interface.inputs.extra_kwargs = {"threshold_scale": 2.3}
 
     output_file = interface.run().outputs.denoised_file
-
-
-def test_denoise_paramter_pretty_par():
-    pretty_par = DenoiseParameters("optimal-fro", 11, 10, "weighted", 10).pretty_par
-
-    assert pretty_par == "11_10w"
-
-
-def test_denoise_parameter_pretty():
-    """Test the pretty_name."""
-    pretty_string = "optimal-fro_11_10_weighted_10"
-    pretty_name = DenoiseParameters.from_str(pretty_string).pretty_name
-
-    assert pretty_name == pretty_string
 
 
 @pytest.fixture
@@ -139,7 +123,7 @@ def test_e2e(data, ds001168):
     input_file = f"{ds001168}/sub-01/ses-1/func/sub-01_ses-1_task-rest_acq-fullbrain_run-1_bold.nii.gz"
     output_file = f"{data}/derivatives/sub-01/ses-1/func/sub-01_ses-1_task-rest_acq-fullbrain_run-1_desc-denoised_bold.nii.gz"
     exit_status = os.system(
-        f"patch-denoise {input_file} {output_file} --conf mp-pca_10_3_weighted"
+        f"patch-denoise {input_file} {output_file} -m mp-pca -ps 10 -po 3 -r weighted"
     )
 
     assert exit_status == 0
@@ -151,7 +135,7 @@ def test_e2e(data, ds001168):
             torch._C._cuda_init()
             output_file = f"{data}/derivatives/sub-01/ses-1/func/sub-01_ses-1_task-rest_acq-fullbrain_run-1_desc-denoised+gpu_bold.nii.gz"
             exit_status = os.system(
-                f"patch-denoise {input_file} {output_file} --conf mp-pca_10_3_weighted --gpu"
+                f"patch-denoise {input_file} {output_file} -m mp-pca -ps 10 -po 3 -r weighted --gpu"
             )
 
             assert exit_status == 0

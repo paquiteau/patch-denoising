@@ -133,7 +133,7 @@ MethodOpt = Annotated[
     ),
 ]
 PatchShapeOpt = Annotated[
-    tuple[int, int, int, int],
+    str,
     typer.Option(
         "-ps",
         "--patch-shape",
@@ -144,7 +144,7 @@ PatchShapeOpt = Annotated[
     ),
 ]
 PatchOverlapOpt = Annotated[
-    tuple[int, int, int, int],
+    str,
     typer.Option(
         "-po",
         "--patch-overlap",
@@ -377,12 +377,20 @@ def main(
     if output_file is None:
         output_file = input_file.parent / f"D{input_file.name}"
 
-    parent_dir = Path(output_file).parent
-    if not Path(output_file).parent.exists():
+    parent_dir = output_file.parent
+    if not output_file.parent.exists():
         parent_dir.mkdir(exist_ok=True, parents=True)
-        log.info(f"{Path(output_file).parent} created")
-    if not Path(output_file).exists():
-        log.warning(f"{Path(output_file).parent} will be overwritten")
+        log.info(f"{output_file.parent} created")
+    if output_file.exists():
+        log.warning(f"{output_file} will be overwritten")
+
+    if output_noise_std_map_file is not None:
+        parent_dir = output_noise_std_map_file.parent
+        if not output_noise_std_map_file.parent.exists():
+            parent_dir.mkdir(exist_ok=True, parents=True)
+            log.info(f"{output_noise_std_map_file.parent} created")
+        if output_noise_std_map_file.exists():
+            log.warning(f"{output_noise_std_map_file} will be overwritten")
 
     # 1. Define only the columns you want (just the spinner and the text)
     with Progress(

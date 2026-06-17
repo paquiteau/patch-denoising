@@ -346,7 +346,7 @@ def _patch_param(
                 f"Reducing patch_param[{i}] from {p} to {s}."
             )
             patch_param = patch_param[:i] + (s,) + patch_param[i + 1 :]
-        if p < 1:
+        if p < 0:
             log.warning(f"patch_param[{i}]<1 using the data_shape[{i}]. ")
             patch_param = patch_param[:i] + (s,) + patch_param[i + 1 :]
     # Ensure patch size is not larger than data size along each axis
