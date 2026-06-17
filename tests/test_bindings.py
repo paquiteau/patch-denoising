@@ -62,7 +62,7 @@ def test_cli(noisy_phantom, nifti_noisy_phantom, tmpdir_factory, denoised_ref):
 
     exit_status = os.system(
         f"patch-denoise {nifti_noisy_phantom} {outfile} --mask mask.nii "
-        "--conf mp-pca_6_5_weighted --extra threshold_scale=2.3"
+        "-m mp-pca -ps 6 -po 5 -r weighted --extra threshold_scale=2.3"
     )
     assert exit_status == 0
     npt.assert_allclose(

@@ -26,6 +26,7 @@ from patch_denoise.bindings.utils import (
     load_complex_nifti,
     save_array,
 )
+from patch_denoise.space_time.base import _patch_param
 
 GPU_AVAILABLE = fast_cuda_check()
 
@@ -70,17 +71,13 @@ class RecombinationEnum(StrEnum):
     MEAN = AVERAGE = "mean"
 
 
-def parse_dims(value: Any) -> tuple[int, int, int, int]:
+def parse_dims(value: Any) -> tuple[int, ...]:
     """Parse a string representing dimensions into a 3 or 4-tuple of integers."""
     if not isinstance(value, str):
         return value  # Already a tuple of ints
     dims = [int(x) for x in re.findall(r"\d+", value)]
-    if len(dims) == 1:
-        return dims[0], dims[0], dims[0], -1
-    if len(dims) == 3:
-        return dims[0], dims[1], dims[2], -1
-    if len(dims) == 4:
-        return dims[0], dims[1], dims[2], dims[3]
+    if len(dims) in (1, 3, 4):
+        return tuple(dims)  # type: ignore
 
     raise typer.BadParameter(
         "Must be an int, 3-tuple, or 4-tuple ('11' or '11x11x11')"
@@ -419,17 +416,12 @@ def main(
 
     # substitute any -1 in patch_shape or patch_overlap with the corresponding dimension
     # of input_data
-    patch_shape = cast(
-        tuple[int, int, int, int],
-        tuple(p if p != -1 else s for p, s in zip(patch_shape, input_data.shape)),
-    )
-    patch_overlap = cast(
-        tuple[int, int, int, int],
-        tuple(p if p != -1 else s for p, s in zip(patch_overlap, input_data.shape)),
-    )
+    patch_shape_ = _patch_param(patch_shape, input_data.shape)
+
+    patch_overlap_ = _patch_param(patch_overlap, input_data.shape)
     log.info(f"denoising method: {method}.")
-    log.info(f"patch shape: {patch_shape}.")
-    log.info(f"patch overlap: {patch_overlap}.")
+    log.info(f"patch shape: {patch_shape_} (from {patch_shape}).")
+    log.info(f"patch overlap: {patch_overlap_} (from {patch_overlap}).")
     log.info(f"recombination method: {recombination}.")
     log.info(f"mask threshold: {mask_threshold}.")
     log.info(f"GPU: {gpu}.")
@@ -479,8 +471,8 @@ def main(
 
     denoised_data, _, noise_std_map, _ = denoise_func(
         input_data,
-        patch_shape=patch_shape,
-        patch_overlap=patch_overlap,
+        patch_shape=patch_shape_,
+        patch_overlap=patch_overlap_,
         mask=mask_data,
         mask_threshold=mask_threshold,
         recombination=recombination,

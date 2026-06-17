@@ -43,20 +43,22 @@ class PatchDenoiseInputSpec(BaseInterfaceInputSpec):
     noise_std_map = File(desc="noise_std_map")
     method = traits.Enum(
         *DENOISER_MAP.keys(),
-        require=["patch_shape", "patch_overlap"],
     )
     patch_shape = traits.Union(
         traits.Int(),
-        traits.List(traits.Int(), minlen=3, maxlen=3),
-        require=["denoise_method", "patch_overlap"],
+        traits.List(traits.Int(), minlen=3, maxlen=4),
     )
     patch_overlap = traits.Union(
         traits.Int(),
-        traits.List(traits.Int(), minlen=3, maxlen=3),
-        require=["patch_shape", "denoise_method"],
+        traits.List(traits.Int(), minlen=3, maxlen=4),
     )
-    mask_threshold = traits.Int(10)
-    recombination = traits.Enum("weighted", "mean")
+    mask_threshold = traits.Int(10, usedefault=True, desc="Threshold for mask.")
+    recombination = traits.Enum(
+        "weighted",
+        "mean",
+        usedefault=True,
+        desc="Recombination method.",
+    )
     extra_kwargs = traits.Dict()
 
 
