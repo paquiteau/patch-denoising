@@ -103,7 +103,7 @@ def test_optimal_denoiser2(phantom, noisy_phantom, recombination, loss):
         noisy_phantom,
         patch_shape=10,
         patch_overlap=9,
-        noise_std=1.414 * g_factor_map(phantom.shape[:-1]),
+        noise_std=2 * g_factor_map(phantom.shape[:-1]),
         recombination=recombination,
         loss=loss,
     )

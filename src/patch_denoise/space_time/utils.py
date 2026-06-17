@@ -131,7 +131,7 @@ def eig_analysis(input_data, max_eig_val=10):
     eig_vals, eig_vec = eigh(
         data_centered.conj().T @ data_centered / (M - 1),
         driver="evx",
-        subset_by_index=(len(mean) - max_eig_val, len(mean) - 1),
+        subset_by_index=(max(len(mean) - max_eig_val, 0), len(mean) - 1),
     )
 
     return data_centered, eig_vals, eig_vec, mean

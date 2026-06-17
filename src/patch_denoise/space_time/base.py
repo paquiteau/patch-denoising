@@ -324,7 +324,7 @@ def _patch_param(
         patch_param = (patch_param,) * len(data_shape)
     elif isinstance(patch_param, tuple | list):
         if len(patch_param) == 1:
-            patch_param = (patch_param[0],) * len(data_shape)
+            patch_param = (patch_param[0],) * (len(data_shape) - 1) + (data_shape[-1],)
         elif len(patch_param) == len(data_shape) - 1:
             patch_param = tuple(patch_param) + (data_shape[-1],)
         elif len(patch_param) == len(data_shape):
