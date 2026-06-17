@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Cli interface."""
-
 import json
 import logging
 import re
@@ -29,13 +28,12 @@ from patch_denoise.bindings.utils import (
 
 GPU_AVAILABLE = fast_cuda_check()
 
-log = logging.getLogger("patch-denoise")
+log = logging.getLogger(__name__)
 
 logging.basicConfig(
     level=logging.WARNING,
     format="%(message)s",
-    datefmt="[%X]",
-    handlers=[RichHandler()],
+    handlers=[RichHandler(show_time=False, show_path=True, show_level=True, markup=True)],
 )
 logging.captureWarnings(True)
 
@@ -360,7 +358,7 @@ def main(
 
     levels = [logging.WARNING, logging.INFO, logging.DEBUG]
     level = levels[min(verbose, len(levels) - 1)]
-    log.setLevel(level)
+    logging.getLogger("patch_denoise").setLevel(level)
     logging.getLogger("py.warnings").setLevel(level)
 
     if output_file is None:
@@ -427,6 +425,15 @@ def main(
     log.info(f"mask affine: \n{masker.mask_img_.affine}.")
 
     if gpu:
+        if method not in [
+                DenoiserEnum.MP_PCA,
+                DenoiserEnum.OPTIMAL_FRO,
+                DenoiserEnum.OPTIMAL_FRO_NOISE,
+                DenoiserEnum.OPTIMAL_NUC,
+                DenoiserEnum.OPTIMAL_OPE
+        ]:
+            raise ValueError(
+                f"Method {method} is not supported on GPU. ")
         if not GPU_AVAILABLE:
             raise RuntimeError(
                 "GPU support is not available. Please ensure that the "
@@ -434,35 +441,30 @@ def main(
                 "a compatible GPU."
             )
         log.info("Using GPU for computation.")
-        from patch_denoise.gpu.main import main_gpu
-
-        denoised_data, _, noise_std_map = main_gpu(
-            input_data, mask, noise_std_map, **kwargs
-        )
-
+        from patch_denoise.gpu.main import main_gpu as denoise_func
+        kwargs["method"] = method
     else:
-        if method in [
-            DenoiserEnum.NORDIC,
-            DenoiserEnum.HYBRID_PCA,
-            DenoiserEnum.ADAPTIVE_QUT,
-            DenoiserEnum.OPTIMAL_FRO_NOISE,
-        ]:
-            if noise_std_map is None:
-                raise RuntimeError("A noise map must be specified for this method.")
-            kwargs["noise_std"] = noise_std_map
-        denoise_func = DENOISER_MAP.get(method, None)
-        if denoise_func is None:
-            raise ValueError(f"Method {method} is not supported.")
+        denoise_func = DENOISER_MAP[method]
 
-        denoised_data, _, noise_std_map, _ = denoise_func(
-            input_data,
-            patch_shape=patch_shape,
-            patch_overlap=patch_overlap,
-            mask=mask_data,
-            mask_threshold=mask_threshold,
-            recombination=recombination,
-            **kwargs,
-        )
+    if method in [
+        DenoiserEnum.NORDIC,
+        DenoiserEnum.HYBRID_PCA,
+        DenoiserEnum.ADAPTIVE_QUT,
+        DenoiserEnum.OPTIMAL_FRO_NOISE,
+    ]:
+        if noise_std_map is None:
+            raise RuntimeError("A noise map must be specified for this method.")
+        kwargs["noise_std"] = noise_std_map
+
+    denoised_data, _, noise_std_map, _ = denoise_func(
+        input_data,
+        patch_shape=patch_shape,
+        patch_overlap=patch_overlap,
+        mask=mask_data,
+        mask_threshold=mask_threshold,
+        recombination=recombination,
+        **kwargs,
+    )
 
     save_array(denoised_data, affine, output_file)
     if output_noise_std_map_file is not None:
@@ -685,13 +687,10 @@ def bids_main(
             input_data = load_img(f).get_fdata()
 
             if gpu:
-                from patch_denoise.gpu.main import main_gpu
-
-                denoised_data, _, noise_std_map = main_gpu(
-                    input_data, mask, noise_std_map, **kwargs
-                )
-            else:
-                denoised_data, _, noise_std_map, _ = denoise_func(
+                from patch_denoise.gpu.main import main_gpu as denoise_func
+                kwargs["method"] = method
+                
+            denoised_data, _, noise_std_map, _ = denoise_func(
                     input_data,
                     patch_shape=patch_shape,
                     patch_overlap=patch_overlap,
