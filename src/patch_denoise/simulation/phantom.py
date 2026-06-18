@@ -87,9 +87,9 @@ def mr_shepp_logan(
         L, M, N = N[:]
 
     # Make sure zlims are appropriate
-    assert (
-        len(zlims) == 2
-    ), "zlims must be a tuple with 2 entries: upper and lower bounds!"
+    assert len(zlims) == 2, (
+        "zlims must be a tuple with 2 entries: upper and lower bounds!"
+    )
     assert zlims[0] <= zlims[1], "zlims: lower bound must be first entry!"
 
     # Get parameters from paper if None provided
