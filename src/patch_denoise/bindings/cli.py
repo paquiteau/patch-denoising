@@ -75,14 +75,14 @@ def parse_dims(value: Any) -> tuple[int, ...]:
     """Parse a string representing dimensions into a 3 or 4-tuple of integers."""
     if not isinstance(value, str):
         return value  # Already a tuple of ints
-    dims = [int(x) for x in re.findall(r"\d+", value)]
+    dims = [int(x) for x in re.findall(r"-?\d+", value)]
     if len(dims) in (1, 3, 4):
         return tuple(dims)  # type: ignore
 
     raise typer.BadParameter(
         "Must be an int, 3-tuple, or 4-tuple ('11' or '11x11x11')"
-        " any 1-character separator is allowed "
-        "('11x11x11', '11-11-11', '11_11_11', '11,11,11')"
+        " any 1-character separator is allowed (except space and -): "
+        "('11x11x11', 11_11_11', '11,11,11')"
     )
 
 
@@ -320,8 +320,8 @@ def main(
         ),
     ] = None,
     method: MethodOpt = DenoiserEnum.OPTIMAL_FRO,
-    patch_shape: PatchShapeOpt = (11, 11, 11, -1),
-    patch_overlap: PatchOverlapOpt = (5, 5, 5, -1),
+    patch_shape: PatchShapeOpt = "11,11,11,-1",
+    patch_overlap: PatchOverlapOpt = "5,5,5,-1",
     recombination: RecombinationOpt = RecombinationEnum.WEIGHTED,
     mask: MaskOpt = "auto",
     mask_threshold: MaskThreshOpt = 50,
