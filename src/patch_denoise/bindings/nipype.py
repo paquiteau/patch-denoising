@@ -76,25 +76,32 @@ class PatchDenoise(SimpleInterface):
     input_spec = PatchDenoiseInputSpec
     output_spec = PatchDenoiseOutputSpec
 
+    # for type checking, we need to define the inputs attribute with the correct type
+    inputs: PatchDenoiseInputSpec
+
     def _run_interface(self, runtime):
         # INPUT
 
         if isdefined(self.inputs.in_mag):
-            data_mag_nii = nib.load(self.inputs.in_mag)
+            data_mag_nii = nib.Nifti1Image.from_filename(self.inputs.in_mag)
             data = data_mag_nii.get_fdata(dtype=np.float32)
             basename = self.inputs.in_mag
             self._affine = data_mag_nii.affine
         else:
-            data_real_nii = nib.load(self.inputs.in_real)
+            data_real_nii = nib.Nifti1Image.from_filename(self.inputs.in_real)
             self._affine = data_real_nii.affine
             data_real = data_real_nii.get_fdata(dtype=np.float32)
-            data_imag = nib.load(self.inputs.in_imag).get_fdata(dtype=np.float32)
+            data_imag = nib.Nifti1Image.from_filename(self.inputs.in_imag).get_fdata(
+                dtype=np.float32
+            )
             data = 1j * data_imag
             data += data_real
             basename = self.inputs.in_real
 
         if isdefined(self.inputs.mask) and self.inputs.mask:
-            mask = np.abs(nib.load(self.inputs.mask).get_fdata()) > 0
+            mask = (
+                np.abs(nib.Nifti1Image.from_filename(self.inputs.mask).get_fdata()) > 0
+            )
         else:
             mask = None
 
@@ -102,7 +109,7 @@ class PatchDenoise(SimpleInterface):
             denoise_func = DENOISER_MAP[self.inputs.method]
         except KeyError:
             raise ValueError(
-                f"unknown denoising denoise_method '{self.inputs.denoise_method}', "
+                f"unknown denoising denoise_method '{self.inputs.method}', "
                 f"available are {list(DENOISER_MAP.keys())}"
             ) from None
 
@@ -116,7 +123,9 @@ class PatchDenoise(SimpleInterface):
             "adaptive-qut",
             "optimal-fro-noise",
         ]:
-            extra_kwargs["noise_std"] = nib.load(self.inputs.noise_std_map).get_fdata()
+            extra_kwargs["noise_std"] = nib.Nifti1Image.from_filename(
+                self.inputs.noise_std_map
+            ).get_fdata()
 
         if denoise_func is not None:
             # CORE CALL
@@ -179,9 +188,10 @@ class NoiseStdMap(SimpleInterface):
 
     input_spec = NoiseStdMapInputSpec
     output_spec = NoiseStdMapOutputSpec
+    inputs: NoiseStdMapInputSpec
 
     def _run_interface(self, runtime):
-        noise_map = nib.load(self.inputs.noise_map_file)
+        noise_map = nib.Nifti1Image.from_filename(self.inputs.noise_map_file)
         noise_std_map = estimate_noise(
             noise_map.get_fdata() / self.inputs.fft_scale, self.inputs.block_size
         )

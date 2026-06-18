@@ -1,6 +1,7 @@
 """Test for the binding module."""
 
 import os
+import subprocess
 from pathlib import Path
 
 import nibabel as nib
@@ -44,7 +45,7 @@ def nifti_noisy_phantom(noisy_phantom, tmpdir_factory):
 
 def test_entrypoint():
     """Test entrypoint of patch-denoise function."""
-    exit_status = os.system("patch-denoise --help")
+    exit_status = subprocess.call("patch-denoise --help", shell=True)
     assert exit_status == 0
 
 
@@ -60,13 +61,14 @@ def test_cli(noisy_phantom, nifti_noisy_phantom, tmpdir_factory, denoised_ref):
     mask_img = nib.Nifti1Image(mask, affine=np.eye(4))
     nib.nifti1.save(mask_img, "mask.nii")
 
-    exit_status = os.system(
+    exit_status = subprocess.call(
         f"patch-denoise {nifti_noisy_phantom} {outfile} --mask mask.nii "
-        "-m mp-pca -ps 6 -po 5 -r weighted --extra threshold_scale=2.3"
+        "-m mp-pca -ps 6 -po 5 -r weighted --extra threshold_scale=2.3",
+        shell=True,
     )
     assert exit_status == 0
     npt.assert_allclose(
-        nib.load(outfile).get_fdata(dtype=np.float32),
+        nib.Nifti1Image.from_filename(outfile).get_fdata(dtype=np.float32),
         denoised_ref,
         rtol=1e-6,
         atol=1e-2,
@@ -85,7 +87,7 @@ def test_nipype_mag(nifti_noisy_phantom, denoised_ref):
 
     output_file = interface.run().outputs.denoised_file
 
-    output_data = nib.load(output_file).get_fdata(dtype=np.float32)
+    output_data = nib.Nifti1Image.from_filename(output_file).get_fdata(dtype=np.float32)
     npt.assert_allclose(output_data, denoised_ref, rtol=1e-2)
 
 
@@ -119,27 +121,22 @@ def ds001168(data) -> Path:
 
 
 @pytest.mark.e2e
-def test_e2e(data, ds001168):
+@pytest.mark.parametrize(
+    "device",
+    [
+        "cpu",
+        pytest.param(
+            "gpu",
+            marks=pytest.mark.skipif(not GPU_AVAILABLE, reason="GPU not available"),
+        ),
+    ],
+)
+def test_e2e(data, ds001168, device):
     input_file = f"{ds001168}/sub-01/ses-1/func/sub-01_ses-1_task-rest_acq-fullbrain_run-1_bold.nii.gz"
     output_file = f"{data}/derivatives/sub-01/ses-1/func/sub-01_ses-1_task-rest_acq-fullbrain_run-1_desc-denoised_bold.nii.gz"
-    exit_status = os.system(
-        f"patch-denoise {input_file} {output_file} -m mp-pca -ps 10 -po 3 -r weighted"
+    exit_status = subprocess.call(
+        f"patch-denoise {input_file} {output_file} -m mp-pca -ps 10 -po 3 -r weighted --{device}",
+        shell=True,
     )
 
     assert exit_status == 0
-
-    if GPU_AVAILABLE:
-        import torch
-
-        try:
-            torch._C._cuda_init()
-            output_file = f"{data}/derivatives/sub-01/ses-1/func/sub-01_ses-1_task-rest_acq-fullbrain_run-1_desc-denoised+gpu_bold.nii.gz"
-            exit_status = os.system(
-                f"patch-denoise {input_file} {output_file} -m mp-pca -ps 10 -po 3 -r weighted --gpu"
-            )
-
-            assert exit_status == 0
-        except RuntimeError:
-            print("skipping GPU test")
-    else:
-        print("skipping GPU test")

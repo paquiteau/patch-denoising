@@ -70,7 +70,7 @@ class OptimalSVDDenoiser(torch.nn.Module):
         u, s, v = torch.linalg.svd(xc, full_matrices=False, driver="gesvda")
         # Calculate noise scale
         median_s = torch.median(s, dim=-1)[0]
-        scale_factor = median_s / self.mp_median  # type: ignore
+        scale_factor = median_s / self.mp_median
 
         # Apply shrink
         scale_factor_exp = scale_factor.unsqueeze(-1)

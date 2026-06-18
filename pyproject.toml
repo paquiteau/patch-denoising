@@ -68,6 +68,7 @@ patch-denoise-bids = "patch_denoise.bindings.bids:app"
 write_to = "src/patch_denoise/_version.py"
 version_scheme = "python-simplified-semver"
 local_scheme="no-local-version"
+fallback_version="v99-dev"
 
 [tool.coverage.run]
 omit = ["*tests*"]

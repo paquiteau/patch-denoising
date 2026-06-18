@@ -5,6 +5,7 @@ This file only contains a selection of the most common options. For a full
 list see the documentation:
 https://www.sphinx-doc.org/en/master/usage/configuration.html
 """
+
 # -- Path setup --------------------------------------------------------------
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -23,10 +24,6 @@ sys.path.insert(0, os.path.abspath(".."))  # Source code dir relative to this fi
 project = "patch-denoise"
 copyright = "2022, Pierre-Antoine Comby"
 author = "Pierre-Antoine Comby"
-
-release = version("patch-denoise")
-# for example take major/minor
-version = ".".join(release.split(".")[:2])
 
 # -- General configuration ---------------------------------------------------
 

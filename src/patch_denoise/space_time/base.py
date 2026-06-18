@@ -28,7 +28,7 @@ class PatchedArray:
 
     def __init__(
         self,
-        array: NDArray,
+        array: NDArray | tuple[int, ...],
         patch_shape: tuple[int, ...],
         patch_overlap: tuple[int, ...],
         dtype: DTypeLike | None = None,

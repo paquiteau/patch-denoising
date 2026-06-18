@@ -77,7 +77,7 @@ def parse_dims(value: Any) -> tuple[int, ...]:
         return value  # Already a tuple of ints
     dims = [int(x) for x in re.findall(r"-?\d+", value)]
     if len(dims) in (1, 3, 4):
-        return tuple(dims)  # type: ignore
+        return tuple(dims)
 
     raise typer.BadParameter(
         "Must be an int, 3-tuple, or 4-tuple ('11' or '11x11x11')"
@@ -555,8 +555,8 @@ def bids_main(
         ),
     ] = None,
     method: MethodOpt = DenoiserEnum.OPTIMAL_FRO,
-    patch_shape: PatchShapeOpt = (11, 11, 11, -1),
-    patch_overlap: PatchOverlapOpt = (5, 5, 5, -1),
+    patch_shape: PatchShapeOpt = "11,11,11,-1",
+    patch_overlap: PatchOverlapOpt = "5,5,5,-1",
     recombination: RecombinationOpt = RecombinationEnum.WEIGHTED,
     mask: MaskOpt = "auto",
     mask_threshold: MaskThreshOpt = 50,
@@ -696,6 +696,8 @@ def bids_main(
             masker.mask_img_.to_filename(output_mask_filename)
 
             input_data = load_img(f).get_fdata()
+            patch_shape_ = _patch_param(patch_shape, input_data.shape)
+            patch_overlap_ = _patch_param(patch_overlap, input_data.shape)
 
             if gpu:
                 from patch_denoise.gpu.main import main_gpu as denoise_func
@@ -704,8 +706,8 @@ def bids_main(
 
             denoised_data, _, noise_std_map, _ = denoise_func(
                 input_data,
-                patch_shape=patch_shape,
-                patch_overlap=patch_overlap,
+                patch_shape=patch_shape_,
+                patch_overlap=patch_overlap_,
                 mask=mask,
                 mask_threshold=mask_threshold,
                 recombination=recombination,

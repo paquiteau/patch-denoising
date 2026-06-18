@@ -20,7 +20,7 @@ from .utils import (
 
 NUMBA_AVAILABLE = True
 try:
-    import numba as nb
+    import numba as nb  # type: ignore
 except ImportError:
     NUMBA_AVAILABLE = False
     pass
@@ -230,7 +230,7 @@ class NordicDenoiser(RawSVDDenoiser):
         max_sval = sum(
             max(
                 svd(
-                    np.random.randn(np.prod(patch_shape), input_data.shape[-1]),
+                    np.random.randn(int(np.prod(patch_shape)), input_data.shape[-1]),
                     compute_uv=False,
                 )
             )
@@ -416,7 +416,7 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         return p_new, maxidx, sigma**2
 
 
-def _sure_atn_cost(X, method, sing_vals, gamma, sigma=None, tau=None):
+def _sure_atn_cost(X, method, sing_vals, *, gamma: float, sigma: float, tau: float):
     """
     Compute the SURE cost function.
 
@@ -505,11 +505,6 @@ def _get_gamma_tau_qut(patch, sing_vals, stdest, gamma0, nbsim):
 
 def _get_gamma_tau(patch, sing_vals, stdest, method, gamma0, tau0):
     """Estimate gamma and tau."""
-
-    # estimation of tau
-    def sure_tau(tau, *args):
-        return _sure_atn_cost(*args, tau[0])
-
     if tau0 is None:
         tau0 = np.log(np.median(sing_vals))
     cost_glob = np.inf
@@ -572,10 +567,11 @@ class AdaptiveDenoiser(BaseSpaceTimeDenoiser):
     def denoise(
         self,
         input_data,
-        mask=None,
-        mask_threshold=50,
-        tau0=None,
-        noise_std=None,
+        *,
+        noise_std: NDArray | float,
+        mask: NDArray | None = None,
+        mask_threshold: float = 50,
+        tau0: float,
         gamma0=None,
         progbar=None,
     ):
@@ -604,7 +600,7 @@ class AdaptiveDenoiser(BaseSpaceTimeDenoiser):
 
         p_s, p_o = self._get_patch_param(input_data.shape)
         if isinstance(noise_std, (float, np.floating)):
-            var_apriori = noise_std**2 * np.ones(input_data.shape[:-1])
+            var_apriori = (noise_std**2) * np.ones(input_data.shape[:-1])
         else:
             var_apriori = noise_std**2
         var_apriori = PatchedArray(
@@ -616,12 +612,13 @@ class AdaptiveDenoiser(BaseSpaceTimeDenoiser):
     def _patch_processing(
         self,
         patch,
-        patch_idx=None,
-        gamma0=None,
-        tau0=None,
-        var_apriori=None,
-        method=None,
-        nbsim=None,
+        *,
+        var_apriori: PatchedArray,
+        patch_idx: int,
+        gamma0: float,
+        tau0: float,
+        method: str,
+        nbsim: int,
     ):
         stdest = np.sqrt(np.mean(var_apriori.get_patch(patch_idx)))
 
