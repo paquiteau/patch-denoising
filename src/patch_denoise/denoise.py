@@ -339,10 +339,10 @@ def adaptive_thresholding(
     )
     return denoiser.denoise(
         input_data,
-        mask,
-        mask_threshold,
-        tau0,
-        noise_std,
-        gamma0,
+        mask=mask,
+        mask_threshold=mask_threshold,
+        tau0=tau0,
+        noise_std=noise_std,
+        gamma0=gamma0,
         progbar=progbar,
     )

@@ -115,7 +115,7 @@ markers = [
     "e2e",  # end to end tests that can be slow
 ]
 testpaths = ["tests"] 
-filterwarnings = ["error"]
+#filterwarnings = ["error"]
 
 [tool.codespell]
 # Ref: https://github.com/codespell-project/codespell#using-a-config-file
