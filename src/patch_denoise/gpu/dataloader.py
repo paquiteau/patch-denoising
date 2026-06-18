@@ -92,7 +92,7 @@ def sliding_sum_nd(data, patch_shape, patch_overlap):
         k = patch_shape[dim]
         s = patch_step[dim]
 
-        if k <= 1 and s <= 1:
+        if k <= 1 or s <= 1:
             continue  # Skip dimensions where no summing/striding is needed
 
         # Move the target dimension to the last position, other dims are seen as batch

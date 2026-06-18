@@ -1,574 +1,628 @@
 #!/usr/bin/env python3
 """Cli interface."""
 
-import argparse
 import json
 import logging
 import re
-from functools import partial
+from enum import StrEnum
 from pathlib import Path
+from typing import Annotated, Any
 
 import numpy as np
-from nilearn.image import load_img
+import typer
+from nilearn.image import load_img, resample_img
 from nilearn.interfaces.bids import get_bids_files, parse_bids_filename
 from nilearn.interfaces.bids.utils import bids_entities, create_bids_filename
 from nilearn.maskers import NiftiMasker
+from numpy.typing import NDArray
+from rich.logging import RichHandler
+from rich.progress import Progress, SpinnerColumn, TextColumn
 
 from patch_denoise import __version__
 from patch_denoise.bindings.utils import (
     DENOISER_MAP,
-    DenoiseParameters,
+    fast_cuda_check,
     load_as_array,
     load_complex_nifti,
     save_array,
 )
+from patch_denoise.space_time.base import _patch_param
 
-GPU_AVAILABLE = True
-try:
-    from patch_denoise.gpu import main_gpu
-except ImportError:
-    GPU_AVAILABLE = False
+GPU_AVAILABLE = fast_cuda_check()
 
+log = logging.getLogger(__name__)
+
+logging.basicConfig(
+    level=logging.WARNING,
+    format="%(message)s",
+    handlers=[
+        RichHandler(show_time=False, show_path=True, show_level=True, markup=True)
+    ],
+)
+logging.captureWarnings(True)
 
 DENOISER_NAMES = ", ".join(d for d in DENOISER_MAP if d)
 
 
-def _path_exists(path, parser):
-    """Ensure a given path exists."""
-    if path is None or not Path(path).exists():
-        raise parser.error(f"Path does not exist: <{path}>.")
-    return Path(path).absolute()
+class AnalysisEnum(StrEnum):
+    """Enum for BIDS analysis levels."""
+
+    PARTICIPANT = "participant"
 
 
-def _is_file(path, parser):
-    """Ensure a given path exists and it is a file."""
-    path = _path_exists(path, parser)
-    if not path.is_file():
-        raise parser.error(
-            f"Path should point to a file (or symlink of file): <{path}>."
+class DenoiserEnum(StrEnum):
+    """Enum for denoising methods."""
+
+    MP_PCA = "mp-pca"
+    HYBRID_PCA = "hybrid-pca"
+    RAW = "raw"
+    OPTIMAL_FRO = "optimal-fro"
+    OPTIMAL_FRO_NOISE = "optimal-fro-noise"
+    OPTIMAL_NUC = "optimal-nuc"
+    OPTIMAL_OPE = "optimal-ope"
+    NORDIC = "nordic"
+    ADAPTIVE_QUT = "adaptive-qut"
+
+
+class RecombinationEnum(StrEnum):
+    """Enum for recombination methods."""
+
+    WEIGHTED = "weighted"
+    MEAN = AVERAGE = "mean"
+
+
+def parse_dims(value: Any) -> tuple[int, ...]:
+    """Parse a string representing dimensions into a 3 or 4-tuple of integers."""
+    if not isinstance(value, str):
+        return value  # Already a tuple of ints
+    dims = [int(x) for x in re.findall(r"-?\d+", value)]
+    if len(dims) in (1, 3, 4):
+        return tuple(dims)
+
+    raise typer.BadParameter(
+        "Must be an int, 3-tuple, or 4-tuple ('11' or '11x11x11')"
+        " any 1-character separator is allowed (except space and -): "
+        "('11x11x11', 11_11_11', '11,11,11')"
+    )
+
+
+def parse_mask_arg(value: str):
+    """Validate if value is 'auto' or points to an existing file."""
+    if value == "auto":
+        return value
+    path = Path(value)
+    if not path.exists() or not path.is_file():
+        raise typer.BadParameter(
+            f"Path should point to a file, or be 'auto': <{value}>."
         )
-    return path
+    return path.absolute()
 
 
-def _is_file_or_value(path, parser, *values):
-    """Ensure a given path exists and is a file, or it is one of the provided values."""
-    if path in values:
-        return path
-    try:
-        return _is_file(path, parser)
-    except argparse.ArgumentTypeError:
-        raise parser.error(
-            f"Path should point to a file, or be one of {values}: <{path}>."
-        ) from None
+def parse_extra_args(extras: list[str] | None) -> dict[str, Any]:
+    """Parse extra arguments passed as key=value pairs into a dictionary."""
+    kwargs = dict()
+    if extras is None:
+        return kwargs
+    for kv in extras:
+        if "=" not in kv:
+            raise typer.BadParameter(
+                f"Extra parameter '{kv}' is not in key=value format."
+            )
+        key, value = kv.split("=", 1)
+        try:
+            value = float(value)
+        except ValueError:
+            pass  # keep as string if not a float
+        kwargs[key] = value
+    return kwargs
 
 
-def _positive_int(string, is_parser=True):
-    """Check if argument is an integer >= 0."""
-    error = argparse.ArgumentTypeError if is_parser else ValueError
-    try:
-        intarg = int(string)
-    except ValueError:
-        msg = "Argument must be a nonnegative integer."
-        raise error(msg) from None
+app = typer.Typer(help="Patch denoising CLI tool.")
 
-    if intarg < 0:
-        raise error("Int argument must be nonnegative.")
-    return intarg
+###########################
+## Shared Argument Types ##
+###########################
 
-
-def _tuple_positive_int(string, is_parser=True):
-    """Parse patch size/overlap argument from string."""
-    # find the separator (any non-digit character)
-    sep = re.search(r"\D", string)
-    if sep is not None:
-        sep = sep.group(0)
-        values = tuple(_positive_int(s, is_parser=is_parser) for s in string.split(sep))
-    else:
-        values = _positive_int(string, is_parser=is_parser)
-    return values
-
-
-class ToDict(argparse.Action):
-    """A custom argparse "store" action to handle a list of key=value pairs."""
-
-    def __call__(self, parser, namespace, values, option_string=None):  # noqa: U100
-        """Call the argument."""
-        d = {}
-        for spec in values:
-            try:
-                key, value = spec.split("=")
-            except ValueError:
-                raise ValueError(
-                    "Extra arguments must be in the form key=value."
-                ) from None
-
-            # Convert any float-like values to float
-            try:
-                value = float(value)
-            except ValueError:
-                pass
-
-            d[key] = value
-        setattr(namespace, self.dest, d)
-
-
-def _get_parser():
-    parser = argparse.ArgumentParser(
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-
-    IsFile = partial(_is_file, parser=parser)
-
-    parser.add_argument(
-        "input_file",
-        help="Input (noisy) file.",
-        type=IsFile,
-    )
-    parser.add_argument(
-        "output_file",
-        nargs="?",
-        default=None,
-        type=Path,
-        help=("Output (denoised) file.\nDefault is D<input_file_name>."),
-    )
-    return _extend_parser(parser)
-
-
-def _bids_parser():
-    parser = argparse.ArgumentParser(
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-
-    parser.add_argument(
-        "bids_dir",
-        action="store",
-        type=Path,
-        help="The directory with the input dataset formatted according to the "
-        "BIDS standard.",
-    )
-    parser.add_argument(
-        "output_dir",
-        action="store",
-        type=Path,
-        help="The directory where the output files should be stored.",
-    )
-    parser.add_argument(
-        "analysis_level",
-        help="Level of the analysis that will be performed. Only participant"
-        "level is available.",
-        choices=["participant"],
-    )
-    parser.add_argument(
-        "--participant-label",
-        "--participant_label",
-        help="The label(s) of the participant(s) to analyze. The "
-        "label corresponds to sub-<participant-label> from the BIDS spec (so "
-        "it does not include 'sub-'). If this parameter is not provided all "
-        "subjects will be analyzed. Multiple participants can be specified "
-        "with a space separated list.",
-        nargs="+",
-    )
-    parser.add_argument(
-        "--session-label",
-        "--session_label",
-        help="The label(s) of the session(s) to analyze. The "
-        "label corresponds to ses-<participant-label> from the BIDS spec (so "
-        "it does not include 'ses-'). If this parameter is not provided all "
-        "sessions will be analyzed. Multiple sessions can be specified "
-        "with a space separated list.",
-        nargs="+",
-    )
-    parser.add_argument(
-        "--task-label",
-        "--task_label",
-        help="The label(s) of the task(s) to analyze. The "
-        "label corresponds to task-<participant-label> from the BIDS spec (so "
-        "it does not include 'task-'). If this parameter is not provided all "
-        "tasks will be analyzed. Multiple tasks can be specified "
-        "with a space separated list.",
-        nargs="+",
-    )
-    parser.add_argument(
-        "--bids-filter-file",
-        type=Path,
-        help="A JSON file describing custom BIDS input filters using PyBIDS. "
-        "We use the same format as described in fMRIPrep documentation: "
-        "https://fmriprep.org/en/latest/faq.html#"
-        "how-do-i-select-only-certain-files-to-be-input-to-fmriprep "
-        "\nHowever, the query filed should always be 'bold'",
-    )
-    return _extend_parser(parser, bids_app=True)
-
-
-def _extend_parser(parser, bids_app=False):
-    IsFile = partial(_is_file, parser=parser)
-    TuplePositiveInt = partial(_tuple_positive_int, is_parser=True)
-
-    parser.add_argument("--version", action="version", version=__version__)
-
-    parser.add_argument(
-        "--gpu", action="store_true", help="Use GPU for computation if available."
-    )
-
-    denoising_group = parser.add_argument_group("Denoising parameters")
-
-    conf_vs_separate = denoising_group.add_mutually_exclusive_group(required=True)
-    conf_vs_separate.add_argument(
-        "--method",
-        help=(
-            "Denoising method.\n"
-            f"Available denoising methods:\n  {DENOISER_NAMES}.\n"
-            "This parameter is mutually exclusive with --conf."
-        ),
-        choices=DENOISER_MAP,
-        default="optimal-fro",
-    )
-
-    denoising_group.add_argument(
+MethodOpt = Annotated[
+    DenoiserEnum,
+    typer.Option(
+        "-m", "--method", help=f"Denoising Method: Available: {DENOISER_NAMES}"
+    ),
+]
+PatchShapeOpt = Annotated[
+    str,
+    typer.Option(
+        "-ps",
         "--patch-shape",
-        help=(
-            "Patch shape.\n"
-            "If int, this is the size of the patch in each dimension.\n"
-            "If of format NxMx..., this is the size of the patch in each dimension\n"
-            "Missing dimensions will be set to the size of the input data in that "
-            "dimension.\n"
-            "If not specified, the default value is used.\n"
-            "Note: setting a low aspect ratio will increase the number of "
-            "patches to be processed, "
-            "and will increase memory usage and computation times.\n"
-            "This parameter should be used in conjunction with --method and "
-            "is mutually exclusive with --conf."
-        ),
-        default=11,
-        type=TuplePositiveInt,
-        metavar="INT",
-    )
-    denoising_group.add_argument(
+        parser=parse_dims,
+        metavar="X,Y,Z[,T]",
+        help="Patch shape. If 4D a sliding window is used. "
+        "If -1 is specified for a dimension, the entire dimension is put the patch.",
+    ),
+]
+PatchOverlapOpt = Annotated[
+    str,
+    typer.Option(
+        "-po",
         "--patch-overlap",
-        help=(
-            "Patch overlap.\n"
-            "If int, this is the size of the overlap in each dimension.\n"
-            "If not specified, the default value is used.\n"
-            "Note: setting a low overlap will increase the number of patches "
-            "to be processed, "
-            "and will increase memory usage and computation times.\n"
-            "This parameter should be used in conjunction with --method and "
-            "is mutually exclusive with --conf."
-        ),
-        default=5,
-        type=TuplePositiveInt,
-        metavar="INT",
-    )
-    denoising_group.add_argument(
-        "--recombination",
-        help=(
-            "Recombination method.\n"
-            "If 'mean', the mean of the overlapping patches is used.\n"
-            "If 'weighted', the weighted mean of the overlapping patches is used.\n"
-            "This parameter should be used in conjunction with --method and "
-            "is mutually exclusive with --conf."
-        ),
-        default="weighted",
-        choices=["mean", "weighted"],
-    )
-    denoising_group.add_argument(
+        parser=parse_dims,
+        metavar="X,Y,Z[,T]",
+        help="Patch overlap. If 4D a sliding window is used. "
+        "If -1 is specified for a dimension, the entire dimension is put the patch.",
+    ),
+]
+
+RecombinationOpt = Annotated[
+    RecombinationEnum,
+    typer.Option("-r", "--recombination", help="Recombination method."),
+]
+MaskOpt = Annotated[
+    str,
+    typer.Option(
+        "-k",
+        "--mask",
+        callback=parse_mask_arg,
+        help="Mask NIfTI file (3D). if auto, mask is computed automatically.",
+        metavar="MASK_FILE | auto",
+    ),
+]
+MaskThreshOpt = Annotated[
+    int,
+    typer.Option(
+        "-t",
         "--mask-threshold",
-        help=(
-            "Mask threshold.\n"
-            "If int, this is the threshold for the mask.\n"
-            "If not specified, the default value is used.\n"
-            "This parameter should be used in conjunction with --method and "
-            "is mutually exclusive with --conf."
-        ),
-        default=10,
-        type=int,
-        metavar="INT",
-    )
-    conf_vs_separate.add_argument(
-        "--conf",
-        help=(
-            "Denoising configuration.\n"
-            "Format should be "
-            "<name>_<patch-size>_<patch-overlap>_<recombination>_<mask_threshold>.\n"
-            "See Documentation of 'DenoiseParameter.from_str' for full specification.\n"
-            f"Available denoising methods:\n  {DENOISER_NAMES}.\n"
-            "This parameter is mutually exclusive with --method."
-        ),
-        default=None,
-    )
-
-    denoising_group.add_argument(
+        help="Min % of overlap between a patch and the mask to trigger computation.",
+    ),
+]
+ExtraOpts = Annotated[
+    list[str] | None,
+    typer.Option(
+        "-e",
         "--extra",
-        metavar="key=value",
-        default=None,
-        nargs="+",
-        help="extra key=value arguments for denoising methods.",
-        action=ToDict,
-    )
+        help="Extra parameters for the denoising method, passed as key=value pairs. "
+        "For example: --extra param1=val1 --extra param2=val2",
+        metavar="KEY=VALUE",
+    ),
+]
 
-    if not bids_app:
-        data_group = parser.add_argument_group("Additional input data")
-        data_group.add_argument(
-            "--mask",
-            metavar="FILE|auto",
-            type=lambda path: _is_file_or_value(path, parser, "auto"),
-            default=None,
-            help=("mask file, if auto, it would be determined from the average image."),
+NaN2NumOpt = Annotated[
+    float | None, typer.Option(help="Replace any NaN in input-data with VALUE")
+]
+VerboseOpt = Annotated[
+    int,
+    typer.Option(
+        "-v", "--verbose", count=True, help="Increase verbosity level (e.g., -vvv)."
+    ),
+]
+GpuFlag = Annotated[
+    bool,
+    typer.Option(
+        "--gpu/--cpu",
+        help="Use GPU or CPU for computation. Requires patch_denoise.gpu module. "
+        "GPU is enabled  by default if available.",
+    ),
+]
+
+
+#############
+# Main CLI  #
+#############
+
+
+def _load_noise_std(
+    noise_std_map_file: Path | None,
+    noise_std_map_phase_file: Path | None,
+) -> tuple[NDArray | None, NDArray | None]:
+    if noise_std_map_file is not None and noise_std_map_phase_file is not None:
+        noise_std_map, affine_noise_map = load_complex_nifti(
+            noise_std_map_file,
+            noise_std_map_phase_file,
         )
-        data_group.add_argument(
-            "--noise-map",
-            metavar="FILE",
-            default=None,
-            type=IsFile,
-            help="noise map estimation file",
-        )
-        data_group.add_argument(
-            "--input-phase",
-            metavar="FILE",
-            default=None,
-            type=IsFile,
-            help=(
-                "Phase of the input data. This MUST be in radians. "
-                "No rescaling will be applied."
-            ),
-        )
-        data_group.add_argument(
-            "--noise-map-phase",
-            metavar="FILE",
-            default=None,
-            type=IsFile,
-            help=(
-                "Phase component of the noise map estimation file. "
-                "This MUST be in radians. No rescaling will be applied."
-            ),
-        )
-
-    misc_group = parser.add_argument_group("Miscellaneous options")
-    if not bids_app:
-        misc_group.add_argument(
-            "--output-noise-map",
-            metavar="FILE",
-            default=None,
-            type=Path,
-            help="Output name for calculated noise map",
-        )
-        misc_group.add_argument(
-            "--nan-to-num",
-            metavar="VALUE",
-            default=None,
-            type=float,
-            help="Replace NaN by the provided value.",
-        )
-    misc_group.add_argument(
-        "-v",
-        "--verbose",
-        action="count",
-        default=0,
-        help="Increase verbosity level. You can provide multiple times (e.g., -vvv).",
-    )
-    return parser
-
-
-def parse_args():
-    """Parse input arguments."""
-    parser = _get_parser()
-    args = parser.parse_args()
-
-    if not args.extra:
-        args.extra = {}
-
-    levels = [logging.WARNING, logging.INFO, logging.DEBUG]
-    level = levels[min(args.verbose, len(levels) - 1)]  # cap to last level index
-    logging.basicConfig(level=level)
-
-    return args
-
-
-def main():
-    """Command line entry point."""
-    args = parse_args()
-
-    if args.input_phase is not None:
-        input_data, affine = load_complex_nifti(args.input_file, args.input_phase)
-    else:
-        input_data, affine = load_as_array(args.input_file)
-
-    kwargs = args.extra
-
-    if args.nan_to_num is not None:
-        input_data = np.nan_to_num(input_data, nan=args.nan_to_num)
-
-    logging.info(f"Input data shape: {input_data.shape}")
-    n_nans = np.isnan(input_data).sum()
-    if n_nans > 0:
-        logging.warning(
-            f"{n_nans}/{input_data.size} voxels are NaN. "
-            "You might want to use --nan-to-num=<value>",
-            stacklevel=0,
-        )
-
-    masker = NiftiMasker(verbose=args.verbose, mask_strategy="epi")
-    if args.mask != "auto":
-        masker.mask_img = args.mask
-
-    masker.fit(args.input_file)
-    mask = masker.mask_img_.get_fdata().astype(bool)
-    affine_mask = masker.mask_img_.affine
-
-    if args.noise_map is not None and args.noise_map_phase is not None:
-        noise_map, affine_noise_map = load_complex_nifti(
-            args.noise_map,
-            args.noise_map_phase,
-        )
-    elif args.noise_map is not None:
-        noise_map, affine_noise_map = load_as_array(args.noise_map)
-    elif args.noise_map_phase is not None:
+    elif noise_std_map_file is not None:
+        noise_std_map, affine_noise_map = load_as_array(noise_std_map_file)
+    elif noise_std_map_phase_file is not None:
         raise ValueError(
             "The phase component of the noise map has been provided, "
             "but not the magnitude."
         )
     else:
-        noise_map = None
+        noise_std_map = None
         affine_noise_map = None
+    return noise_std_map, affine_noise_map
+
+
+def _load_validate_input(
+    input_file: Path,
+    input_phase: Path | None,
+    mask: Path | str,
+    noise_std_map_file: Path | None,
+    noise_std_map_phase_file: Path | None,
+    nan_to_num: float | None,
+    verbose: int,
+) -> tuple[NDArray, NDArray, NiftiMasker, NDArray | None]:
+    if input_phase is not None:
+        input_data, affine = load_complex_nifti(input_file, input_phase)
+    else:
+        input_data, affine = load_as_array(input_file)
+
+    if nan_to_num is not None:
+        input_data = np.nan_to_num(input_data, nan=nan_to_num)
+
+    log.info(f"Input data shape: {input_data.shape}")
+    n_nans = np.isnan(input_data).sum()
+    if n_nans > 0:
+        log.warning(
+            f"{n_nans}/{input_data.size} voxels are NaN. "
+            "You might want to use --nan-to-num=<value>",
+            stacklevel=0,
+        )
+
+    masker = NiftiMasker(verbose=verbose, mask_strategy="epi")
+    if mask != "auto":
+        masker.mask_img = mask
+
+    masker.fit(input_file)
+
+    affine_mask = masker.mask_img_.affine
+
+    noise_std_map, affine_noise = _load_noise_std(
+        noise_std_map_file, noise_std_map_phase_file
+    )
 
     if affine is not None:
         if (affine_mask is not None) and not np.allclose(affine, affine_mask):
-            logging.warning(
-                "Affine matrix of input and mask does not match", stacklevel=2
+            log.warning(
+                "Affine matrix of input and mask does not match, it will be resampled",
+                stacklevel=2,
             )
 
-        if (affine_noise_map is not None) and not np.allclose(affine, affine_noise_map):
-            logging.warning(
+            masker.mask_img_ = resample_img(
+                masker.mask_img_,
+                target_affine=affine,
+                target_shape=input_data.shape[:3],
+                interpolation="nearest",
+            )
+
+        if (affine_noise is not None) and not np.allclose(affine, affine_noise):
+            log.warning(
                 "Affine matrix of input and noise map does not match", stacklevel=2
             )
 
-    # Parse configuration string instead of defining each parameter separately
-    if args.conf is not None:
-        d_par = DenoiseParameters.from_str(args.conf)
-        args.method = d_par.method
-        args.patch_shape = d_par.patch_shape
-        args.patch_overlap = d_par.patch_overlap
-        args.recombination = d_par.recombination
-        args.mask_threshold = d_par.mask_threshold
+    return input_data, affine, masker, noise_std_map
 
-    logging.info(f"Current Setup {args}")
 
-    if args.output_file is not None:
-        parent_dir = Path(args.output_file).parent
-        if not Path(args.output_file).parent.exists():
+@app.command()
+def main(
+    input_file: Annotated[
+        Path,
+        typer.Argument(
+            exists=True,
+            dir_okay=False,
+            resolve_path=True,
+            help="Input noisy NIfTI file (4D).",
+        ),
+    ],
+    output_file: Annotated[
+        Path | None,
+        typer.Argument(
+            dir_okay=False,
+            resolve_path=True,
+            help="Output denoised NIfTI file (4D). Default is D<input_file>.",
+        ),
+    ] = None,
+    output_noise_std_map_file: Annotated[
+        Path | None,
+        typer.Option(
+            "--output-noise-std-map",
+            dir_okay=False,
+            resolve_path=True,
+            help="Output noise level estimation NIfTI file (3D).",
+        ),
+    ] = None,
+    method: MethodOpt = DenoiserEnum.OPTIMAL_FRO,
+    patch_shape: PatchShapeOpt = "11,11,11,-1",
+    patch_overlap: PatchOverlapOpt = "5,5,5,-1",
+    recombination: RecombinationOpt = RecombinationEnum.WEIGHTED,
+    mask: MaskOpt = "auto",
+    mask_threshold: MaskThreshOpt = 50,
+    extras: ExtraOpts = None,
+    nan_to_num: NaN2NumOpt = None,
+    verbose: VerboseOpt = 0,
+    gpu: GpuFlag = GPU_AVAILABLE,
+    input_phase: Annotated[
+        Path | None,
+        typer.Option(
+            "-ip",
+            "--input-phase",
+            exists=True,
+            dir_okay=False,
+            resolve_path=True,
+            help="Input phase NIfTI file (4D). If provided, process complex data.",
+        ),
+    ] = None,
+    noise_std_map_file: Annotated[
+        Path | None,
+        typer.Option(
+            "--noise-std-map",
+            exists=True,
+            dir_okay=False,
+            resolve_path=True,
+            help="Input Noise std map",
+        ),
+    ] = None,
+    noise_std_map_phase_file: Annotated[
+        Path | None,
+        typer.Option(
+            "--noise-std-map-phase",
+            exists=True,
+            dir_okay=False,
+            resolve_path=True,
+            help="Input Noise std map, phase component.",
+        ),
+    ] = None,
+):
+    """Perform local-low-rank denoising on 4D MRI data."""
+    kwargs = parse_extra_args(extras)
+
+    levels = [logging.WARNING, logging.INFO, logging.DEBUG]
+    level = levels[min(verbose, len(levels) - 1)]
+    logging.getLogger("patch_denoise").setLevel(level)
+    logging.getLogger("py.warnings").setLevel(level)
+
+    if output_file is None:
+        output_file = input_file.parent / f"D{input_file.name}"
+
+    parent_dir = output_file.parent
+    if not output_file.parent.exists():
+        parent_dir.mkdir(exist_ok=True, parents=True)
+        log.info(f"{output_file.parent} created")
+    if output_file.exists():
+        log.warning(f"{output_file} will be overwritten")
+
+    if output_noise_std_map_file is not None:
+        parent_dir = output_noise_std_map_file.parent
+        if not output_noise_std_map_file.parent.exists():
             parent_dir.mkdir(exist_ok=True, parents=True)
-            logging.info(f"{Path(args.output_file).parent} created")
-        if not Path(args.output_file).exists():
-            logging.warning(f"{Path(args.output_file).parent} will be overwritten")
+            log.info(f"{output_noise_std_map_file.parent} created")
+        if output_noise_std_map_file.exists():
+            log.warning(f"{output_noise_std_map_file} will be overwritten")
 
-    report = masker.generate_report()
-    report.save_as_html(Path(args.output_file).with_suffix(".html"))
+    # 1. Define only the columns you want (just the spinner and the text)
+    with Progress(
+        SpinnerColumn(spinner_name="dots"),
+        TextColumn("[progress.description]{task.description}"),
+    ) as progress:
+        progress.add_task(description="Loading and validating input...", total=None)
+        # 2. Add your task and start the progress display
+        input_data, affine, masker, noise_std_map = _load_validate_input(
+            input_file,
+            input_phase,
+            mask,
+            noise_std_map_file,
+            noise_std_map_phase_file,
+            nan_to_num,
+            verbose,
+        )
+    if mask == "auto":
+        mask_filename = output_file.with_stem("mask_" + output_file.stem)
+        log.info("Saving automatically computed mask to {mask_filename}.")
+        masker.mask_img_.to_filename(mask_filename)
+        log.info("Creating report for NiftiMasker.")
+        report = masker.generate_report()
+        report.save_as_html(output_file.with_suffix(".html"))
+    mask_data = masker.mask_img_.get_fdata().astype(bool)
 
-    mask_filename = args.output_file.with_stem("mask_" + args.output_file.stem)
-    masker.mask_img_.to_filename(mask_filename)
+    # substitute any -1 in patch_shape or patch_overlap with the corresponding dimension
+    # of input_data
+    patch_shape_ = _patch_param(patch_shape, input_data.shape)
 
-    if args.gpu:
+    patch_overlap_ = _patch_param(patch_overlap, input_data.shape)
+    log.info(f"denoising method: {method}.")
+    log.info(f"patch shape: {patch_shape_} (from {patch_shape}).")
+    log.info(f"patch overlap: {patch_overlap_} (from {patch_overlap}).")
+    log.info(f"recombination method: {recombination}.")
+    log.info(f"mask threshold: {mask_threshold}.")
+    log.info(f"GPU: {gpu}.")
+    log.info(f"extra parameters: {kwargs}.")
+    log.info(f"nan_to_num: {nan_to_num}.")
+    log.info(f"input data shape: {input_data.shape}.")
+    log.info(msg=f"mask shape: {masker.mask_img_.shape}.")
+    log.info(
+        f"noise std map: {noise_std_map.shape if noise_std_map is not None else None}."
+    )
+    log.info(f"output file: {output_file}.")
+    log.info(f"output noise std map file: {output_noise_std_map_file}.")
+    log.debug(f"input affine:\n{affine}.")
+    log.debug(f"mask affine: \n{masker.mask_img_.affine}.")
+
+    if gpu:
+        if method not in [
+            DenoiserEnum.MP_PCA,
+            DenoiserEnum.OPTIMAL_FRO,
+            DenoiserEnum.OPTIMAL_FRO_NOISE,
+            DenoiserEnum.OPTIMAL_NUC,
+            DenoiserEnum.OPTIMAL_OPE,
+        ]:
+            raise ValueError(f"Method {method} is not supported on GPU. ")
         if not GPU_AVAILABLE:
             raise RuntimeError(
                 "GPU support is not available. Please ensure that the "
                 "patch_denoise.gpu module is installed and that you have"
                 "a compatible GPU."
             )
-        logging.info("Using GPU for computation.")
-        denoised_data, _, noise_std_map = main_gpu(
-            args, input_data, mask, noise_map, **kwargs
-        )
+        log.info("Using GPU for computation.")
+        from patch_denoise.gpu.main import main_gpu as denoise_func
 
+        kwargs["method"] = method
     else:
-        if args.method in [
-            "nordic",
-            "hybrid-pca",
-            "adaptive-qut",
-            "optimal-fro-noise",
-        ]:
-            if noise_map is None:
-                raise RuntimeError("A noise map must be specified for this method.")
-            kwargs["noise_std"] = noise_map
-        denoise_func = DENOISER_MAP.get(args.method, None)
-        if denoise_func is None:
-            raise ValueError(f"Method {args.method} is not supported.")
+        denoise_func = DENOISER_MAP[method]
 
-        denoised_data, _, noise_std_map, _ = denoise_func(
-            input_data,
-            patch_shape=args.patch_shape,
-            patch_overlap=args.patch_overlap,
-            mask=mask,
-            mask_threshold=args.mask_threshold,
-            recombination=args.recombination,
-            **kwargs,
-        )
+    if method in [
+        DenoiserEnum.NORDIC,
+        DenoiserEnum.HYBRID_PCA,
+        DenoiserEnum.ADAPTIVE_QUT,
+        DenoiserEnum.OPTIMAL_FRO_NOISE,
+    ]:
+        if noise_std_map is None:
+            raise RuntimeError("A noise map must be specified for this method.")
+        kwargs["noise_std"] = noise_std_map
 
-    save_array(denoised_data, affine, args.output_file)
-    save_array(noise_std_map, affine, args.output_noise_map)
+    denoised_data, _, noise_std_map, _ = denoise_func(
+        input_data,
+        patch_shape=patch_shape_,
+        patch_overlap=patch_overlap_,
+        mask=mask_data,
+        mask_threshold=mask_threshold,
+        recombination=recombination,
+        **kwargs,
+    )
+
+    save_array(denoised_data, affine, output_file)
+    if output_noise_std_map_file is not None:
+        save_array(noise_std_map, affine, output_noise_std_map_file)
 
 
-def bids_app():
+############
+# BIDS CLI #
+############
+
+bidsapp = typer.Typer(help="Patch denoising-bids CLI.")
+
+
+@bidsapp.command()
+def bids_main(
+    bids_dir: Annotated[
+        Path,
+        typer.Argument(
+            exists=True,
+            file_okay=False,
+            dir_okay=True,
+            resolve_path=True,
+            help="Input BIDS directory.",
+        ),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Argument(
+            exists=False,
+            file_okay=False,
+            dir_okay=True,
+            resolve_path=True,
+            help="Output BIDS directory.",
+        ),
+    ],
+    analysis_level: Annotated[
+        AnalysisEnum,
+        typer.Argument(
+            help="BIDS analysis level. Only 'participant' is supported.",
+        ),
+    ] = AnalysisEnum.PARTICIPANT,
+    participant_label: Annotated[
+        list[int] | None,
+        typer.Option(
+            "-participant-label",
+            "--participant_label",
+            help="List of participant labels to process. "
+            "If not provided, all participants will be processed.",
+        ),
+    ] = None,
+    session_label: Annotated[
+        list[int] | None,
+        typer.Option(
+            "-session-label",
+            "--session_label",
+            help="List of session labels to process."
+            " If not provided, all sessions will be processed.",
+        ),
+    ] = None,
+    task_label: Annotated[
+        list[str] | None,
+        typer.Option(
+            "-task-label",
+            "--task_label",
+            help="List of task labels to process."
+            " If not provided, all tasks will be processed.",
+        ),
+    ] = None,
+    bids_filters: Annotated[
+        Path | None,
+        typer.Option(
+            "-bids-filters",
+            "--bids_filters",
+            help="Path to a JSON file containing BIDS filters. See "
+            "https://fmriprep.org/en/latest/faq.html#"
+            "how-do-i-select-only-certain-files-to-be-input-to-fmriprep",
+        ),
+    ] = None,
+    method: MethodOpt = DenoiserEnum.OPTIMAL_FRO,
+    patch_shape: PatchShapeOpt = "11,11,11,-1",
+    patch_overlap: PatchOverlapOpt = "5,5,5,-1",
+    recombination: RecombinationOpt = RecombinationEnum.WEIGHTED,
+    mask: MaskOpt = "auto",
+    mask_threshold: MaskThreshOpt = 50,
+    extras: ExtraOpts = None,
+    nan_to_num: NaN2NumOpt = None,
+    verbose: VerboseOpt = 0,
+    gpu: GpuFlag = GPU_AVAILABLE,
+    noise_std_map_file: Annotated[
+        Path | None,
+        typer.Option(
+            "--noise-std-map",
+            exists=True,
+            dir_okay=False,
+            resolve_path=True,
+            help="Input Noise std map",
+        ),
+    ] = None,
+    noise_std_map_phase_file: Annotated[
+        Path | None,
+        typer.Option(
+            "--noise-std-map-phase",
+            exists=True,
+            dir_okay=False,
+            resolve_path=True,
+            help="Input Noise std map, phase component.",
+        ),
+    ] = None,
+):
     """Run CLI for bids app."""
-    parser = _bids_parser()
-    args = parser.parse_args()
-
-    if not args.extra:
-        args.extra = {}
-    kwargs = args.extra
-
+    kwargs = parse_extra_args(extras)
     levels = [logging.WARNING, logging.INFO, logging.DEBUG]
-    level = levels[min(args.verbose, len(levels) - 1)]  # cap to last level index
-    logging.basicConfig(level=level)
+    level = levels[min(verbose, len(levels) - 1)]  # cap to last level index
+    log.setLevel(level=level)
 
-    if args.participant_label:
-        all_subjects = args.participant_label
+    if participant_label:
+        all_subjects = participant_label
     else:
         all_subjects = [
-            x.name.strip("sub-")
-            for x in Path(args.bids_dir).iterdir()
-            if "sub-" in x.name
+            x.name.strip("sub-") for x in Path(bids_dir).iterdir() if "sub-" in x.name
         ]
 
     filters = []
-    if args.task_label:
-        filters.append(("task", args.task_label[0]))
-    if args.session_label:
-        filters.append(("ses", args.session_label[0]))
+    if task_label:
+        filters.append(("task", task_label[0]))
+    if session_label:
+        filters.append(("ses", session_label[0]))
 
-    # Parse configuration string instead of defining each parameter separately
-    if args.conf is not None:
-        d_par = DenoiseParameters.from_str(args.conf)
-        args.method = d_par.method
-        args.patch_shape = d_par.patch_shape
-        args.patch_overlap = d_par.patch_overlap
-        args.recombination = d_par.recombination
-        args.mask_threshold = d_par.mask_threshold
+    noise_std_map, _ = _load_noise_std(noise_std_map_file, noise_std_map_phase_file)
 
-    logging.info(f"Current Setup {args}")
-
-    noise_map = None
-
-    if args.gpu and not GPU_AVAILABLE:
+    if gpu and not GPU_AVAILABLE:
         raise RuntimeError(
             "GPU support is not available. Please ensure that the "
             "patch_denoise.gpu module is installed and that you have"
             "a compatible GPU."
         )
-    else:
-        if args.method in [
-            "nordic",
-            "hybrid-pca",
-            "adaptive-qut",
-            "optimal-fro-noise",
-        ]:
-            if noise_map is None:
-                raise RuntimeError("A noise map must be specified for this method.")
-            kwargs["noise_std"] = noise_map
-        denoise_func = DENOISER_MAP.get(args.method, None)
-        if denoise_func is None:
-            raise ValueError(f"Method {args.method} is not supported.")
+    if method in [
+        DenoiserEnum.NORDIC,
+        DenoiserEnum.HYBRID_PCA,
+        DenoiserEnum.ADAPTIVE_QUT,
+        DenoiserEnum.OPTIMAL_FRO_NOISE,
+    ]:
+        if noise_std_map is None:
+            raise RuntimeError("A noise map must be specified for this method.")
+        kwargs["noise_std"] = noise_std_map
+    denoise_func = DENOISER_MAP[method]
 
-    output_dir = Path(args.output_dir)
     output_dir.mkdir(exist_ok=True, parents=True)
 
     ds_json = output_dir / "dataset_description.json"
@@ -596,7 +650,7 @@ def bids_app():
 
     for sub_label in all_subjects:
         files = get_bids_files(
-            args.bids_dir,
+            bids_dir,
             file_tag="bold",
             modality_folder="func",
             file_type="nii.*",
@@ -631,7 +685,7 @@ def bids_app():
 
             output_dir_for_subject.mkdir(exist_ok=True, parents=True)
 
-            masker = NiftiMasker(verbose=args.verbose, mask_strategy="epi")
+            masker = NiftiMasker(verbose=verbose, mask_strategy="epi")
             masker.fit(f)
             mask = masker.mask_img_.get_fdata().astype(bool)
             affine = masker.mask_img_.affine
@@ -642,25 +696,23 @@ def bids_app():
             masker.mask_img_.to_filename(output_mask_filename)
 
             input_data = load_img(f).get_fdata()
+            patch_shape_ = _patch_param(patch_shape, input_data.shape)
+            patch_overlap_ = _patch_param(patch_overlap, input_data.shape)
 
-            if args.gpu:
-                denoised_data, _, noise_std_map = main_gpu(
-                    args,
-                    input_data,
-                    mask,
-                    # noise_map,
-                    # **kwargs
-                )
-            else:
-                denoised_data, _, noise_std_map, _ = denoise_func(
-                    input_data,
-                    patch_shape=args.patch_shape,
-                    patch_overlap=args.patch_overlap,
-                    mask=mask,
-                    mask_threshold=args.mask_threshold,
-                    recombination=args.recombination,
-                    # **kwargs,
-                )
+            if gpu:
+                from patch_denoise.gpu.main import main_gpu as denoise_func
+
+                kwargs["method"] = method
+
+            denoised_data, _, noise_std_map, _ = denoise_func(
+                input_data,
+                patch_shape=patch_shape_,
+                patch_overlap=patch_overlap_,
+                mask=mask,
+                mask_threshold=mask_threshold,
+                recombination=recombination,
+                **kwargs,
+            )
 
             print(noise_std_map.shape)
             save_array(denoised_data, affine, output_filename)
@@ -668,4 +720,4 @@ def bids_app():
 
 
 if __name__ == "__main__":
-    main()
+    app()

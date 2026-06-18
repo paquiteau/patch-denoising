@@ -7,18 +7,22 @@ import torch
 import triton
 import triton.language as tl
 from numpy.typing import NDArray
-from tqdm.auto import tqdm
+from tqdm.rich import tqdm
 
 from .dataloader import PatchDataset
 from .denoiser import MPPCADenoiser, OptimalSVDDenoiser
+
+log = logging.getLogger(__name__)
 
 
 @triton.jit
 def __atomic_accumulate_kernel(
     global_out_ptr,  # Interpreted as float*
     global_weights_ptr,  # Interpreted as float*
+    global_var_est_ptr,  # Interpreted as float*
     recon_ptr,  # Interpreted as float*
     weights_ptr,  # Interpreted as float*
+    varest_ptr,  # Interpreted as float*
     coords_ptr,
     stride_out0: tl.constexpr,
     stride_out1: tl.constexpr,
@@ -51,6 +55,7 @@ def __atomic_accumulate_kernel(
     off_k = tl.load(coords_ptr + pid * 4 + 2)
     off_l = tl.load(coords_ptr + pid * 4 + 3)
     w = tl.load(weights_ptr + pid)
+    v = tl.load(varest_ptr + pid)
 
     for p_idx in range(0, PH * PW * PD * PT, BLOCK_SIZE):
         offsets = p_idx + tl.arange(0, BLOCK_SIZE)
@@ -99,10 +104,20 @@ def __atomic_accumulate_kernel(
             )
 
         # Weights are always 1 float per logical pixel
+        tl.atomic_add(global_var_est_ptr + g_idx, v, mask=mask)
         tl.atomic_add(global_weights_ptr + g_idx, w, mask=mask)
 
 
-def launch_triton(out_acc, out_weights, recon, weights, coords, patch_shape):
+def launch_triton(
+    out_acc: torch.Tensor,
+    out_weights: torch.Tensor,
+    out_var_map: torch.Tensor,
+    recon: torch.Tensor,
+    weights: torch.Tensor,
+    var_est: torch.Tensor,
+    coords: torch.Tensor,
+    patch_shape: tuple[int, int, int, int],
+):
     """Launch the Triton kernel for atomic accumulation."""
     is_complex = recon.is_complex()
 
@@ -120,38 +135,39 @@ def launch_triton(out_acc, out_weights, recon, weights, coords, patch_shape):
     __atomic_accumulate_kernel[grid](
         p_out,
         out_weights,
+        out_var_map,
         p_recon,
         weights,
+        var_est,
         coords,
-        *out_acc.stride(),
+        *out_acc.stride(),  # type: ignore
         *recon.stride(),
-        *patch_shape,
-        BATCH_SIZE=recon.shape[0],
+        *patch_shape,  # type: ignore
+        BATCH_SIZE=recon.shape[0],  # type: ignore
         BLOCK_SIZE=1024,  # type: ignore
-        IS_COMPLEX=is_complex,
+        IS_COMPLEX=is_complex,  # type: ignore
     )
 
 
 def make_denoiser(
-    args, noise_map, batch_size, compile=True, **kwargs
-) -> torch.nn.Module:
+    method, patch_shape, recombination, batch_size, compile=True, **kwargs
+) -> OptimalSVDDenoiser | MPPCADenoiser:
     """Create a denoiser model on GPU."""
-    print(args)
-    if "optimal" in args.method:
+    if "optimal" in method:
         denoiser = OptimalSVDDenoiser(
-            patch_shape=args.patch_shape,
-            recombination=args.recombination,
-            loss=args.method.split("-")[-1],
+            patch_shape=patch_shape,
+            recombination=recombination,
+            loss=method.split("-")[-1],
             **kwargs,
         )
-    elif args.method == "mppca":
+    elif method == "mppca":
         denoiser = MPPCADenoiser(
-            patch_shape=args.patch_shape,
-            recombination=args.recombination,
+            patch_shape=patch_shape,
+            recombination=recombination,
             **kwargs,
         )
     else:
-        raise ValueError(f"method {args.method} is not supported on GPU. ")
+        raise ValueError(f"method {method} is not supported on GPU. ")
 
     denoiser = denoiser.cuda()  # Move model to GPU
 
@@ -165,7 +181,7 @@ def make_denoiser(
         with torch.inference_mode():
             # warm up to create working memory
             dummy_input = torch.randn(
-                batch_size, *args.patch_shape, device="cuda", dtype=torch.float32
+                batch_size, *patch_shape, device="cuda", dtype=torch.float32
             )
             denoiser(dummy_input)
             denoiser = torch.compile(
@@ -179,15 +195,20 @@ def make_denoiser(
     # Clear overhead memory from autotuning benchmarks
     torch.cuda.empty_cache()
 
-    return denoiser
+    return denoiser  # type: ignore
 
 
 @torch.inference_mode()
 def main_gpu(
-    args,
     input_data: NDArray,
+    *,
+    patch_shape: tuple[int, int, int, int],
+    patch_overlap: tuple[int, int, int, int],
+    mask_threshold: float,
+    recombination: str,
+    method: str,
     mask: NDArray | None,
-    noise_map: NDArray | None,
+    noise_map: NDArray | None = None,
     batch_size: int = 32,
     compile: bool = False,
     **kwargs,
@@ -199,11 +220,11 @@ def main_gpu(
     input_data_ = torch.from_numpy(input_data)
     patch_dataset = PatchDataset(
         input_data_,
-        patch_shape=args.patch_shape,
-        patch_overlap=args.patch_overlap,
+        patch_shape=patch_shape,
+        patch_overlap=patch_overlap,
         mask=mask,
         noise_map=noise_map,
-        mask_threshold=args.mask_threshold,
+        mask_threshold=mask_threshold,
     )
     loader = torch.utils.data.DataLoader(
         patch_dataset,
@@ -215,16 +236,20 @@ def main_gpu(
 
     # Setup the denoiser model on GPU
     denoiser = make_denoiser(
-        args, noise_map, batch_size=batch_size, compile=compile, **kwargs
+        method,
+        patch_shape=patch_shape,
+        recombination=recombination,
+        batch_size=batch_size,
+        compile=compile,
+        **kwargs,
     )
 
     N_STREAMS = 2
     streams = [torch.cuda.Stream() for _ in range(N_STREAMS)]
-    logging.info(
-        f"Processing {len(patch_dataset)} patches with batch size {batch_size}..."
-    )
+    log.info(f"Processing {len(patch_dataset)} patches with batch size {batch_size}...")
 
     out_weights = torch.zeros(input_data_.shape, dtype=input_data_.dtype, device="cuda")
+    out_var_map = torch.zeros(input_data_.shape, dtype=input_data_.dtype, device="cuda")
     out_acc = torch.zeros(input_data_.shape, dtype=torch.float32, device="cuda")
     for i, (patches, indices) in enumerate(tqdm(loader, unit_scale=batch_size)):
         slot = i % 2
@@ -233,18 +258,25 @@ def main_gpu(
             # H2D -> Compute -> D2H (All Asynchronous)
             gpu_in = patches.cuda(non_blocking=True)
             gpu_indices = indices.cuda(non_blocking=True)
-            gpu_out, gpu_weight = denoiser(gpu_in)
+            gpu_out, gpu_weight, gpu_var_est = denoiser(gpu_in)
             launch_triton(
                 out_acc,
                 out_weights,
+                out_var_map,
                 gpu_out,
                 gpu_weight,
+                gpu_var_est,
                 gpu_indices,
-                args.patch_shape,
+                patch_shape,
             )
 
     out_acc /= out_weights.clamp(min=1e-8)  # Avoid division by zero
     out_acc = out_acc.cpu().numpy()
+    out_var_map /= out_weights.clamp(min=1e-8)  # Avoid division by zero
+    out_var_map = torch.sqrt(
+        torch.mean(out_var_map, -1)
+    )  # Convert variance to standard deviation
+    out_var_map = out_var_map.cpu().numpy()
     out_weights = out_weights.cpu().numpy()
 
-    return out_acc, out_weights, None
+    return out_acc, out_weights, out_var_map, None

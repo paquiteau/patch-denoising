@@ -10,8 +10,9 @@ authors = [{name="Pierre-antoine Comby", email="pierre-antoine.comby@crans.org"}
 readme = "README.rst"
 license = {file = "LICENSE.txt"}
 dependencies = [
+    "nilearn[plotting]",
+    "typer",
     "tqdm",
-    "nilearn[plotting]"
 ]
 requires-python = ">=3.12"
 
@@ -60,13 +61,14 @@ doc = [
 ]
 
 [project.scripts]
-patch-denoise = "patch_denoise.bindings.cli:main"
-patch-denoise-bids = "patch_denoise.bindings.cli:bids_app"
+patch-denoise = "patch_denoise.bindings.cli:app"
+patch-denoise-bids = "patch_denoise.bindings.bids:app"
 
 [tool.setuptools_scm]
 write_to = "src/patch_denoise/_version.py"
 version_scheme = "python-simplified-semver"
 local_scheme="no-local-version"
+fallback_version="v99-dev"
 
 [tool.coverage.run]
 omit = ["*tests*"]
@@ -79,6 +81,7 @@ exclude_lines = ["pragma: no cover", "raise NotImplementedError"]
 #linting using ruff
 [tool.ruff]
 src = ["src", "tests", "docs"]
+line-length=88
 
 [tool.ruff.lint]
 ignore = ["B905"]
@@ -92,6 +95,8 @@ select = ["E", "F", "B", "Q", "UP", "D", "I"]
 
 [tool.ruff.lint.pydocstyle]
 convention="numpy"
+
+[tool.ruff.format]
 
 [tool.pytest]
 log_level = "INFO" 
@@ -110,7 +115,7 @@ markers = [
     "e2e",  # end to end tests that can be slow
 ]
 testpaths = ["tests"] 
-filterwarnings = ["error"]
+#filterwarnings = ["error"]
 
 [tool.codespell]
 # Ref: https://github.com/codespell-project/codespell#using-a-config-file

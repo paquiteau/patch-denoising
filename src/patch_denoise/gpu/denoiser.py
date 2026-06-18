@@ -70,19 +70,14 @@ class OptimalSVDDenoiser(torch.nn.Module):
         u, s, v = torch.linalg.svd(xc, full_matrices=False, driver="gesvda")
         # Calculate noise scale
         median_s = torch.median(s, dim=-1)[0]
-        scale_factor = median_s / self.mp_median  # type: ignore
-
-        # 3. Use unsqueeze for clarity and predictable dimension expansion
-        scale_factor_exp = scale_factor.unsqueeze(-1)
+        scale_factor = median_s / self.mp_median
 
         # Apply shrink
+        scale_factor_exp = scale_factor.unsqueeze(-1)
         s_shrink = self._shrink(s / scale_factor_exp)
         s_shrink = s_shrink * scale_factor_exp
-
-        # 4. Remove boolean indexing to prevent graph breaks. Use nan_to_num.
         s_shrink = torch.nan_to_num(s_shrink, nan=0.0)
 
-        # 5. Simplify rank logic and weighting
         rank = torch.sum(s_shrink > 0, dim=-1) + 1
 
         if self.recombination == "weighted":
@@ -90,10 +85,9 @@ class OptimalSVDDenoiser(torch.nn.Module):
         else:
             weight = torch.ones_like(rank, dtype=x.dtype)
 
-        # unsqueeze does broadcasting, no copies.
         x_denoised = torch.matmul(u * s_shrink.unsqueeze(1), v) + m
 
-        return x_denoised.reshape(x.shape), weight
+        return x_denoised.reshape(x.shape), weight, scale_factor**2
 
 
 class MPPCADenoiser(torch.nn.Module):
@@ -158,4 +152,5 @@ class MPPCADenoiser(torch.nn.Module):
         else:
             weight = torch.ones_like(p, dtype=x.dtype)
 
-        return x_denoised.reshape(x.shape), weight
+        var_estimate = rcum_eigs[:, p] / (M - p)
+        return x_denoised.reshape(x.shape), weight, var_estimate

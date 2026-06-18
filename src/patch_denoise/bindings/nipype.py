@@ -15,7 +15,7 @@ from nipype.interfaces.base import (
 from nipype.utils.filemanip import split_filename
 
 from ..space_time.utils import estimate_noise
-from .utils import DENOISER_MAP, DenoiseParameters
+from .utils import DENOISER_MAP
 
 
 class PatchDenoiseInputSpec(BaseInterfaceInputSpec):
@@ -41,26 +41,24 @@ class PatchDenoiseInputSpec(BaseInterfaceInputSpec):
 
     mask = File(exists=True)
     noise_std_map = File(desc="noise_std_map")
-    denoise_str = traits.Str(desc="string describing the denoiser configuration")
     method = traits.Enum(
         *DENOISER_MAP.keys(),
-        xor=["denoise_str"],
-        require=["patch_shape", "patch_overlap"],
     )
     patch_shape = traits.Union(
         traits.Int(),
-        traits.List(traits.Int(), minlen=3, maxlen=3),
-        xor=["denoise_str"],
-        require=["denoise_method", "patch_overlap"],
+        traits.List(traits.Int(), minlen=3, maxlen=4),
     )
     patch_overlap = traits.Union(
         traits.Int(),
-        traits.List(traits.Int(), minlen=3, maxlen=3),
-        xor=["denoise_str"],
-        require=["patch_shape", "denoise_method"],
+        traits.List(traits.Int(), minlen=3, maxlen=4),
     )
-    mask_threshold = traits.Int(10)
-    recombination = traits.Enum("weighted", "mean")
+    mask_threshold = traits.Int(10, usedefault=True, desc="Threshold for mask.")
+    recombination = traits.Enum(
+        "weighted",
+        "mean",
+        usedefault=True,
+        desc="Recombination method.",
+    )
     extra_kwargs = traits.Dict()
 
 
@@ -78,47 +76,40 @@ class PatchDenoise(SimpleInterface):
     input_spec = PatchDenoiseInputSpec
     output_spec = PatchDenoiseOutputSpec
 
-    _denoise_attrs = [
-        "method",
-        "patch_shape",
-        "patch_overlap",
-        "mask_threshold",
-        "recombination",
-    ]
+    # for type checking, we need to define the inputs attribute with the correct type
+    inputs: PatchDenoiseInputSpec
 
     def _run_interface(self, runtime):
         # INPUT
-        if isdefined(self.inputs.denoise_str):
-            d_par = DenoiseParameters.from_str(self.inputs.denoise_str)
-        else:
-            d_par = DenoiseParameters()
-            for attr in PatchDenoise._denoise_attrs:
-                setattr(d_par, attr, getattr(self.inputs, attr))
 
         if isdefined(self.inputs.in_mag):
-            data_mag_nii = nib.load(self.inputs.in_mag)
+            data_mag_nii = nib.Nifti1Image.from_filename(self.inputs.in_mag)
             data = data_mag_nii.get_fdata(dtype=np.float32)
             basename = self.inputs.in_mag
             self._affine = data_mag_nii.affine
         else:
-            data_real_nii = nib.load(self.inputs.in_real)
+            data_real_nii = nib.Nifti1Image.from_filename(self.inputs.in_real)
             self._affine = data_real_nii.affine
             data_real = data_real_nii.get_fdata(dtype=np.float32)
-            data_imag = nib.load(self.inputs.in_imag).get_fdata(dtype=np.float32)
+            data_imag = nib.Nifti1Image.from_filename(self.inputs.in_imag).get_fdata(
+                dtype=np.float32
+            )
             data = 1j * data_imag
             data += data_real
             basename = self.inputs.in_real
 
         if isdefined(self.inputs.mask) and self.inputs.mask:
-            mask = np.abs(nib.load(self.inputs.mask).get_fdata()) > 0
+            mask = (
+                np.abs(nib.Nifti1Image.from_filename(self.inputs.mask).get_fdata()) > 0
+            )
         else:
             mask = None
 
         try:
-            denoise_func = DENOISER_MAP[d_par.method]
+            denoise_func = DENOISER_MAP[self.inputs.method]
         except KeyError:
             raise ValueError(
-                f"unknown denoising denoise_method '{self.inputs.denoise_method}', "
+                f"unknown denoising denoise_method '{self.inputs.method}', "
                 f"available are {list(DENOISER_MAP.keys())}"
             ) from None
 
@@ -126,23 +117,25 @@ class PatchDenoise(SimpleInterface):
             extra_kwargs = self.inputs.extra_kwargs
         else:
             extra_kwargs = dict()
-        if d_par.method in [
+        if self.inputs.method in [
             "nordic",
             "hybrid-pca",
             "adaptive-qut",
             "optimal-fro-noise",
         ]:
-            extra_kwargs["noise_std"] = nib.load(self.inputs.noise_std_map).get_fdata()
+            extra_kwargs["noise_std"] = nib.Nifti1Image.from_filename(
+                self.inputs.noise_std_map
+            ).get_fdata()
 
         if denoise_func is not None:
             # CORE CALL
             denoised_data, _, noise_std_map, rank_map = denoise_func(
                 data,
-                patch_shape=d_par.patch_shape,
-                patch_overlap=d_par.patch_overlap,
+                patch_shape=self.inputs.patch_shape,
+                patch_overlap=self.inputs.patch_overlap,
                 mask=mask,
-                mask_threshold=d_par.mask_threshold,
-                recombination=d_par.recombination,
+                mask_threshold=self.inputs.mask_threshold,
+                recombination=self.inputs.recombination,
                 **extra_kwargs,
             )
         else:
@@ -160,7 +153,7 @@ class PatchDenoise(SimpleInterface):
         self._make_results_file("rank_map", f"{base}_rank_map.nii", rank_map)
         self._make_results_file(
             "denoised_file",
-            f"{base}_d_{d_par.method}.nii",
+            f"D{base}.nii",
             denoised_data,
         )
         self._make_results_file("noise_std_map", f"{base}_noise_map.nii", noise_std_map)
@@ -195,9 +188,10 @@ class NoiseStdMap(SimpleInterface):
 
     input_spec = NoiseStdMapInputSpec
     output_spec = NoiseStdMapOutputSpec
+    inputs: NoiseStdMapInputSpec
 
     def _run_interface(self, runtime):
-        noise_map = nib.load(self.inputs.noise_map_file)
+        noise_map = nib.Nifti1Image.from_filename(self.inputs.noise_map_file)
         noise_std_map = estimate_noise(
             noise_map.get_fdata() / self.inputs.fft_scale, self.inputs.block_size
         )

@@ -11,7 +11,9 @@ def mr_shepp_logan_t2_star(N, B0=3):
     return mr_shepp_logan(N, E=None, B0=B0, T2star=True)[-1]
 
 
-def mr_shepp_logan(N, E=None, B0=3, T2star=False, zlims=(-1, 1)):
+def mr_shepp_logan(
+    N: int | tuple[int, int, int], E=None, B0=3, T2star=False, zlims=(-1, 1)
+):
     """Shepp-Logan phantom with MR tissue parameters.
 
     Parameters
@@ -79,9 +81,9 @@ def mr_shepp_logan(N, E=None, B0=3, T2star=False, zlims=(-1, 1)):
     /mr_shepp_logan.py
     """
     # Determine size of phantom
-    if np.isscalar(N):
+    if isinstance(N, int):
         L, M, N = N, N, N
-    else:
+    elif isinstance(N, (list, tuple)) and len(N) == 3:
         L, M, N = N[:]
 
     # Make sure zlims are appropriate
