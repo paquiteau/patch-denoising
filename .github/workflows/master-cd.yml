@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -41,7 +41,7 @@ jobs:
           pytest -n auto --cov-report xml:coverage.xml
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           flags: unittests # optional
           file: coverage.xml
@@ -55,7 +55,7 @@ jobs:
     if: success()
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Get history and tags for SCM versioning to work
         run: |
           git fetch --prune --unshallow
@@ -89,7 +89,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
     - name: Get history and tags for SCM versioning to work
       run: |
         git fetch --prune --unshallow
