@@ -92,8 +92,8 @@ def sliding_sum_nd(data, patch_shape, patch_overlap):
         k = patch_shape[dim]
         s = patch_step[dim]
 
-        if k <= 1 or s <= 1:
-            continue  # Skip dimensions where no summing/striding is needed
+        if k <= 1:
+            continue  # A patch of size 1 sums to the data itself, nothing to do
 
         # Move the target dimension to the last position, other dims are seen as batch
         curr_shape = res.shape
@@ -102,7 +102,7 @@ def sliding_sum_nd(data, patch_shape, patch_overlap):
         res = res.reshape(-1, 1, curr_shape[dim])
 
         weight = torch.ones((1, 1, k), dtype=res.dtype, device=res.device)
-        res = F.conv1d(res, weight, stride=s)
+        res = F.conv1d(res, weight, stride=s if s > 0 else k)
 
         new_dim_len = res.shape[-1]
         new_shape = list(res_shape_moved)
@@ -138,7 +138,7 @@ def select_patches_to_process(mask, patch_shape, patch_overlap, mask_threshold=0
 
     with torch.inference_mode():
         mask_g = mask.to(dtype=torch.float32, device="cuda")
-        patch_score_g = sliding_sum_nd(mask, patch_shape, patch_overlap)
+        patch_score_g = sliding_sum_nd(mask_g, patch_shape, patch_overlap)
         patch_score_g /= np.prod(patch_shape)
 
         patch_score = patch_score_g.cpu().ravel()
