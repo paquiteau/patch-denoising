@@ -277,14 +277,20 @@ def _opt_nuc_shrink(singvals, beta=1):
 
 
 def _opt_fro_shrink(singvals, beta=1):
-    """Perform optimal threshold of singular values for frobenius norm."""
-    return np.sqrt(
-        np.maximum(
-            (((singvals**2) - beta - 1) ** 2 - 4 * beta),
-            0,
-        )
-        / singvals
-    )
+    """Perform optimal threshold of singular values for frobenius norm.
+
+    eta(y) = sqrt((y**2 - beta - 1)**2 - 4 beta) / y for y >= 1 + sqrt(beta), 0 below.
+    The radicand is factorized as (y**2 - hi)(y**2 - lo) with hi/lo the squared MP
+    edges (1 +/- sqrt(beta))**2: it is also positive *below* the lower edge, so the
+    clipping of (y**2 - hi) is what enforces the support, not just positivity.
+    """
+    sqrt_beta = np.sqrt(beta)
+    y2 = singvals * singvals
+    out = np.maximum(y2 - (1 + sqrt_beta) ** 2, 0)
+    out *= y2 - (1 - sqrt_beta) ** 2
+    np.sqrt(out, out=out)
+    # out is already 0 wherever singvals == 0, so the masked-out entries stay correct.
+    return np.divide(out, singvals, out=out, where=singvals > 0)
 
 
 @fill_doc

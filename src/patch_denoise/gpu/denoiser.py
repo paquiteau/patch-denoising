@@ -25,21 +25,24 @@ class OptimalSVDDenoiser(torch.nn.Module):
             raise ValueError(f"Invalid loss {loss}, must be 'fro', 'nuc', or 'ope'")
 
         beta = patch_shape[-1] / np.prod(patch_shape[:-1])
-        mp_median_val = np.sqrt(
-            marchenko_pastur_median(beta=beta, eps=eps_marshenko_pastur)
-        )
 
-        # Precompute all constants to save math ops in the forward pass
-        self.beta = torch.nn.Parameter(torch.tensor(beta, dtype=torch.float32))
-        self.mp_median = torch.nn.Parameter(
-            torch.tensor(mp_median_val, dtype=torch.float32)
+        # Precompute all constants to save math ops in the forward pass. They are
+        # python scalars, not tensors: inductor folds them into the elementwise
+        # kernels as immediates, and there is no 0-d tensor to broadcast or move.
+        self.beta = float(beta)
+        self.sqrt_beta = float(np.sqrt(beta))
+        self.mp_median = float(
+            np.sqrt(marchenko_pastur_median(beta=beta, eps=eps_marshenko_pastur))
         )
+        self.mp_edge = 1.0 + self.sqrt_beta  # upper Marchenko-Pastur edge
+        self.mp_edge_hi = self.mp_edge**2  # squared edges, for the "fro" branch
+        self.mp_edge_lo = (1.0 - self.sqrt_beta) ** 2
 
     def _opt_loss_x(self, y):
         """Compute (8) of donoho2017 using precomputed buffers."""
         tmp = y**2 - self.beta - 1.0
         # Use boolean to float conversion instead of boolean indexing
-        mask = (y >= (1 + torch.sqrt(self.beta))).to(y.dtype)
+        mask = (y >= self.mp_edge).to(y.dtype)
         return torch.sqrt(0.5 * (tmp + torch.sqrt((tmp**2) - 4 * self.beta))) * mask
 
     def _shrink(self, singvals):
@@ -50,15 +53,20 @@ class OptimalSVDDenoiser(torch.nn.Module):
         elif self.loss == "nuc":
             tmp = self._opt_loss_x(singvals)
             return torch.nn.functional.relu(
-                tmp**4 - (torch.sqrt(self.beta) * tmp * singvals) - self.beta
+                tmp**4 - (self.sqrt_beta * tmp * singvals) - self.beta
             ) / ((tmp**2) * singvals)
 
         elif self.loss == "fro":
-            return torch.sqrt(
-                torch.nn.functional.relu(
-                    ((singvals**2) - self.beta - 1.0) ** 2 - 4 * self.beta
-                )
-                / singvals
+            # eta(y) = sqrt((y**2 - beta - 1)**2 - 4 beta) / y for y >= 1 + sqrt(beta),
+            # 0 otherwise. Factorized as (y**2 - hi)(y**2 - lo) with hi/lo the squared
+            # MP edges: the radicand is also positive *below* the lower edge, so the
+            # relu on (y**2 - hi) is what enforces the support, not just positivity.
+            y2 = singvals * singvals
+            above = torch.nn.functional.relu(y2 - self.mp_edge_hi)
+            # Branchless: the relu already zeroes everything below the upper edge, so
+            # the clamp only exists to keep the 0/0 of a null singular value finite.
+            return torch.sqrt(above * (y2 - self.mp_edge_lo)) / singvals.clamp_min(
+                torch.finfo(singvals.dtype).tiny
             )
 
     def forward(self, x: torch.Tensor):
