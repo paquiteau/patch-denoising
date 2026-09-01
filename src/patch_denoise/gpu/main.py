@@ -1,7 +1,6 @@
 """Main loop for the gpu version of patch-denoise."""
 
 import logging
-import os
 
 import torch
 import triton
@@ -171,9 +170,6 @@ def make_denoiser(
 
     denoiser = denoiser.cuda()  # Move model to GPU
 
-    # cache compilation
-    os.environ["TORCHINDUCTOR_CACHE_DIR"] = "./.torch_cache"
-    os.environ["TORCHINDUCTOR_CACHE_ENABLED"] = "1"
     torch.set_float32_matmul_precision("high")
 
     if compile:

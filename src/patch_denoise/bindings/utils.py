@@ -12,36 +12,67 @@ import nibabel as nib
 import numpy as np
 from numpy.typing import NDArray
 
-from patch_denoise.denoise import (
-    adaptive_thresholding,
-    hybrid_pca,
-    mp_pca,
-    nordic,
-    optimal_thresholding,
-    raw_svt,
+DENOISER_NAMES = (
+    "mp-pca",
+    "hybrid-pca",
+    "raw",
+    "optimal-fro",
+    "optimal-fro-noise",
+    "optimal-nuc",
+    "optimal-ope",
+    "nordic",
+    "adaptive-qut",
 )
 
-DENOISER_MAP = {
-    "mp-pca": mp_pca,
-    "hybrid-pca": hybrid_pca,
-    "raw": raw_svt,
-    "optimal-fro": lambda *args, **kwargs: optimal_thresholding(
-        *args, loss="fro", **kwargs
-    ),
-    "optimal-fro-noise": lambda *args, **kwargs: optimal_thresholding(
-        *args, loss="fro", **kwargs
-    ),
-    "optimal-nuc": lambda *args, **kwargs: optimal_thresholding(
-        *args, loss="nuc", **kwargs
-    ),
-    "optimal-ope": lambda *args, **kwargs: optimal_thresholding(
-        *args, loss="ope", **kwargs
-    ),
-    "nordic": nordic,
-    "adaptive-qut": lambda *args, **kwargs: adaptive_thresholding(
-        *args, method="qut", **kwargs
-    ),
-}
+
+class _DenoiserMap:
+    """Lazily builds the method-name -> denoising-function mapping.
+
+    Importing ``patch_denoise.denoise`` pulls in the whole scipy/space_time
+    stack, which is unnecessary when only the GPU path (or --help) is used.
+    """
+
+    def __getitem__(self, method: str):
+        from patch_denoise.denoise import (
+            adaptive_thresholding,
+            hybrid_pca,
+            mp_pca,
+            nordic,
+            optimal_thresholding,
+            raw_svt,
+        )
+
+        mapping = {
+            "mp-pca": mp_pca,
+            "hybrid-pca": hybrid_pca,
+            "raw": raw_svt,
+            "optimal-fro": lambda *args, **kwargs: optimal_thresholding(
+                *args, loss="fro", **kwargs
+            ),
+            "optimal-fro-noise": lambda *args, **kwargs: optimal_thresholding(
+                *args, loss="fro", **kwargs
+            ),
+            "optimal-nuc": lambda *args, **kwargs: optimal_thresholding(
+                *args, loss="nuc", **kwargs
+            ),
+            "optimal-ope": lambda *args, **kwargs: optimal_thresholding(
+                *args, loss="ope", **kwargs
+            ),
+            "nordic": nordic,
+            "adaptive-qut": lambda *args, **kwargs: adaptive_thresholding(
+                *args, method="qut", **kwargs
+            ),
+        }
+        return mapping[method]
+
+    def __iter__(self):
+        return iter(DENOISER_NAMES)
+
+    def __contains__(self, method: str) -> bool:
+        return method in DENOISER_NAMES
+
+
+DENOISER_MAP = _DenoiserMap()
 
 _RECOMBINATION = {"w": "weighted", "c": "center", "a": "average"}
 

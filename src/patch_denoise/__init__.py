@@ -2,23 +2,6 @@
 
 from importlib.metadata import PackageNotFoundError, version
 
-from patch_denoise.denoise import (
-    adaptive_thresholding,
-    hybrid_pca,
-    mp_pca,
-    nordic,
-    optimal_thresholding,
-    raw_svt,
-)
-from patch_denoise.space_time.lowrank import (
-    AdaptiveDenoiser,
-    HybridPCADenoiser,
-    MPPCADenoiser,
-    NordicDenoiser,
-    OptimalSVDDenoiser,
-    RawSVDDenoiser,
-)
-
 __all__ = [
     "AdaptiveDenoiser",
     "HybridPCADenoiser",
@@ -33,6 +16,40 @@ __all__ = [
     "raw_svt",
     "nordic",
 ]
+
+_FUNCTIONAL = {
+    "mp_pca",
+    "hybrid_pca",
+    "optimal_thresholding",
+    "adaptive_thresholding",
+    "raw_svt",
+    "nordic",
+}
+_DENOISERS = {
+    "AdaptiveDenoiser",
+    "HybridPCADenoiser",
+    "MPPCADenoiser",
+    "NordicDenoiser",
+    "OptimalSVDDenoiser",
+    "RawSVDDenoiser",
+}
+
+
+def __getattr__(name: str):
+    """Lazily import denoisers, so ``import patch_denoise`` stays lightweight."""
+    if name in _FUNCTIONAL:
+        from patch_denoise import denoise
+
+        return getattr(denoise, name)
+    if name in _DENOISERS:
+        from patch_denoise.space_time import lowrank
+
+        return getattr(lowrank, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def __dir__() -> list[str]:
+    return sorted(__all__)
 
 
 try:

@@ -6,14 +6,13 @@ import logging
 import re
 from enum import StrEnum
 from pathlib import Path
-from typing import Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any
+
+if TYPE_CHECKING:
+    from nilearn.maskers import NiftiMasker
 
 import numpy as np
 import typer
-from nilearn.image import load_img, resample_img
-from nilearn.interfaces.bids import get_bids_files, parse_bids_filename
-from nilearn.interfaces.bids.utils import bids_entities, create_bids_filename
-from nilearn.maskers import NiftiMasker
 from numpy.typing import NDArray
 from rich.logging import RichHandler
 from rich.progress import Progress, SpinnerColumn, TextColumn
@@ -21,12 +20,13 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from patch_denoise import __version__
 from patch_denoise.bindings.utils import (
     DENOISER_MAP,
+    DENOISER_NAMES,
     fast_cuda_check,
     load_as_array,
     load_complex_nifti,
     save_array,
 )
-from patch_denoise.space_time.base import _patch_param
+
 
 GPU_AVAILABLE = fast_cuda_check()
 
@@ -41,7 +41,7 @@ logging.basicConfig(
 )
 logging.captureWarnings(True)
 
-DENOISER_NAMES = ", ".join(d for d in DENOISER_MAP if d)
+DENOISER_NAMES_HELP = ", ".join(DENOISER_NAMES)
 
 
 class AnalysisEnum(StrEnum):
@@ -126,7 +126,7 @@ app = typer.Typer(help="Patch denoising CLI tool.")
 MethodOpt = Annotated[
     DenoiserEnum,
     typer.Option(
-        "-m", "--method", help=f"Denoising Method: Available: {DENOISER_NAMES}"
+        "-m", "--method", help=f"Denoising Method: Available: {DENOISER_NAMES_HELP}"
     ),
 ]
 PatchShapeOpt = Annotated[
@@ -239,7 +239,10 @@ def _load_validate_input(
     noise_std_map_phase_file: Path | None,
     nan_to_num: float | None,
     verbose: int,
-) -> tuple[NDArray, NDArray, NiftiMasker, NDArray | None]:
+) -> tuple[NDArray, NDArray, "NiftiMasker", NDArray | None]:
+    from nilearn.image import resample_img
+    from nilearn.maskers import NiftiMasker  # noqa: F811 (runtime import)
+
     if input_phase is not None:
         input_data, affine = load_complex_nifti(input_file, input_phase)
     else:
@@ -411,6 +414,8 @@ def main(
         report = masker.generate_report()
         report.save_as_html(output_file.with_suffix(".html"))
     mask_data = masker.mask_img_.get_fdata().astype(bool)
+
+    from patch_denoise.space_time.base import _patch_param
 
     # substitute any -1 in patch_shape or patch_overlap with the corresponding dimension
     # of input_data
@@ -621,7 +626,20 @@ def bids_main(
         if noise_std_map is None:
             raise RuntimeError("A noise map must be specified for this method.")
         kwargs["noise_std"] = noise_std_map
-    denoise_func = DENOISER_MAP[method]
+
+    if gpu:
+        from patch_denoise.gpu.main import main_gpu as denoise_func
+
+        kwargs["method"] = method
+    else:
+        denoise_func = DENOISER_MAP[method]
+
+    from nilearn.image import load_img
+    from nilearn.interfaces.bids import get_bids_files, parse_bids_filename
+    from nilearn.interfaces.bids.utils import bids_entities, create_bids_filename
+    from nilearn.maskers import NiftiMasker
+
+    from patch_denoise.space_time.base import _patch_param
 
     output_dir.mkdir(exist_ok=True, parents=True)
 
@@ -698,11 +716,6 @@ def bids_main(
             input_data = load_img(f).get_fdata()
             patch_shape_ = _patch_param(patch_shape, input_data.shape)
             patch_overlap_ = _patch_param(patch_overlap, input_data.shape)
-
-            if gpu:
-                from patch_denoise.gpu.main import main_gpu as denoise_func
-
-                kwargs["method"] = method
 
             denoised_data, _, noise_std_map, _ = denoise_func(
                 input_data,
