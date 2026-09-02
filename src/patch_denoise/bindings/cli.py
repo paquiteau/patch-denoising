@@ -27,7 +27,6 @@ from patch_denoise.bindings.utils import (
     save_array,
 )
 
-
 GPU_AVAILABLE = fast_cuda_check()
 
 log = logging.getLogger(__name__)

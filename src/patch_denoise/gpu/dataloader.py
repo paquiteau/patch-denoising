@@ -171,9 +171,12 @@ class PatchDataset(torch.utils.data.Dataset):
         data_shape = input_data.shape
         if mask is None:
             mask = torch.ones(data_shape, dtype=torch.float32)
-        elif mask.shape == data_shape[:-1]:  # only spatial mask provided
-            mask = np.broadcast_to(mask[..., None], data_shape).astype(np.float32)
-            mask = torch.from_numpy(mask)
+        else:
+            if isinstance(mask, np.ndarray):
+                mask = torch.from_numpy(mask)
+            mask = mask.to(dtype=torch.float32)
+            if mask.shape == data_shape[:-1]:  # only spatial mask provided
+                mask = mask[..., None].expand(data_shape).contiguous()
 
         self.patch_locs = select_patches_to_process(
             mask, patch_shape, patch_overlap, mask_threshold
