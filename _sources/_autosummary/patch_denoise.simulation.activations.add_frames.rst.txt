@@ -1,0 +1,6 @@
+patch\_denoise.simulation.activations.add\_frames
+=================================================
+
+.. currentmodule:: patch_denoise.simulation.activations
+
+.. autofunction:: add_frames

@@ -1,0 +1,1166 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" data-theme="light">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>patch_denoise.bindings.cli &#8212; patch-denoise  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=cb8930eaaf36d9849b67" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=cb8930eaaf36d9849b67" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=cb8930eaaf36d9849b67"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67" />
+
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/patch_denoise/bindings/cli';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="light">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">patch-denoise  documentation</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../denoisers.html">
+    LLR Denoising Methods
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../usage.html">
+    Command line
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../denoisers.html">
+    LLR Denoising Methods
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../usage.html">
+    Command line
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">patch_denoise.bindings.cli</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for patch_denoise.bindings.cli</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="sd">"""Cli interface."""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrEnum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">Any</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">nilearn.maskers</span><span class="w"> </span><span class="kn">import</span> <span class="n">NiftiMasker</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">typer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NDArray</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rich.logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">RichHandler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rich.progress</span><span class="w"> </span><span class="kn">import</span> <span class="n">Progress</span><span class="p">,</span> <span class="n">SpinnerColumn</span><span class="p">,</span> <span class="n">TextColumn</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">patch_denoise</span><span class="w"> </span><span class="kn">import</span> <span class="n">__version__</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">patch_denoise.bindings.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DENOISER_MAP</span><span class="p">,</span>
+    <span class="n">DENOISER_NAMES</span><span class="p">,</span>
+    <span class="n">fast_cuda_check</span><span class="p">,</span>
+    <span class="n">load_as_array</span><span class="p">,</span>
+    <span class="n">load_complex_nifti</span><span class="p">,</span>
+    <span class="n">save_array</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">GPU_AVAILABLE</span> <span class="o">=</span> <span class="n">fast_cuda_check</span><span class="p">()</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span>
+    <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">,</span>
+    <span class="nb">format</span><span class="o">=</span><span class="s2">"</span><span class="si">%(message)s</span><span class="s2">"</span><span class="p">,</span>
+    <span class="n">handlers</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">RichHandler</span><span class="p">(</span><span class="n">show_time</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">show_path</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">show_level</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">markup</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+<span class="n">logging</span><span class="o">.</span><span class="n">captureWarnings</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">DENOISER_NAMES_HELP</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DENOISER_NAMES</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="AnalysisEnum">
+<a class="viewcode-back" href="../../../_autosummary/patch_denoise.bindings.cli.AnalysisEnum.html#patch_denoise.bindings.cli.AnalysisEnum">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AnalysisEnum</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Enum for BIDS analysis levels."""</span>
+
+    <span class="n">PARTICIPANT</span> <span class="o">=</span> <span class="s2">"participant"</span></div>
+
+
+
+<div class="viewcode-block" id="DenoiserEnum">
+<a class="viewcode-back" href="../../../_autosummary/patch_denoise.bindings.cli.DenoiserEnum.html#patch_denoise.bindings.cli.DenoiserEnum">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DenoiserEnum</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Enum for denoising methods."""</span>
+
+    <span class="n">MP_PCA</span> <span class="o">=</span> <span class="s2">"mp-pca"</span>
+    <span class="n">HYBRID_PCA</span> <span class="o">=</span> <span class="s2">"hybrid-pca"</span>
+    <span class="n">RAW</span> <span class="o">=</span> <span class="s2">"raw"</span>
+    <span class="n">OPTIMAL_FRO</span> <span class="o">=</span> <span class="s2">"optimal-fro"</span>
+    <span class="n">OPTIMAL_FRO_NOISE</span> <span class="o">=</span> <span class="s2">"optimal-fro-noise"</span>
+    <span class="n">OPTIMAL_NUC</span> <span class="o">=</span> <span class="s2">"optimal-nuc"</span>
+    <span class="n">OPTIMAL_OPE</span> <span class="o">=</span> <span class="s2">"optimal-ope"</span>
+    <span class="n">NORDIC</span> <span class="o">=</span> <span class="s2">"nordic"</span>
+    <span class="n">ADAPTIVE_QUT</span> <span class="o">=</span> <span class="s2">"adaptive-qut"</span></div>
+
+
+
+<div class="viewcode-block" id="RecombinationEnum">
+<a class="viewcode-back" href="../../../_autosummary/patch_denoise.bindings.cli.RecombinationEnum.html#patch_denoise.bindings.cli.RecombinationEnum">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RecombinationEnum</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Enum for recombination methods."""</span>
+
+    <span class="n">WEIGHTED</span> <span class="o">=</span> <span class="s2">"weighted"</span>
+    <span class="n">MEAN</span> <span class="o">=</span> <span class="n">AVERAGE</span> <span class="o">=</span> <span class="s2">"mean"</span></div>
+
+
+
+<div class="viewcode-block" id="parse_dims">
+<a class="viewcode-back" href="../../../_autosummary/patch_denoise.bindings.cli.parse_dims.html#patch_denoise.bindings.cli.parse_dims">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_dims</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Parse a string representing dimensions into a 3 or 4-tuple of integers."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">value</span>  <span class="c1"># Already a tuple of ints</span>
+    <span class="n">dims</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="sa">r</span><span class="s2">"-?\d+"</span><span class="p">,</span> <span class="n">value</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dims</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">dims</span><span class="p">)</span>
+
+    <span class="k">raise</span> <span class="n">typer</span><span class="o">.</span><span class="n">BadParameter</span><span class="p">(</span>
+        <span class="s2">"Must be an int, 3-tuple, or 4-tuple ('11' or '11x11x11')"</span>
+        <span class="s2">" any 1-character separator is allowed (except space and -): "</span>
+        <span class="s2">"('11x11x11', 11_11_11', '11,11,11')"</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="parse_mask_arg">
+<a class="viewcode-back" href="../../../_autosummary/patch_denoise.bindings.cli.parse_mask_arg.html#patch_denoise.bindings.cli.parse_mask_arg">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_mask_arg</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Validate if value is 'auto' or points to an existing file."""</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="s2">"auto"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">value</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="n">typer</span><span class="o">.</span><span class="n">BadParameter</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Path should point to a file, or be 'auto': &lt;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&gt;."</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">path</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="parse_extra_args">
+<a class="viewcode-back" href="../../../_autosummary/patch_denoise.bindings.cli.parse_extra_args.html#patch_denoise.bindings.cli.parse_extra_args">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_extra_args</span><span class="p">(</span><span class="n">extras</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Parse extra arguments passed as key=value pairs into a dictionary."""</span>
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">extras</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">kwargs</span>
+    <span class="k">for</span> <span class="n">kv</span> <span class="ow">in</span> <span class="n">extras</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">"="</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kv</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">typer</span><span class="o">.</span><span class="n">BadParameter</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Extra parameter '</span><span class="si">{</span><span class="n">kv</span><span class="si">}</span><span class="s2">' is not in key=value format."</span>
+            <span class="p">)</span>
+        <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">kv</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"="</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">pass</span>  <span class="c1"># keep as string if not a float</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="k">return</span> <span class="n">kwargs</span></div>
+
+
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">typer</span><span class="o">.</span><span class="n">Typer</span><span class="p">(</span><span class="n">help</span><span class="o">=</span><span class="s2">"Patch denoising CLI tool."</span><span class="p">)</span>
+
+<span class="c1">###########################</span>
+<span class="c1">## Shared Argument Types ##</span>
+<span class="c1">###########################</span>
+
+<span class="n">MethodOpt</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span>
+    <span class="n">DenoiserEnum</span><span class="p">,</span>
+    <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span>
+        <span class="s2">"-m"</span><span class="p">,</span> <span class="s2">"--method"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Denoising Method: Available: </span><span class="si">{</span><span class="n">DENOISER_NAMES_HELP</span><span class="si">}</span><span class="s2">"</span>
+    <span class="p">),</span>
+<span class="p">]</span>
+<span class="n">PatchShapeOpt</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span>
+    <span class="nb">str</span><span class="p">,</span>
+    <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span>
+        <span class="s2">"-ps"</span><span class="p">,</span>
+        <span class="s2">"--patch-shape"</span><span class="p">,</span>
+        <span class="n">parser</span><span class="o">=</span><span class="n">parse_dims</span><span class="p">,</span>
+        <span class="n">metavar</span><span class="o">=</span><span class="s2">"X,Y,Z[,T]"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Patch shape. If 4D a sliding window is used. "</span>
+        <span class="s2">"If -1 is specified for a dimension, the entire dimension is put the patch."</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">]</span>
+<span class="n">PatchOverlapOpt</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span>
+    <span class="nb">str</span><span class="p">,</span>
+    <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span>
+        <span class="s2">"-po"</span><span class="p">,</span>
+        <span class="s2">"--patch-overlap"</span><span class="p">,</span>
+        <span class="n">parser</span><span class="o">=</span><span class="n">parse_dims</span><span class="p">,</span>
+        <span class="n">metavar</span><span class="o">=</span><span class="s2">"X,Y,Z[,T]"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Patch overlap. If 4D a sliding window is used. "</span>
+        <span class="s2">"If -1 is specified for a dimension, the entire dimension is put the patch."</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">]</span>
+
+<span class="n">RecombinationOpt</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span>
+    <span class="n">RecombinationEnum</span><span class="p">,</span>
+    <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span><span class="s2">"-r"</span><span class="p">,</span> <span class="s2">"--recombination"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Recombination method."</span><span class="p">),</span>
+<span class="p">]</span>
+<span class="n">MaskOpt</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span>
+    <span class="nb">str</span><span class="p">,</span>
+    <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span>
+        <span class="s2">"-k"</span><span class="p">,</span>
+        <span class="s2">"--mask"</span><span class="p">,</span>
+        <span class="n">callback</span><span class="o">=</span><span class="n">parse_mask_arg</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Mask NIfTI file (3D). if auto, mask is computed automatically."</span><span class="p">,</span>
+        <span class="n">metavar</span><span class="o">=</span><span class="s2">"MASK_FILE | auto"</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">]</span>
+<span class="n">MaskThreshOpt</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span>
+    <span class="nb">int</span><span class="p">,</span>
+    <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span>
+        <span class="s2">"-t"</span><span class="p">,</span>
+        <span class="s2">"--mask-threshold"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Min </span><span class="si">% o</span><span class="s2">f overlap between a patch and the mask to trigger computation."</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">]</span>
+<span class="n">ExtraOpts</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span>
+    <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span>
+        <span class="s2">"-e"</span><span class="p">,</span>
+        <span class="s2">"--extra"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Extra parameters for the denoising method, passed as key=value pairs. "</span>
+        <span class="s2">"For example: --extra param1=val1 --extra param2=val2"</span><span class="p">,</span>
+        <span class="n">metavar</span><span class="o">=</span><span class="s2">"KEY=VALUE"</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">]</span>
+
+<span class="n">NaN2NumOpt</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span>
+    <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span><span class="n">help</span><span class="o">=</span><span class="s2">"Replace any NaN in input-data with VALUE"</span><span class="p">)</span>
+<span class="p">]</span>
+<span class="n">VerboseOpt</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span>
+    <span class="nb">int</span><span class="p">,</span>
+    <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span>
+        <span class="s2">"-v"</span><span class="p">,</span> <span class="s2">"--verbose"</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Increase verbosity level (e.g., -vvv)."</span>
+    <span class="p">),</span>
+<span class="p">]</span>
+<span class="n">GpuFlag</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span>
+    <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span>
+        <span class="s2">"--gpu/--cpu"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Use GPU or CPU for computation. Requires patch_denoise.gpu module. "</span>
+        <span class="s2">"GPU is enabled  by default if available."</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">]</span>
+
+
+<span class="c1">#############</span>
+<span class="c1"># Main CLI  #</span>
+<span class="c1">#############</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_noise_std</span><span class="p">(</span>
+    <span class="n">noise_std_map_file</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">noise_std_map_phase_file</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">NDArray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">NDArray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">noise_std_map_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">noise_std_map_phase_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">noise_std_map</span><span class="p">,</span> <span class="n">affine_noise_map</span> <span class="o">=</span> <span class="n">load_complex_nifti</span><span class="p">(</span>
+            <span class="n">noise_std_map_file</span><span class="p">,</span>
+            <span class="n">noise_std_map_phase_file</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">noise_std_map_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">noise_std_map</span><span class="p">,</span> <span class="n">affine_noise_map</span> <span class="o">=</span> <span class="n">load_as_array</span><span class="p">(</span><span class="n">noise_std_map_file</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">noise_std_map_phase_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"The phase component of the noise map has been provided, "</span>
+            <span class="s2">"but not the magnitude."</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">noise_std_map</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">affine_noise_map</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">noise_std_map</span><span class="p">,</span> <span class="n">affine_noise_map</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_validate_input</span><span class="p">(</span>
+    <span class="n">input_file</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">input_phase</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">mask</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">noise_std_map_file</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">noise_std_map_phase_file</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">nan_to_num</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">NDArray</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">,</span> <span class="s2">"NiftiMasker"</span><span class="p">,</span> <span class="n">NDArray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">nilearn.image</span><span class="w"> </span><span class="kn">import</span> <span class="n">resample_img</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">nilearn.maskers</span><span class="w"> </span><span class="kn">import</span> <span class="n">NiftiMasker</span>  <span class="c1"># noqa: F811 (runtime import)</span>
+
+    <span class="k">if</span> <span class="n">input_phase</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">input_data</span><span class="p">,</span> <span class="n">affine</span> <span class="o">=</span> <span class="n">load_complex_nifti</span><span class="p">(</span><span class="n">input_file</span><span class="p">,</span> <span class="n">input_phase</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">input_data</span><span class="p">,</span> <span class="n">affine</span> <span class="o">=</span> <span class="n">load_as_array</span><span class="p">(</span><span class="n">input_file</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">nan_to_num</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">input_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">nan</span><span class="o">=</span><span class="n">nan_to_num</span><span class="p">)</span>
+
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Input data shape: </span><span class="si">{</span><span class="n">input_data</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">n_nans</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">n_nans</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n_nans</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">input_data</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> voxels are NaN. "</span>
+            <span class="s2">"You might want to use --nan-to-num=&lt;value&gt;"</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="n">masker</span> <span class="o">=</span> <span class="n">NiftiMasker</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> <span class="n">mask_strategy</span><span class="o">=</span><span class="s2">"epi"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">mask</span> <span class="o">!=</span> <span class="s2">"auto"</span><span class="p">:</span>
+        <span class="n">masker</span><span class="o">.</span><span class="n">mask_img</span> <span class="o">=</span> <span class="n">mask</span>
+
+    <span class="n">masker</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">input_file</span><span class="p">)</span>
+
+    <span class="n">affine_mask</span> <span class="o">=</span> <span class="n">masker</span><span class="o">.</span><span class="n">mask_img_</span><span class="o">.</span><span class="n">affine</span>
+
+    <span class="n">noise_std_map</span><span class="p">,</span> <span class="n">affine_noise</span> <span class="o">=</span> <span class="n">_load_noise_std</span><span class="p">(</span>
+        <span class="n">noise_std_map_file</span><span class="p">,</span> <span class="n">noise_std_map_phase_file</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">affine</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">affine_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">affine</span><span class="p">,</span> <span class="n">affine_mask</span><span class="p">):</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">"Affine matrix of input and mask does not match, it will be resampled"</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">masker</span><span class="o">.</span><span class="n">mask_img_</span> <span class="o">=</span> <span class="n">resample_img</span><span class="p">(</span>
+                <span class="n">masker</span><span class="o">.</span><span class="n">mask_img_</span><span class="p">,</span>
+                <span class="n">target_affine</span><span class="o">=</span><span class="n">affine</span><span class="p">,</span>
+                <span class="n">target_shape</span><span class="o">=</span><span class="n">input_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">3</span><span class="p">],</span>
+                <span class="n">interpolation</span><span class="o">=</span><span class="s2">"nearest"</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">affine_noise</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">affine</span><span class="p">,</span> <span class="n">affine_noise</span><span class="p">):</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">"Affine matrix of input and noise map does not match"</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span>
+            <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">input_data</span><span class="p">,</span> <span class="n">affine</span><span class="p">,</span> <span class="n">masker</span><span class="p">,</span> <span class="n">noise_std_map</span>
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../../_autosummary/patch_denoise.bindings.cli.main.html#patch_denoise.bindings.cli.main">[docs]</a>
+<span class="nd">@app</span><span class="o">.</span><span class="n">command</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span>
+    <span class="n">input_file</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="n">Path</span><span class="p">,</span>
+        <span class="n">typer</span><span class="o">.</span><span class="n">Argument</span><span class="p">(</span>
+            <span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">dir_okay</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">resolve_path</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">"Input noisy NIfTI file (4D)."</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">],</span>
+    <span class="n">output_file</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">typer</span><span class="o">.</span><span class="n">Argument</span><span class="p">(</span>
+            <span class="n">dir_okay</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">resolve_path</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">"Output denoised NIfTI file (4D). Default is D&lt;input_file&gt;."</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">output_noise_std_map_file</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span>
+            <span class="s2">"--output-noise-std-map"</span><span class="p">,</span>
+            <span class="n">dir_okay</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">resolve_path</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">"Output noise level estimation NIfTI file (3D)."</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">method</span><span class="p">:</span> <span class="n">MethodOpt</span> <span class="o">=</span> <span class="n">DenoiserEnum</span><span class="o">.</span><span class="n">OPTIMAL_FRO</span><span class="p">,</span>
+    <span class="n">patch_shape</span><span class="p">:</span> <span class="n">PatchShapeOpt</span> <span class="o">=</span> <span class="s2">"11,11,11,-1"</span><span class="p">,</span>
+    <span class="n">patch_overlap</span><span class="p">:</span> <span class="n">PatchOverlapOpt</span> <span class="o">=</span> <span class="s2">"5,5,5,-1"</span><span class="p">,</span>
+    <span class="n">recombination</span><span class="p">:</span> <span class="n">RecombinationOpt</span> <span class="o">=</span> <span class="n">RecombinationEnum</span><span class="o">.</span><span class="n">WEIGHTED</span><span class="p">,</span>
+    <span class="n">mask</span><span class="p">:</span> <span class="n">MaskOpt</span> <span class="o">=</span> <span class="s2">"auto"</span><span class="p">,</span>
+    <span class="n">mask_threshold</span><span class="p">:</span> <span class="n">MaskThreshOpt</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
+    <span class="n">extras</span><span class="p">:</span> <span class="n">ExtraOpts</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">nan_to_num</span><span class="p">:</span> <span class="n">NaN2NumOpt</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">verbose</span><span class="p">:</span> <span class="n">VerboseOpt</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">gpu</span><span class="p">:</span> <span class="n">GpuFlag</span> <span class="o">=</span> <span class="n">GPU_AVAILABLE</span><span class="p">,</span>
+    <span class="n">input_phase</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span>
+            <span class="s2">"-ip"</span><span class="p">,</span>
+            <span class="s2">"--input-phase"</span><span class="p">,</span>
+            <span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">dir_okay</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">resolve_path</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">"Input phase NIfTI file (4D). If provided, process complex data."</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">noise_std_map_file</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span>
+            <span class="s2">"--noise-std-map"</span><span class="p">,</span>
+            <span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">dir_okay</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">resolve_path</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">"Input Noise std map"</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">noise_std_map_phase_file</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span>
+            <span class="s2">"--noise-std-map-phase"</span><span class="p">,</span>
+            <span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">dir_okay</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">resolve_path</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">"Input Noise std map, phase component."</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Perform local-low-rank denoising on 4D MRI data."""</span>
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="n">parse_extra_args</span><span class="p">(</span><span class="n">extras</span><span class="p">)</span>
+
+    <span class="n">levels</span> <span class="o">=</span> <span class="p">[</span><span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">,</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">]</span>
+    <span class="n">level</span> <span class="o">=</span> <span class="n">levels</span><span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">verbose</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">levels</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">"patch_denoise"</span><span class="p">)</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">level</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">"py.warnings"</span><span class="p">)</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">level</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">output_file</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">output_file</span> <span class="o">=</span> <span class="n">input_file</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"D</span><span class="si">{</span><span class="n">input_file</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span>
+
+    <span class="n">parent_dir</span> <span class="o">=</span> <span class="n">output_file</span><span class="o">.</span><span class="n">parent</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">output_file</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">parent_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">output_file</span><span class="o">.</span><span class="n">parent</span><span class="si">}</span><span class="s2"> created"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">output_file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">output_file</span><span class="si">}</span><span class="s2"> will be overwritten"</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">output_noise_std_map_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">parent_dir</span> <span class="o">=</span> <span class="n">output_noise_std_map_file</span><span class="o">.</span><span class="n">parent</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">output_noise_std_map_file</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">parent_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">output_noise_std_map_file</span><span class="o">.</span><span class="n">parent</span><span class="si">}</span><span class="s2"> created"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">output_noise_std_map_file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">output_noise_std_map_file</span><span class="si">}</span><span class="s2"> will be overwritten"</span><span class="p">)</span>
+
+    <span class="c1"># 1. Define only the columns you want (just the spinner and the text)</span>
+    <span class="k">with</span> <span class="n">Progress</span><span class="p">(</span>
+        <span class="n">SpinnerColumn</span><span class="p">(</span><span class="n">spinner_name</span><span class="o">=</span><span class="s2">"dots"</span><span class="p">),</span>
+        <span class="n">TextColumn</span><span class="p">(</span><span class="s2">"[progress.description]</span><span class="si">{task.description}</span><span class="s2">"</span><span class="p">),</span>
+    <span class="p">)</span> <span class="k">as</span> <span class="n">progress</span><span class="p">:</span>
+        <span class="n">progress</span><span class="o">.</span><span class="n">add_task</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"Loading and validating input..."</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="c1"># 2. Add your task and start the progress display</span>
+        <span class="n">input_data</span><span class="p">,</span> <span class="n">affine</span><span class="p">,</span> <span class="n">masker</span><span class="p">,</span> <span class="n">noise_std_map</span> <span class="o">=</span> <span class="n">_load_validate_input</span><span class="p">(</span>
+            <span class="n">input_file</span><span class="p">,</span>
+            <span class="n">input_phase</span><span class="p">,</span>
+            <span class="n">mask</span><span class="p">,</span>
+            <span class="n">noise_std_map_file</span><span class="p">,</span>
+            <span class="n">noise_std_map_phase_file</span><span class="p">,</span>
+            <span class="n">nan_to_num</span><span class="p">,</span>
+            <span class="n">verbose</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">mask</span> <span class="o">==</span> <span class="s2">"auto"</span><span class="p">:</span>
+        <span class="n">mask_filename</span> <span class="o">=</span> <span class="n">output_file</span><span class="o">.</span><span class="n">with_stem</span><span class="p">(</span><span class="s2">"mask_"</span> <span class="o">+</span> <span class="n">output_file</span><span class="o">.</span><span class="n">stem</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Saving automatically computed mask to </span><span class="si">{mask_filename}</span><span class="s2">."</span><span class="p">)</span>
+        <span class="n">masker</span><span class="o">.</span><span class="n">mask_img_</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="n">mask_filename</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Creating report for NiftiMasker."</span><span class="p">)</span>
+        <span class="n">report</span> <span class="o">=</span> <span class="n">masker</span><span class="o">.</span><span class="n">generate_report</span><span class="p">()</span>
+        <span class="n">report</span><span class="o">.</span><span class="n">save_as_html</span><span class="p">(</span><span class="n">output_file</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="s2">".html"</span><span class="p">))</span>
+    <span class="n">mask_data</span> <span class="o">=</span> <span class="n">masker</span><span class="o">.</span><span class="n">mask_img_</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">patch_denoise.space_time.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">_patch_param</span>
+
+    <span class="c1"># substitute any -1 in patch_shape or patch_overlap with the corresponding dimension</span>
+    <span class="c1"># of input_data</span>
+    <span class="n">patch_shape_</span> <span class="o">=</span> <span class="n">_patch_param</span><span class="p">(</span><span class="n">patch_shape</span><span class="p">,</span> <span class="n">input_data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+    <span class="n">patch_overlap_</span> <span class="o">=</span> <span class="n">_patch_param</span><span class="p">(</span><span class="n">patch_overlap</span><span class="p">,</span> <span class="n">input_data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"denoising method: </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"patch shape: </span><span class="si">{</span><span class="n">patch_shape_</span><span class="si">}</span><span class="s2"> (from </span><span class="si">{</span><span class="n">patch_shape</span><span class="si">}</span><span class="s2">)."</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"patch overlap: </span><span class="si">{</span><span class="n">patch_overlap_</span><span class="si">}</span><span class="s2"> (from </span><span class="si">{</span><span class="n">patch_overlap</span><span class="si">}</span><span class="s2">)."</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"recombination method: </span><span class="si">{</span><span class="n">recombination</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"mask threshold: </span><span class="si">{</span><span class="n">mask_threshold</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"GPU: </span><span class="si">{</span><span class="n">gpu</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"extra parameters: </span><span class="si">{</span><span class="n">kwargs</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"nan_to_num: </span><span class="si">{</span><span class="n">nan_to_num</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"input data shape: </span><span class="si">{</span><span class="n">input_data</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="sa">f</span><span class="s2">"mask shape: </span><span class="si">{</span><span class="n">masker</span><span class="o">.</span><span class="n">mask_img_</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"noise std map: </span><span class="si">{</span><span class="n">noise_std_map</span><span class="o">.</span><span class="n">shape</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">noise_std_map</span><span class="w"> </span><span class="ow">is</span><span class="w"> </span><span class="ow">not</span><span class="w"> </span><span class="kc">None</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="kc">None</span><span class="si">}</span><span class="s2">."</span>
+    <span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"output file: </span><span class="si">{</span><span class="n">output_file</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"output noise std map file: </span><span class="si">{</span><span class="n">output_noise_std_map_file</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"input affine:</span><span class="se">\n</span><span class="si">{</span><span class="n">affine</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"mask affine: </span><span class="se">\n</span><span class="si">{</span><span class="n">masker</span><span class="o">.</span><span class="n">mask_img_</span><span class="o">.</span><span class="n">affine</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">gpu</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="n">DenoiserEnum</span><span class="o">.</span><span class="n">MP_PCA</span><span class="p">,</span>
+            <span class="n">DenoiserEnum</span><span class="o">.</span><span class="n">OPTIMAL_FRO</span><span class="p">,</span>
+            <span class="n">DenoiserEnum</span><span class="o">.</span><span class="n">OPTIMAL_FRO_NOISE</span><span class="p">,</span>
+            <span class="n">DenoiserEnum</span><span class="o">.</span><span class="n">OPTIMAL_NUC</span><span class="p">,</span>
+            <span class="n">DenoiserEnum</span><span class="o">.</span><span class="n">OPTIMAL_OPE</span><span class="p">,</span>
+        <span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Method </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2"> is not supported on GPU. "</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">GPU_AVAILABLE</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">"GPU support is not available. Please ensure that the "</span>
+                <span class="s2">"patch_denoise.gpu module is installed and that you have"</span>
+                <span class="s2">"a compatible GPU."</span>
+            <span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Using GPU for computation."</span><span class="p">)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">patch_denoise.gpu.main</span><span class="w"> </span><span class="kn">import</span> <span class="n">main_gpu</span> <span class="k">as</span> <span class="n">denoise_func</span>
+
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"method"</span><span class="p">]</span> <span class="o">=</span> <span class="n">method</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">denoise_func</span> <span class="o">=</span> <span class="n">DENOISER_MAP</span><span class="p">[</span><span class="n">method</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">method</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="n">DenoiserEnum</span><span class="o">.</span><span class="n">NORDIC</span><span class="p">,</span>
+        <span class="n">DenoiserEnum</span><span class="o">.</span><span class="n">HYBRID_PCA</span><span class="p">,</span>
+        <span class="n">DenoiserEnum</span><span class="o">.</span><span class="n">ADAPTIVE_QUT</span><span class="p">,</span>
+        <span class="n">DenoiserEnum</span><span class="o">.</span><span class="n">OPTIMAL_FRO_NOISE</span><span class="p">,</span>
+    <span class="p">]:</span>
+        <span class="k">if</span> <span class="n">noise_std_map</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"A noise map must be specified for this method."</span><span class="p">)</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"noise_std"</span><span class="p">]</span> <span class="o">=</span> <span class="n">noise_std_map</span>
+
+    <span class="n">denoised_data</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">noise_std_map</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">denoise_func</span><span class="p">(</span>
+        <span class="n">input_data</span><span class="p">,</span>
+        <span class="n">patch_shape</span><span class="o">=</span><span class="n">patch_shape_</span><span class="p">,</span>
+        <span class="n">patch_overlap</span><span class="o">=</span><span class="n">patch_overlap_</span><span class="p">,</span>
+        <span class="n">mask</span><span class="o">=</span><span class="n">mask_data</span><span class="p">,</span>
+        <span class="n">mask_threshold</span><span class="o">=</span><span class="n">mask_threshold</span><span class="p">,</span>
+        <span class="n">recombination</span><span class="o">=</span><span class="n">recombination</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">save_array</span><span class="p">(</span><span class="n">denoised_data</span><span class="p">,</span> <span class="n">affine</span><span class="p">,</span> <span class="n">output_file</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">output_noise_std_map_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">save_array</span><span class="p">(</span><span class="n">noise_std_map</span><span class="p">,</span> <span class="n">affine</span><span class="p">,</span> <span class="n">output_noise_std_map_file</span><span class="p">)</span></div>
+
+
+
+<span class="c1">############</span>
+<span class="c1"># BIDS CLI #</span>
+<span class="c1">############</span>
+
+<span class="n">bidsapp</span> <span class="o">=</span> <span class="n">typer</span><span class="o">.</span><span class="n">Typer</span><span class="p">(</span><span class="n">help</span><span class="o">=</span><span class="s2">"Patch denoising-bids CLI."</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="bids_main">
+<a class="viewcode-back" href="../../../_autosummary/patch_denoise.bindings.cli.bids_main.html#patch_denoise.bindings.cli.bids_main">[docs]</a>
+<span class="nd">@bidsapp</span><span class="o">.</span><span class="n">command</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">bids_main</span><span class="p">(</span>
+    <span class="n">bids_dir</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="n">Path</span><span class="p">,</span>
+        <span class="n">typer</span><span class="o">.</span><span class="n">Argument</span><span class="p">(</span>
+            <span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">file_okay</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">dir_okay</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">resolve_path</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">"Input BIDS directory."</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">],</span>
+    <span class="n">output_dir</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="n">Path</span><span class="p">,</span>
+        <span class="n">typer</span><span class="o">.</span><span class="n">Argument</span><span class="p">(</span>
+            <span class="n">exists</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">file_okay</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">dir_okay</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">resolve_path</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">"Output BIDS directory."</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">],</span>
+    <span class="n">analysis_level</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="n">AnalysisEnum</span><span class="p">,</span>
+        <span class="n">typer</span><span class="o">.</span><span class="n">Argument</span><span class="p">(</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">"BIDS analysis level. Only 'participant' is supported."</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="n">AnalysisEnum</span><span class="o">.</span><span class="n">PARTICIPANT</span><span class="p">,</span>
+    <span class="n">participant_label</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span>
+            <span class="s2">"-participant-label"</span><span class="p">,</span>
+            <span class="s2">"--participant_label"</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">"List of participant labels to process. "</span>
+            <span class="s2">"If not provided, all participants will be processed."</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">session_label</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span>
+            <span class="s2">"-session-label"</span><span class="p">,</span>
+            <span class="s2">"--session_label"</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">"List of session labels to process."</span>
+            <span class="s2">" If not provided, all sessions will be processed."</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">task_label</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span>
+            <span class="s2">"-task-label"</span><span class="p">,</span>
+            <span class="s2">"--task_label"</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">"List of task labels to process."</span>
+            <span class="s2">" If not provided, all tasks will be processed."</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">bids_filters</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span>
+            <span class="s2">"-bids-filters"</span><span class="p">,</span>
+            <span class="s2">"--bids_filters"</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">"Path to a JSON file containing BIDS filters. See "</span>
+            <span class="s2">"https://fmriprep.org/en/latest/faq.html#"</span>
+            <span class="s2">"how-do-i-select-only-certain-files-to-be-input-to-fmriprep"</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">method</span><span class="p">:</span> <span class="n">MethodOpt</span> <span class="o">=</span> <span class="n">DenoiserEnum</span><span class="o">.</span><span class="n">OPTIMAL_FRO</span><span class="p">,</span>
+    <span class="n">patch_shape</span><span class="p">:</span> <span class="n">PatchShapeOpt</span> <span class="o">=</span> <span class="s2">"11,11,11,-1"</span><span class="p">,</span>
+    <span class="n">patch_overlap</span><span class="p">:</span> <span class="n">PatchOverlapOpt</span> <span class="o">=</span> <span class="s2">"5,5,5,-1"</span><span class="p">,</span>
+    <span class="n">recombination</span><span class="p">:</span> <span class="n">RecombinationOpt</span> <span class="o">=</span> <span class="n">RecombinationEnum</span><span class="o">.</span><span class="n">WEIGHTED</span><span class="p">,</span>
+    <span class="n">mask</span><span class="p">:</span> <span class="n">MaskOpt</span> <span class="o">=</span> <span class="s2">"auto"</span><span class="p">,</span>
+    <span class="n">mask_threshold</span><span class="p">:</span> <span class="n">MaskThreshOpt</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
+    <span class="n">extras</span><span class="p">:</span> <span class="n">ExtraOpts</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">nan_to_num</span><span class="p">:</span> <span class="n">NaN2NumOpt</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">verbose</span><span class="p">:</span> <span class="n">VerboseOpt</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">gpu</span><span class="p">:</span> <span class="n">GpuFlag</span> <span class="o">=</span> <span class="n">GPU_AVAILABLE</span><span class="p">,</span>
+    <span class="n">noise_std_map_file</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span>
+            <span class="s2">"--noise-std-map"</span><span class="p">,</span>
+            <span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">dir_okay</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">resolve_path</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">"Input Noise std map"</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">noise_std_map_phase_file</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span>
+            <span class="s2">"--noise-std-map-phase"</span><span class="p">,</span>
+            <span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">dir_okay</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">resolve_path</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">"Input Noise std map, phase component."</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Run CLI for bids app."""</span>
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="n">parse_extra_args</span><span class="p">(</span><span class="n">extras</span><span class="p">)</span>
+    <span class="n">levels</span> <span class="o">=</span> <span class="p">[</span><span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">,</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">]</span>
+    <span class="n">level</span> <span class="o">=</span> <span class="n">levels</span><span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">verbose</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">levels</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>  <span class="c1"># cap to last level index</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">level</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">participant_label</span><span class="p">:</span>
+        <span class="n">all_subjects</span> <span class="o">=</span> <span class="n">participant_label</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">all_subjects</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">x</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">"sub-"</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">Path</span><span class="p">(</span><span class="n">bids_dir</span><span class="p">)</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span> <span class="k">if</span> <span class="s2">"sub-"</span> <span class="ow">in</span> <span class="n">x</span><span class="o">.</span><span class="n">name</span>
+        <span class="p">]</span>
+
+    <span class="n">filters</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">task_label</span><span class="p">:</span>
+        <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s2">"task"</span><span class="p">,</span> <span class="n">task_label</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="k">if</span> <span class="n">session_label</span><span class="p">:</span>
+        <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s2">"ses"</span><span class="p">,</span> <span class="n">session_label</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+
+    <span class="n">noise_std_map</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_load_noise_std</span><span class="p">(</span><span class="n">noise_std_map_file</span><span class="p">,</span> <span class="n">noise_std_map_phase_file</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">gpu</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">GPU_AVAILABLE</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="s2">"GPU support is not available. Please ensure that the "</span>
+            <span class="s2">"patch_denoise.gpu module is installed and that you have"</span>
+            <span class="s2">"a compatible GPU."</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="n">DenoiserEnum</span><span class="o">.</span><span class="n">NORDIC</span><span class="p">,</span>
+        <span class="n">DenoiserEnum</span><span class="o">.</span><span class="n">HYBRID_PCA</span><span class="p">,</span>
+        <span class="n">DenoiserEnum</span><span class="o">.</span><span class="n">ADAPTIVE_QUT</span><span class="p">,</span>
+        <span class="n">DenoiserEnum</span><span class="o">.</span><span class="n">OPTIMAL_FRO_NOISE</span><span class="p">,</span>
+    <span class="p">]:</span>
+        <span class="k">if</span> <span class="n">noise_std_map</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"A noise map must be specified for this method."</span><span class="p">)</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"noise_std"</span><span class="p">]</span> <span class="o">=</span> <span class="n">noise_std_map</span>
+
+    <span class="k">if</span> <span class="n">gpu</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">patch_denoise.gpu.main</span><span class="w"> </span><span class="kn">import</span> <span class="n">main_gpu</span> <span class="k">as</span> <span class="n">denoise_func</span>
+
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"method"</span><span class="p">]</span> <span class="o">=</span> <span class="n">method</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">denoise_func</span> <span class="o">=</span> <span class="n">DENOISER_MAP</span><span class="p">[</span><span class="n">method</span><span class="p">]</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">nilearn.image</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_img</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">nilearn.interfaces.bids</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_bids_files</span><span class="p">,</span> <span class="n">parse_bids_filename</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">nilearn.interfaces.bids.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">bids_entities</span><span class="p">,</span> <span class="n">create_bids_filename</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">nilearn.maskers</span><span class="w"> </span><span class="kn">import</span> <span class="n">NiftiMasker</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">patch_denoise.space_time.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">_patch_param</span>
+
+    <span class="n">output_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">ds_json</span> <span class="o">=</span> <span class="n">output_dir</span> <span class="o">/</span> <span class="s2">"dataset_description.json"</span>
+    <span class="n">GeneratedBy</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"Name"</span><span class="p">:</span> <span class="s2">"patch-denoise"</span><span class="p">,</span>
+        <span class="s2">"Version"</span><span class="p">:</span> <span class="n">__version__</span><span class="p">,</span>
+        <span class="s2">"Description"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"A dataset denoised with patch-denoise."</span><span class="p">),</span>
+        <span class="s2">"CodeURL"</span><span class="p">:</span> <span class="s2">"https://github.com/paquiteau/patch-denoising"</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="n">ds_json</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">with</span> <span class="n">ds_json</span><span class="o">.</span><span class="n">open</span><span class="p">()</span> <span class="k">as</span> <span class="n">f_obj</span><span class="p">:</span>
+            <span class="n">dataset_description</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f_obj</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dataset_description</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"GeneratedBy"</span><span class="p">):</span>
+            <span class="n">dataset_description</span><span class="p">[</span><span class="s2">"GeneratedBy"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">GeneratedBy</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">dataset_description</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"BIDSVersion"</span><span class="p">:</span> <span class="s2">"1.9.0"</span><span class="p">,</span>
+            <span class="s2">"DatasetType"</span><span class="p">:</span> <span class="s2">"derivative"</span><span class="p">,</span>
+            <span class="s2">"GeneratedBy"</span><span class="p">:</span> <span class="p">[</span><span class="n">GeneratedBy</span><span class="p">],</span>
+        <span class="p">}</span>
+    <span class="k">with</span> <span class="n">ds_json</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f_obj</span><span class="p">:</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">dataset_description</span><span class="p">,</span> <span class="n">f_obj</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">entities_to_include</span> <span class="o">=</span> <span class="n">bids_entities</span><span class="p">()[</span><span class="s2">"raw"</span><span class="p">]</span> <span class="o">+</span> <span class="n">bids_entities</span><span class="p">()[</span><span class="s2">"derivatives"</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">sub_label</span> <span class="ow">in</span> <span class="n">all_subjects</span><span class="p">:</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="n">get_bids_files</span><span class="p">(</span>
+            <span class="n">bids_dir</span><span class="p">,</span>
+            <span class="n">file_tag</span><span class="o">=</span><span class="s2">"bold"</span><span class="p">,</span>
+            <span class="n">modality_folder</span><span class="o">=</span><span class="s2">"func"</span><span class="p">,</span>
+            <span class="n">file_type</span><span class="o">=</span><span class="s2">"nii.*"</span><span class="p">,</span>
+            <span class="n">sub_label</span><span class="o">=</span><span class="n">sub_label</span><span class="p">,</span>
+            <span class="n">filters</span><span class="o">=</span><span class="n">filters</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+            <span class="n">parsed_f</span> <span class="o">=</span> <span class="n">parse_bids_filename</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+            <span class="n">output_dir_for_subject</span> <span class="o">=</span> <span class="n">output_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"sub-</span><span class="si">{</span><span class="n">parsed_f</span><span class="p">[</span><span class="s1">'entities'</span><span class="p">][</span><span class="s1">'sub'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+            <span class="k">if</span> <span class="s2">"ses"</span> <span class="ow">in</span> <span class="n">parsed_f</span><span class="p">[</span><span class="s2">"entities"</span><span class="p">]:</span>
+                <span class="n">output_dir_for_subject</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">output_dir_for_subject</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"ses-</span><span class="si">{</span><span class="n">parsed_f</span><span class="p">[</span><span class="s1">'entities'</span><span class="p">][</span><span class="s1">'ses'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+
+            <span class="n">parsed_f</span><span class="p">[</span><span class="s2">"entities"</span><span class="p">][</span><span class="s2">"desc"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"denoised"</span>
+            <span class="n">output_filename</span> <span class="o">=</span> <span class="n">output_dir_for_subject</span> <span class="o">/</span> <span class="n">create_bids_filename</span><span class="p">(</span>
+                <span class="n">parsed_f</span><span class="p">,</span>
+                <span class="n">entities_to_include</span><span class="o">=</span><span class="n">entities_to_include</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">parsed_f</span><span class="p">[</span><span class="s2">"suffix"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"mask"</span>
+            <span class="n">output_mask_filename</span> <span class="o">=</span> <span class="n">output_dir_for_subject</span> <span class="o">/</span> <span class="n">create_bids_filename</span><span class="p">(</span>
+                <span class="n">parsed_f</span><span class="p">,</span>
+                <span class="n">entities_to_include</span><span class="o">=</span><span class="n">entities_to_include</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">parsed_f</span><span class="p">[</span><span class="s2">"suffix"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"std"</span>
+            <span class="n">output_std_filename</span> <span class="o">=</span> <span class="n">output_dir_for_subject</span> <span class="o">/</span> <span class="n">create_bids_filename</span><span class="p">(</span>
+                <span class="n">parsed_f</span><span class="p">,</span>
+                <span class="n">entities_to_include</span><span class="o">=</span><span class="n">entities_to_include</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">output_dir_for_subject</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="n">masker</span> <span class="o">=</span> <span class="n">NiftiMasker</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> <span class="n">mask_strategy</span><span class="o">=</span><span class="s2">"epi"</span><span class="p">)</span>
+            <span class="n">masker</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">masker</span><span class="o">.</span><span class="n">mask_img_</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+            <span class="n">affine</span> <span class="o">=</span> <span class="n">masker</span><span class="o">.</span><span class="n">mask_img_</span><span class="o">.</span><span class="n">affine</span>
+
+            <span class="n">report</span> <span class="o">=</span> <span class="n">masker</span><span class="o">.</span><span class="n">generate_report</span><span class="p">()</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">save_as_html</span><span class="p">(</span><span class="n">output_mask_filename</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="s2">".html"</span><span class="p">))</span>
+
+            <span class="n">masker</span><span class="o">.</span><span class="n">mask_img_</span><span class="o">.</span><span class="n">to_filename</span><span class="p">(</span><span class="n">output_mask_filename</span><span class="p">)</span>
+
+            <span class="n">input_data</span> <span class="o">=</span> <span class="n">load_img</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">()</span>
+            <span class="n">patch_shape_</span> <span class="o">=</span> <span class="n">_patch_param</span><span class="p">(</span><span class="n">patch_shape</span><span class="p">,</span> <span class="n">input_data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            <span class="n">patch_overlap_</span> <span class="o">=</span> <span class="n">_patch_param</span><span class="p">(</span><span class="n">patch_overlap</span><span class="p">,</span> <span class="n">input_data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+            <span class="n">denoised_data</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">noise_std_map</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">denoise_func</span><span class="p">(</span>
+                <span class="n">input_data</span><span class="p">,</span>
+                <span class="n">patch_shape</span><span class="o">=</span><span class="n">patch_shape_</span><span class="p">,</span>
+                <span class="n">patch_overlap</span><span class="o">=</span><span class="n">patch_overlap_</span><span class="p">,</span>
+                <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">,</span>
+                <span class="n">mask_threshold</span><span class="o">=</span><span class="n">mask_threshold</span><span class="p">,</span>
+                <span class="n">recombination</span><span class="o">=</span><span class="n">recombination</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="n">noise_std_map</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            <span class="n">save_array</span><span class="p">(</span><span class="n">denoised_data</span><span class="p">,</span> <span class="n">affine</span><span class="p">,</span> <span class="n">output_filename</span><span class="p">)</span>
+            <span class="n">save_array</span><span class="p">(</span><span class="n">noise_std_map</span><span class="p">,</span> <span class="n">affine</span><span class="p">,</span> <span class="n">output_std_filename</span><span class="p">)</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">app</span><span class="p">()</span>
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2022, Pierre-Antoine Comby.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.21.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

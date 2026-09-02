@@ -1,0 +1,32 @@
+patch\_denoise.bindings
+=======================
+
+.. automodule:: patch_denoise.bindings
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   cli
+   nipype
+   utils
+

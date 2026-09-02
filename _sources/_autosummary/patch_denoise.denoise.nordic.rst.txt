@@ -1,0 +1,6 @@
+patch\_denoise.denoise.nordic
+=============================
+
+.. currentmodule:: patch_denoise.denoise
+
+.. autofunction:: nordic

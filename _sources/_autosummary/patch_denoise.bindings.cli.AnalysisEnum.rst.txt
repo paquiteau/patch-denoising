@@ -1,0 +1,78 @@
+AnalysisEnum
+============
+
+.. currentmodule:: patch_denoise.bindings.cli
+
+.. autoclass:: AnalysisEnum
+   :members:
+   :private-members:
+   :show-inheritance:
+   :special-members: __call__, __add__, __mul__, __matmul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~AnalysisEnum.encode
+      ~AnalysisEnum.replace
+      ~AnalysisEnum.split
+      ~AnalysisEnum.rsplit
+      ~AnalysisEnum.join
+      ~AnalysisEnum.capitalize
+      ~AnalysisEnum.casefold
+      ~AnalysisEnum.title
+      ~AnalysisEnum.center
+      ~AnalysisEnum.count
+      ~AnalysisEnum.expandtabs
+      ~AnalysisEnum.find
+      ~AnalysisEnum.partition
+      ~AnalysisEnum.index
+      ~AnalysisEnum.ljust
+      ~AnalysisEnum.lower
+      ~AnalysisEnum.lstrip
+      ~AnalysisEnum.rfind
+      ~AnalysisEnum.rindex
+      ~AnalysisEnum.rjust
+      ~AnalysisEnum.rstrip
+      ~AnalysisEnum.rpartition
+      ~AnalysisEnum.splitlines
+      ~AnalysisEnum.strip
+      ~AnalysisEnum.swapcase
+      ~AnalysisEnum.translate
+      ~AnalysisEnum.upper
+      ~AnalysisEnum.startswith
+      ~AnalysisEnum.endswith
+      ~AnalysisEnum.removeprefix
+      ~AnalysisEnum.removesuffix
+      ~AnalysisEnum.isascii
+      ~AnalysisEnum.islower
+      ~AnalysisEnum.isupper
+      ~AnalysisEnum.istitle
+      ~AnalysisEnum.isspace
+      ~AnalysisEnum.isdecimal
+      ~AnalysisEnum.isdigit
+      ~AnalysisEnum.isnumeric
+      ~AnalysisEnum.isalpha
+      ~AnalysisEnum.isalnum
+      ~AnalysisEnum.isidentifier
+      ~AnalysisEnum.isprintable
+      ~AnalysisEnum.zfill
+      ~AnalysisEnum.format
+      ~AnalysisEnum.format_map
+      ~AnalysisEnum.maketrans
+      ~AnalysisEnum.__init__
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~AnalysisEnum.PARTICIPANT
+   
+   

@@ -1,0 +1,6 @@
+patch\_denoise.bindings.utils.save\_array
+=========================================
+
+.. currentmodule:: patch_denoise.bindings.utils
+
+.. autofunction:: save_array

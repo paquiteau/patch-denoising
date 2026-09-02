@@ -1,0 +1,6 @@
+patch\_denoise.bindings.cli.parse\_mask\_arg
+============================================
+
+.. currentmodule:: patch_denoise.bindings.cli
+
+.. autofunction:: parse_mask_arg

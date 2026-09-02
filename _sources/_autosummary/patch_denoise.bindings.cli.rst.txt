@@ -1,0 +1,46 @@
+patch\_denoise.bindings.cli
+===========================
+
+.. automodule:: patch_denoise.bindings.cli
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+      :nosignatures:
+   
+      bids_main
+      main
+      parse_dims
+      parse_extra_args
+      parse_mask_arg
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      AnalysisEnum
+      DenoiserEnum
+      RecombinationEnum
+   
+   
+
+   
+   
+   
+
+
+

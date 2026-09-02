@@ -1,0 +1,86 @@
+DenoiserEnum
+============
+
+.. currentmodule:: patch_denoise.bindings.cli
+
+.. autoclass:: DenoiserEnum
+   :members:
+   :private-members:
+   :show-inheritance:
+   :special-members: __call__, __add__, __mul__, __matmul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~DenoiserEnum.encode
+      ~DenoiserEnum.replace
+      ~DenoiserEnum.split
+      ~DenoiserEnum.rsplit
+      ~DenoiserEnum.join
+      ~DenoiserEnum.capitalize
+      ~DenoiserEnum.casefold
+      ~DenoiserEnum.title
+      ~DenoiserEnum.center
+      ~DenoiserEnum.count
+      ~DenoiserEnum.expandtabs
+      ~DenoiserEnum.find
+      ~DenoiserEnum.partition
+      ~DenoiserEnum.index
+      ~DenoiserEnum.ljust
+      ~DenoiserEnum.lower
+      ~DenoiserEnum.lstrip
+      ~DenoiserEnum.rfind
+      ~DenoiserEnum.rindex
+      ~DenoiserEnum.rjust
+      ~DenoiserEnum.rstrip
+      ~DenoiserEnum.rpartition
+      ~DenoiserEnum.splitlines
+      ~DenoiserEnum.strip
+      ~DenoiserEnum.swapcase
+      ~DenoiserEnum.translate
+      ~DenoiserEnum.upper
+      ~DenoiserEnum.startswith
+      ~DenoiserEnum.endswith
+      ~DenoiserEnum.removeprefix
+      ~DenoiserEnum.removesuffix
+      ~DenoiserEnum.isascii
+      ~DenoiserEnum.islower
+      ~DenoiserEnum.isupper
+      ~DenoiserEnum.istitle
+      ~DenoiserEnum.isspace
+      ~DenoiserEnum.isdecimal
+      ~DenoiserEnum.isdigit
+      ~DenoiserEnum.isnumeric
+      ~DenoiserEnum.isalpha
+      ~DenoiserEnum.isalnum
+      ~DenoiserEnum.isidentifier
+      ~DenoiserEnum.isprintable
+      ~DenoiserEnum.zfill
+      ~DenoiserEnum.format
+      ~DenoiserEnum.format_map
+      ~DenoiserEnum.maketrans
+      ~DenoiserEnum.__init__
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~DenoiserEnum.MP_PCA
+      ~DenoiserEnum.HYBRID_PCA
+      ~DenoiserEnum.RAW
+      ~DenoiserEnum.OPTIMAL_FRO
+      ~DenoiserEnum.OPTIMAL_FRO_NOISE
+      ~DenoiserEnum.OPTIMAL_NUC
+      ~DenoiserEnum.OPTIMAL_OPE
+      ~DenoiserEnum.NORDIC
+      ~DenoiserEnum.ADAPTIVE_QUT
+   
+   

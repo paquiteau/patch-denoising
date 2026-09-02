@@ -1,0 +1,80 @@
+RecombinationEnum
+=================
+
+.. currentmodule:: patch_denoise.bindings.cli
+
+.. autoclass:: RecombinationEnum
+   :members:
+   :private-members:
+   :show-inheritance:
+   :special-members: __call__, __add__, __mul__, __matmul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~RecombinationEnum.encode
+      ~RecombinationEnum.replace
+      ~RecombinationEnum.split
+      ~RecombinationEnum.rsplit
+      ~RecombinationEnum.join
+      ~RecombinationEnum.capitalize
+      ~RecombinationEnum.casefold
+      ~RecombinationEnum.title
+      ~RecombinationEnum.center
+      ~RecombinationEnum.count
+      ~RecombinationEnum.expandtabs
+      ~RecombinationEnum.find
+      ~RecombinationEnum.partition
+      ~RecombinationEnum.index
+      ~RecombinationEnum.ljust
+      ~RecombinationEnum.lower
+      ~RecombinationEnum.lstrip
+      ~RecombinationEnum.rfind
+      ~RecombinationEnum.rindex
+      ~RecombinationEnum.rjust
+      ~RecombinationEnum.rstrip
+      ~RecombinationEnum.rpartition
+      ~RecombinationEnum.splitlines
+      ~RecombinationEnum.strip
+      ~RecombinationEnum.swapcase
+      ~RecombinationEnum.translate
+      ~RecombinationEnum.upper
+      ~RecombinationEnum.startswith
+      ~RecombinationEnum.endswith
+      ~RecombinationEnum.removeprefix
+      ~RecombinationEnum.removesuffix
+      ~RecombinationEnum.isascii
+      ~RecombinationEnum.islower
+      ~RecombinationEnum.isupper
+      ~RecombinationEnum.istitle
+      ~RecombinationEnum.isspace
+      ~RecombinationEnum.isdecimal
+      ~RecombinationEnum.isdigit
+      ~RecombinationEnum.isnumeric
+      ~RecombinationEnum.isalpha
+      ~RecombinationEnum.isalnum
+      ~RecombinationEnum.isidentifier
+      ~RecombinationEnum.isprintable
+      ~RecombinationEnum.zfill
+      ~RecombinationEnum.format
+      ~RecombinationEnum.format_map
+      ~RecombinationEnum.maketrans
+      ~RecombinationEnum.__init__
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~RecombinationEnum.WEIGHTED
+      ~RecombinationEnum.MEAN
+      ~RecombinationEnum.AVERAGE
+   
+   

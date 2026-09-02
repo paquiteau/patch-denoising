@@ -1,0 +1,6 @@
+patch\_denoise.bindings.utils.fast\_cuda\_check
+===============================================
+
+.. currentmodule:: patch_denoise.bindings.utils
+
+.. autofunction:: fast_cuda_check
