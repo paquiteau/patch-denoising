@@ -183,7 +183,9 @@ def make_denoiser(
             denoiser = torch.compile(
                 denoiser,
                 fullgraph=True,
-                mode="max-autotune",
+                # "max-autotune" crashes
+                # see https://github.com/pytorch/pytorch/issues/195731
+                mode="max-autotune-no-cudagraphs",
             )  # Compile the model for faster inference
             # warm up the model with a dummy input to trigger compilation before timing
             denoiser(dummy_input)
