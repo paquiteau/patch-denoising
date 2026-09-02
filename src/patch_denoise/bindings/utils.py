@@ -71,6 +71,10 @@ class _DenoiserMap:
     def __contains__(self, method: str) -> bool:
         return method in DENOISER_NAMES
 
+    def keys(self):
+        """Return the available denoising method names."""
+        return DENOISER_NAMES
+
 
 DENOISER_MAP = _DenoiserMap()
 
