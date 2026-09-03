@@ -159,7 +159,7 @@ def make_denoiser(
             loss=method.split("-")[-1],
             **kwargs,
         )
-    elif method == "mppca":
+    elif method == "mp-pca":
         denoiser = MPPCADenoiser(
             patch_shape=patch_shape,
             recombination=recombination,
@@ -246,9 +246,9 @@ def main_gpu(
     streams = [torch.cuda.Stream() for _ in range(N_STREAMS)]
     log.info(f"Processing {len(patch_dataset)} patches with batch size {batch_size}...")
 
-    out_weights = torch.zeros(input_data_.shape, dtype=input_data_.dtype, device="cuda")
-    out_var_map = torch.zeros(input_data_.shape, dtype=input_data_.dtype, device="cuda")
-    out_acc = torch.zeros(input_data_.shape, dtype=torch.float32, device="cuda")
+    out_weights = torch.zeros(input_data_.shape, dtype=torch.float32, device="cuda")
+    out_var_map = torch.zeros(input_data_.shape, dtype=torch.float32, device="cuda")
+    out_acc = torch.zeros(input_data_.shape, dtype=input_data_.dtype, device="cuda")
     for i, (patches, indices) in enumerate(tqdm(loader, unit_scale=batch_size)):
         slot = i % 2
         stream = streams[slot]
