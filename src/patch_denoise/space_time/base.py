@@ -1,11 +1,10 @@
 """Base Structure for patch-based denoising on spatio-temporal dimension."""
 
-from patch_denoise.bindings.cli import RecombinationEnum
-
 import abc
 import logging
 import warnings
 from collections.abc import Callable
+from enum import StrEnum
 from typing import Any
 
 import numpy as np
@@ -15,6 +14,14 @@ from tqdm.rich import tqdm
 from .._docs import fill_doc
 
 log = logging.getLogger(__name__)
+
+
+class RecombinationEnum(StrEnum):
+    """Enum for recombination methods."""
+
+    WEIGHTED = "weighted"
+    MEAN = AVERAGE = "average"
+    CENTER = "center"
 
 
 class PatchedArray:
@@ -43,7 +50,6 @@ class PatchedArray:
 
         self._ps = np.asarray(patch_shape)
         self._po = np.asarray(patch_overlap)
-        self._po = patch_overlap
 
         dimensions = self._arr.ndim
         step = self._ps - self._po
@@ -175,7 +181,8 @@ class BaseSpaceTimeDenoiser(abc.ABC):
 
         if recombination not in RecombinationEnum:
             raise ValueError(
-                f"recombination must be one of {RecombinationEnum.__members__.keys()}. Got {recombination}."
+                f"recombination must be one of {[e.value for e in RecombinationEnum]}."
+                f" Got {recombination}."
             )
 
         self.recombination = recombination
@@ -270,19 +277,18 @@ class BaseSpaceTimeDenoiser(abc.ABC):
             noise_std_estimate.add2patch(i, noise_var)
             patch_counts.add2patch(i, 1)
 
-            if self.recombination == "center":
+            if self.recombination == RecombinationEnum.CENTER:
                 output_data.get_patch(i)[center_pos] = p_denoise[center_pos]
-            elif self.recombination == "weighted":
+            elif self.recombination == RecombinationEnum.WEIGHTED:
                 theta = 1 / (2 + maxidx)
                 output_data.add2patch(i, p_denoise * theta)
                 patch_weights.add2patch(i, theta)
-            elif self.recombination == "average":
+            elif self.recombination == RecombinationEnum.AVERAGE:
                 output_data.add2patch(i, p_denoise)
                 patch_weights.add2patch(i, 1)
             else:
-                raise ValueError(
-                    "recombination must be one of 'weighted', 'average', 'center'"
-                )
+                valid = [e.value for e in RecombinationEnum]
+                raise ValueError(f"recombination must be one of {valid}.")
             if progbar:
                 progbar.update()
         log.info("Finished processing patches.")
@@ -294,6 +300,11 @@ class BaseSpaceTimeDenoiser(abc.ABC):
 
             noise_std_estimate = np.sqrt(noise_std_estimate._arr / patch_counts._arr)
             rank_map = rank_map._arr / patch_counts._arr
+
+        untouched = patch_counts._arr == 0
+        output_data[untouched] = 0
+        noise_std_estimate[untouched] = 0
+        rank_map[untouched] = 0
 
         noise_std_estimate[~process_mask._arr] = 0
         output_data[~process_mask._arr] = 0

@@ -55,7 +55,8 @@ class PatchDenoiseInputSpec(BaseInterfaceInputSpec):
     mask_threshold = traits.Int(10, usedefault=True, desc="Threshold for mask.")
     recombination = traits.Enum(
         "weighted",
-        "mean",
+        "average",
+        "center",
         usedefault=True,
         desc="Recombination method.",
     )
@@ -193,7 +194,8 @@ class NoiseStdMap(SimpleInterface):
     def _run_interface(self, runtime):
         noise_map = nib.Nifti1Image.from_filename(self.inputs.noise_map_file)
         noise_std_map = estimate_noise(
-            noise_map.get_fdata() / self.inputs.fft_scale, self.inputs.block_size
+            noise_map.get_fdata(dtype=np.float32) / self.inputs.fft_scale,
+            self.inputs.block_size,
         )
         noise_std_map_img = nib.Nifti1Image(noise_std_map, affine=noise_map.affine)
 

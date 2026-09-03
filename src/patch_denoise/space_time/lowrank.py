@@ -404,12 +404,13 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         **kwargs,
     ):
         u_vec, s_values, v_vec, p_tmean = svd_analysis(patch)
+        n_dim = patch.shape[0]
         if var_apriori is not None:
             sigma = np.sqrt(np.mean(var_apriori.get_patch(patch_idx)))
         else:
-            sigma = np.median(s_values) / np.sqrt(patch.shape[1] * mp_median)
+            sigma = np.median(s_values) / np.sqrt(n_dim * mp_median)
 
-        scale_factor = np.sqrt(patch.shape[1]) * sigma
+        scale_factor = np.sqrt(n_dim) * sigma
         thresh_s_values = scale_factor * shrink_func(
             s_values / scale_factor,
             beta=patch.shape[1] / patch.shape[0],

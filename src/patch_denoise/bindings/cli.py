@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Cli interface."""
 
-import json
 import logging
 import re
 from enum import StrEnum
@@ -26,6 +25,7 @@ from patch_denoise.bindings.utils import (
     load_complex_nifti,
     save_array,
 )
+from patch_denoise.space_time.base import RecombinationEnum
 
 GPU_AVAILABLE = fast_cuda_check()
 
@@ -55,14 +55,6 @@ class DenoiserEnum(StrEnum):
     OPTIMAL_OPE = "optimal-ope"
     NORDIC = "nordic"
     ADAPTIVE_QUT = "adaptive-qut"
-
-
-class RecombinationEnum(StrEnum):
-    """Enum for recombination methods."""
-
-    WEIGHTED = "weighted"
-    MEAN = AVERAGE = "mean"
-    CENTER = "center"
 
 
 def parse_dims(value: Any) -> tuple[int, ...]:
