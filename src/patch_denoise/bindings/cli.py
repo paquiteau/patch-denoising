@@ -198,7 +198,7 @@ GpuFlag = Annotated[
     typer.Option(
         "--gpu/--cpu",
         help="Use GPU or CPU for computation. Requires patch_denoise.gpu module. "
-        "GPU is enabled  by default if available.",
+        "GPU is enabled by default if available.",
     ),
 ]
 
