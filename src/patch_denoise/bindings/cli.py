@@ -62,6 +62,7 @@ class RecombinationEnum(StrEnum):
 
     WEIGHTED = "weighted"
     MEAN = AVERAGE = "mean"
+    CENTER = "center"
 
 
 def parse_dims(value: Any) -> tuple[int, ...]:
