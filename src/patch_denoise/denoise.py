@@ -33,9 +33,7 @@ def mp_pca(
 
     Returns
     -------
-    $denoise_return    "numpy",
-    "scipy",
-    "matplotlib",
+    $denoise_return
 
     Notes
     -----
@@ -59,7 +57,9 @@ def mp_pca(
         recombination=recombination,
         threshold_scale=threshold_scale,
     )
-    return denoiser.denoise(input_data, mask=mask, mask_threshold=mask_threshold)
+    return denoiser.denoise(
+        input_data, mask=mask, mask_threshold=mask_threshold, progbar=progbar
+    )
 
 
 @fill_doc
