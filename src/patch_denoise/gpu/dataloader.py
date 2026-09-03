@@ -112,7 +112,7 @@ def sliding_sum_nd(data, patch_shape, patch_overlap):
     return res
 
 
-def select_patches_to_process(mask, patch_shape, patch_overlap, mask_threshold=0.5):
+def select_patches_to_process(mask, patch_shape, patch_overlap, mask_threshold=50):
     """Select patches to process based on the mask and threshold.
 
     Parameters
@@ -123,9 +123,9 @@ def select_patches_to_process(mask, patch_shape, patch_overlap, mask_threshold=0
         The shape of each patch.
     patch_overlap : tuple of int
         The number of overlapping elements between adjacent patches along each dimension
-    mask_threshold : float, default 0.5
+    mask_threshold : float, default 50
         The percentage threshold for selecting patches. Patches with a
-        percentage of masked pixels below this threshold will be selected for
+        percentage of masked pixels above this threshold will be selected for
         processing.
 
     Returns
@@ -133,9 +133,7 @@ def select_patches_to_process(mask, patch_shape, patch_overlap, mask_threshold=0
     list of int
         A list of indices corresponding to the selected patches to process.
     """
-    #
     # move to cuda to be super fast
-
     with torch.inference_mode():
         mask_g = mask.to(dtype=torch.float32, device="cuda")
         patch_score_g = sliding_sum_nd(mask_g, patch_shape, patch_overlap)
@@ -162,7 +160,7 @@ class PatchDataset(torch.utils.data.Dataset):
         patch_overlap: tuple[int, ...],
         noise_map=None,
         mask: torch.Tensor | NDArray | None = None,
-        mask_threshold=0.5,
+        mask_threshold=50,
     ):
         # TODO: this can be a bit memory demanding on the cpu side
         # consider implementing a more memory efficient version
@@ -170,13 +168,13 @@ class PatchDataset(torch.utils.data.Dataset):
 
         data_shape = input_data.shape
         if mask is None:
-            mask = torch.ones(data_shape, dtype=torch.float32)
+            mask = torch.ones(data_shape[:-1], dtype=torch.float32)
         else:
             if isinstance(mask, np.ndarray):
                 mask = torch.from_numpy(mask)
             mask = mask.to(dtype=torch.float32)
-            if mask.shape == data_shape[:-1]:  # only spatial mask provided
-                mask = mask[..., None].expand(data_shape).contiguous()
+        if mask.shape == data_shape[:-1]:  # only spatial mask provided
+            mask = mask[..., None].expand(data_shape).contiguous()
 
         self.patch_locs = select_patches_to_process(
             mask, patch_shape, patch_overlap, mask_threshold
