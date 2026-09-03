@@ -76,8 +76,10 @@ class OptimalSVDDenoiser(torch.nn.Module):
         m = torch.mean(x_flat, dim=-2, keepdim=True)
         xc = x_flat - m
         u, s, v = torch.linalg.svd(xc, full_matrices=False, driver="gesvda")
-        # Calculate noise scale
-        median_s = torch.median(s, dim=-1)[0]
+        # Calculate noise scale. `torch.quantile(..., 0.5)` (not torch.median,
+        # which returns the lower of the two middle values on an even-length
+        # input) matches np.median's interpolated behavior used on CPU.
+        median_s = torch.quantile(s, 0.5, dim=-1)
         scale_factor = median_s / self.mp_median
 
         # Apply shrink
@@ -86,16 +88,17 @@ class OptimalSVDDenoiser(torch.nn.Module):
         s_shrink = s_shrink * scale_factor_exp
         s_shrink = torch.nan_to_num(s_shrink, nan=0.0)
 
-        rank = torch.sum(s_shrink > 0, dim=-1) + 1
+        maxidx = torch.sum(s_shrink > 0, dim=-1)
 
         if self.recombination == "weighted":
-            weight = 1.0 / rank
+            weight = 1.0 / (2.0 + maxidx)
         else:
-            weight = torch.ones_like(rank, dtype=x.dtype)
+            weight = torch.ones_like(maxidx, dtype=x.dtype)
 
         x_denoised = torch.matmul(u * s_shrink.unsqueeze(1), v) + m
 
-        return x_denoised.reshape(x.shape), weight, scale_factor**2
+        M = x_flat.shape[-1]
+        return x_denoised.reshape(x.shape), weight, scale_factor**2 / M
 
 
 class MPPCADenoiser(torch.nn.Module):
@@ -117,7 +120,7 @@ class MPPCADenoiser(torch.nn.Module):
         # Flatten and mean center
         x_flat = x.reshape(x.shape[0], -1, x.shape[-1])  # (B, N,M)
 
-        xm = torch.mean(x_flat, dim=-1, keepdim=True)
+        xm = torch.mean(x_flat, dim=-2, keepdim=True)
         xc = x_flat - xm
 
         u, s, v = torch.linalg.svd(xc, full_matrices=False, driver="gesvda")
@@ -145,20 +148,23 @@ class MPPCADenoiser(torch.nn.Module):
         # s2 = csum(p+1)/((M-p)*(N-p));
         # s2_after = s2 - csum(p+1)/(M*N);
 
-        p = torch.arange(M)
+        p_range = torch.arange(M, device=x.device)
         p = torch.argmax(
-            (eigs - eigs[:, -1]) * (M - p) * (N - p)
-            < 4 * rcum_eigs * torch.sqrt(M * N),  # type: ignore
+            (
+                (eigs - eigs[:, -1:]) * (M - p_range) * (N - p_range)
+                < 4 * rcum_eigs * (M * N) ** 0.5 * self.threshold_scale**2
+            ).to(torch.int64),
             dim=-1,
         )
-        eigs[:, p:] = 0
+        eigs = eigs * (p_range < p.unsqueeze(-1))
         s_shrink = torch.sqrt(eigs * (N - 1))
         x_denoised = torch.matmul(u * s_shrink.unsqueeze(1), v) + xm
 
         if self.recombination == "weighted":
-            weight = 1.0 / (1.0 + p)
+            weight = 1.0 / (2.0 + p)
         else:
             weight = torch.ones_like(p, dtype=x.dtype)
 
-        var_estimate = rcum_eigs[:, p] / (M - p)
+        batch_idx = torch.arange(x_flat.shape[0], device=x.device)
+        var_estimate = rcum_eigs[batch_idx, p] / (M - p)
         return x_denoised.reshape(x.shape), weight, var_estimate

@@ -290,12 +290,13 @@ class BaseSpaceTimeDenoiser(abc.ABC):
             if self.recombination in ["average", "weighted"]:
                 output_data /= patch_weights
 
-            noise_std_estimate = noise_std_estimate._arr / patch_counts._arr
+            noise_std_estimate = np.sqrt(noise_std_estimate._arr / patch_counts._arr)
             rank_map = rank_map._arr / patch_counts._arr
 
         noise_std_estimate[~process_mask._arr] = 0
         output_data[~process_mask._arr] = 0
         rank_map[~process_mask._arr] = 0
+        patch_weights[~process_mask._arr] = 0
 
         return output_data, patch_weights, noise_std_estimate, rank_map
 
