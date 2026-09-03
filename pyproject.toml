@@ -62,7 +62,6 @@ doc = [
 
 [project.scripts]
 patch-denoise = "patch_denoise.bindings.cli:app"
-patch-denoise-bids = "patch_denoise.bindings.bids:app"
 
 [tool.setuptools_scm]
 write_to = "src/patch_denoise/_version.py"
