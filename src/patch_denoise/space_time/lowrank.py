@@ -232,7 +232,9 @@ class NordicDenoiser(RawSVDDenoiser):
         max_sval = sum(
             max(
                 svd(
-                    np.random.randn(int(np.prod(patch_shape)), input_data.shape[-1]),
+                    np.random.randn(
+                        int(np.prod(patch_shape[:-1])), input_data.shape[-1]
+                    ),
                     compute_uv=False,
                 )
             )
@@ -471,6 +473,8 @@ if NUMBA_AVAILABLE:
         ],
         fastmath=True,
     )(_sure_atn_cost)
+else:
+    sure_atn_cost = _sure_atn_cost
 
 
 def _atn_shrink(singvals, gamma, tau):
@@ -495,7 +499,7 @@ def _get_gamma_tau_qut(patch, sing_vals, stdest, gamma0, nbsim):
     if not isinstance(gamma0, (float, np.floating)):
 
         def sure_gamma(gamma):
-            return _sure_atn_cost(
+            return sure_atn_cost(
                 X=patch,
                 method="qut",
                 sing_vals=sing_vals,
@@ -518,7 +522,7 @@ def _get_gamma_tau(patch, sing_vals, stdest, method, gamma0, tau0):
     cost_glob = np.inf
     for g in gamma0:
         res_opti = minimize(
-            lambda x: _sure_atn_cost(
+            lambda x: sure_atn_cost(
                 X=patch,
                 method=method,
                 gamma=g,  # noqa: B023
@@ -529,7 +533,7 @@ def _get_gamma_tau(patch, sing_vals, stdest, method, gamma0, tau0):
             tau0,
         )
         # get cost value.
-        cost = _sure_atn_cost(
+        cost = sure_atn_cost(
             X=patch,
             method=method,
             gamma=g,
