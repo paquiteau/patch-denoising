@@ -42,25 +42,27 @@ class MPPCADenoiser(BaseSpaceTimeDenoiser):
         self.input_denoising_kwargs["threshold_scale"] = threshold_scale
 
     def _patch_processing(self, patch, patch_idx=None, threshold_scale=1.0):
-        """Process a patch with the MP-PCA method."""
-        p_center, eig_vals, eig_vec, p_tmean = eig_analysis(patch)
-        maxidx = 0
-        meanvar = np.mean(eig_vals)
-        meanvar *= 4 * np.sqrt((len(eig_vals) - maxidx + 1) / len(patch))
-        while maxidx < len(eig_vals) and meanvar < eig_vals[~maxidx] - eig_vals[0]:
-            maxidx += 1
-            meanvar = np.mean(eig_vals[:-maxidx])
-            meanvar *= 4 * np.sqrt((len(eig_vec) - maxidx + 1) / len(patch))
-        var_noise = np.mean(eig_vals[: len(eig_vals) - maxidx])
+        """Process a patch with the MP-PCA method (Veraart 2016 MP threshold)."""
+        N, M = patch.shape  # N: spatial samples, M: temporal/feature dimension
+        p_center, eig_vals, eig_vec, p_tmean = eig_analysis(patch, max_eig_val=M)
+        # `eig_analysis` returns eigenvalues in increasing order; flip to
+        # decreasing order to match the classical MP-PCA formulation.
+        eig_vals = eig_vals[::-1]
 
-        maxidx = np.sum(eig_vals > (var_noise * threshold_scale**2))
+        cum_eigs = np.cumsum(eig_vals)
+        rcum_eigs = eig_vals - cum_eigs + cum_eigs[-1]
+        p_range = np.arange(M)
+        condition = (eig_vals - eig_vals[-1]) * (M - p_range) * (N - p_range) < (
+            4 * rcum_eigs * np.sqrt(M * N) * threshold_scale**2
+        )
+        nonzero = np.flatnonzero(condition)
+        maxidx = int(nonzero[0]) if nonzero.size else 0
+        var_noise = rcum_eigs[maxidx] / (M - maxidx)
 
         if maxidx == 0:
             patch_new = np.zeros_like(patch) + p_tmean
         else:
             patch_new = eig_synthesis(p_center, eig_vec, p_tmean, maxidx)
-
-        # Equation (3) of Manjon 2013
 
         return patch_new, maxidx, var_noise
 

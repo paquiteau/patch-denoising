@@ -181,6 +181,7 @@ class PatchDataset(torch.utils.data.Dataset):
         self.patch_locs = select_patches_to_process(
             mask, patch_shape, patch_overlap, mask_threshold
         )
+        self.mask = mask
         self.patch_shape = patch_shape
         self.patch_overlap = patch_overlap
 

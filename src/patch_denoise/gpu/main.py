@@ -19,6 +19,7 @@ def __atomic_accumulate_kernel(
     global_out_ptr,  # Interpreted as float*
     global_weights_ptr,  # Interpreted as float*
     global_var_est_ptr,  # Interpreted as float*
+    global_count_ptr,  # Interpreted as uint32*
     recon_ptr,  # Interpreted as float*
     weights_ptr,  # Interpreted as float*
     varest_ptr,  # Interpreted as float*
@@ -105,12 +106,14 @@ def __atomic_accumulate_kernel(
         # Weights are always 1 float per logical pixel
         tl.atomic_add(global_var_est_ptr + g_idx, v, mask=mask)
         tl.atomic_add(global_weights_ptr + g_idx, w, mask=mask)
+        tl.atomic_add(global_count_ptr + g_idx, 1, mask=mask)
 
 
 def launch_triton(
     out_acc: torch.Tensor,
     out_weights: torch.Tensor,
     out_var_map: torch.Tensor,
+    out_counts: torch.Tensor,
     recon: torch.Tensor,
     weights: torch.Tensor,
     var_est: torch.Tensor,
@@ -135,6 +138,7 @@ def launch_triton(
         p_out,
         out_weights,
         out_var_map,
+        out_counts,
         p_recon,
         weights,
         var_est,
@@ -212,6 +216,18 @@ def main_gpu(
     **kwargs,
 ):
     """Denoise loop for the gpu version of patch-denoise."""
+    squeeze_z = input_data.ndim == 3
+    if squeeze_z:  # 2D + T
+        data_shape = input_data.shape
+        input_data = input_data[:, :, None, :]
+        patch_shape = (patch_shape[0], patch_shape[1], 1, patch_shape[2])
+        patch_overlap = (patch_overlap[0], patch_overlap[1], 0, patch_overlap[2])
+        if mask is not None:
+            if mask.shape == data_shape:
+                mask = mask[:, :, None, :]
+            elif mask.shape == data_shape[:-1]:
+                mask = mask[:, :, None]
+
     # Create the Dataset
     batch_size = int(batch_size)
     # setup dataset and dataloader using pytorch api:
@@ -248,6 +264,7 @@ def main_gpu(
 
     out_weights = torch.zeros(input_data_.shape, dtype=torch.float32, device="cuda")
     out_var_map = torch.zeros(input_data_.shape, dtype=torch.float32, device="cuda")
+    out_counts = torch.zeros(input_data_.shape, dtype=torch.uint32, device="cuda")
     out_acc = torch.zeros(input_data_.shape, dtype=input_data_.dtype, device="cuda")
     for i, (patches, indices) in enumerate(tqdm(loader, unit_scale=batch_size)):
         slot = i % 2
@@ -261,6 +278,7 @@ def main_gpu(
                 out_acc,
                 out_weights,
                 out_var_map,
+                out_counts,
                 gpu_out,
                 gpu_weight,
                 gpu_var_est,
@@ -268,13 +286,26 @@ def main_gpu(
                 patch_shape,
             )
 
-    out_acc /= out_weights.clamp(min=1e-8)  # Avoid division by zero
+    # Voxels outside the mask (or missed by every selected patch) never
+    # accumulate any weight/count, so these divisions leave nan/inf there;
+    # null them out via the mask instead of clamping the divisor.
+    mask_arr = patch_dataset.mask.to(device="cuda", dtype=torch.bool)
+
+    out_acc /= out_weights
+    out_acc[~mask_arr] = 0
     out_acc = out_acc.cpu().numpy()
-    out_var_map /= out_weights.clamp(min=1e-8)  # Avoid division by zero
-    out_var_map = torch.sqrt(
-        torch.mean(out_var_map, -1)
-    )  # Convert variance to standard deviation
+
+    out_var_map /= out_counts.to(torch.float32)
+    out_var_map = torch.sqrt(out_var_map)
+    out_var_map[~mask_arr] = 0
     out_var_map = out_var_map.cpu().numpy()
+
+    out_weights[~mask_arr] = 0
     out_weights = out_weights.cpu().numpy()
+
+    if squeeze_z:
+        out_acc = out_acc[:, :, 0, :]
+        out_weights = out_weights[:, :, 0, :]
+        out_var_map = out_var_map[:, :, 0, :]
 
     return out_acc, out_weights, out_var_map, None
