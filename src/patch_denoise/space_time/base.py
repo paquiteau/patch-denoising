@@ -1,5 +1,7 @@
 """Base Structure for patch-based denoising on spatio-temporal dimension."""
 
+from patch_denoise.bindings.cli import RecombinationEnum
+
 import abc
 import logging
 import warnings
@@ -171,9 +173,9 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         self.p_shape = patch_shape
         self.p_ovl = patch_overlap
 
-        if recombination not in ["weighted", "average", "center"]:
+        if recombination not in RecombinationEnum:
             raise ValueError(
-                "recombination must be one of 'weighted', 'average', 'center'"
+                f"recombination must be one of {RecombinationEnum.__members__.keys()}. Got {recombination}."
             )
 
         self.recombination = recombination
