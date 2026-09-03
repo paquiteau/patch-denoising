@@ -93,7 +93,7 @@ class OptimalSVDDenoiser(torch.nn.Module):
         if self.recombination == "weighted":
             weight = 1.0 / (2.0 + maxidx)
         else:
-            weight = torch.ones_like(maxidx, dtype=x.dtype)
+            weight = torch.ones_like(maxidx, dtype=torch.float32)
 
         x_denoised = torch.matmul(u * s_shrink.unsqueeze(1), v) + m
 
@@ -163,7 +163,7 @@ class MPPCADenoiser(torch.nn.Module):
         if self.recombination == "weighted":
             weight = 1.0 / (2.0 + p)
         else:
-            weight = torch.ones_like(p, dtype=x.dtype)
+            weight = torch.ones_like(p, dtype=torch.float32)
 
         batch_idx = torch.arange(x_flat.shape[0], device=x.device)
         var_estimate = rcum_eigs[batch_idx, p] / (M - p)
