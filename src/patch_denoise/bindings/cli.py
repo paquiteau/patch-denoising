@@ -85,6 +85,16 @@ def parse_mask_arg(value: str):
     return path.absolute()
 
 
+def parse_gpu_batch_size(value: str) -> str | int:
+    """Validate if value is 'auto' or an integer batch size."""
+    if value == "auto":
+        return value
+    try:
+        return int(value)
+    except ValueError:
+        raise typer.BadParameter(f"Must be an integer or 'auto': <{value}>.") from None
+
+
 def parse_extra_args(extras: list[str] | None) -> dict[str, Any]:
     """Parse extra arguments passed as key=value pairs into a dictionary."""
     kwargs = dict()
@@ -183,6 +193,27 @@ GpuFlag = Annotated[
         "--gpu/--cpu",
         help="Use GPU or CPU for computation. Requires patch_denoise.gpu module. "
         "GPU is enabled by default if available.",
+    ),
+]
+GpuBatchSizeOpt = Annotated[
+    str,
+    typer.Option(
+        "--gpu-batch-size",
+        callback=parse_gpu_batch_size,
+        metavar="INTEGER | auto",
+        help="Number of patches processed per GPU batch, or 'auto' to measure "
+        "the fastest size for this GPU/method/patch-shape once and cache it "
+        "(~/.cache/patch_denoise/gpu_batch_size.json) for future runs. "
+        "Ignored on CPU.",
+    ),
+]
+GpuCompileFlag = Annotated[
+    bool,
+    typer.Option(
+        "--gpu-compile/--no-gpu-compile",
+        help="Compile the GPU denoiser with torch.compile. Ignored on CPU. "
+        "Adds warmup cost and currently fails on inputs whose last batch is a "
+        "different size (i.e. n_patches is not a multiple of --gpu-batch-size).",
     ),
 ]
 
@@ -316,6 +347,8 @@ def main(
     nan_to_num: NaN2NumOpt = None,
     verbose: VerboseOpt = 0,
     gpu: GpuFlag = GPU_AVAILABLE,
+    gpu_batch_size: GpuBatchSizeOpt = "auto",
+    gpu_compile: GpuCompileFlag = False,
     input_phase: Annotated[
         Path | None,
         typer.Option(
@@ -445,6 +478,8 @@ def main(
         from patch_denoise.gpu.main import main_gpu as denoise_func
 
         kwargs["method"] = method
+        kwargs["batch_size"] = gpu_batch_size
+        kwargs["compile"] = gpu_compile
     else:
         denoise_func = DENOISER_MAP[method]
 
