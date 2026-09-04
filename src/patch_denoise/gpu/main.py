@@ -339,8 +339,9 @@ def main_gpu(
     out_var_map[~mask_arr] = 0
     out_var_map = out_var_map.cpu().numpy()
 
-    out_rank_map /= out_counts
+    out_rank_map = out_rank_map.to(dtype=torch.float32)
     out_rank_map[~mask_arr] = 0
+    out_rank_map /= out_counts
     out_rank_map = out_rank_map.cpu().numpy()
 
     out_weights[~mask_arr] = 0
