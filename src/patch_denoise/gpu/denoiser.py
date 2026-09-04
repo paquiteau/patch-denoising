@@ -178,13 +178,11 @@ class MPPCADenoiser(torch.nn.Module):
         # s2_after = s2 - csum(p+1)/(M*N);
 
         p_range = torch.arange(M, device=x.device)
-        p = torch.argmax(
-            (
-                (eigs - eigs[:, -1:]) * (M - p_range) * (N - p_range)
-                < 4 * rcum_eigs * (M * N) ** 0.5 * self.threshold_scale**2
-            ).to(torch.uint32),
-            dim=-1,
-        )
+        # eigs is ascending, so mask is True for all indices < p, and False for all indices >= p
+        mask = (eigs - eigs[:, -1:]) * (M - p_range) * (N - p_range) > 4 * rcum_eigs * (
+            M * N
+        ) ** 0.5 * self.threshold_scale**2
+        p = torch.sum(mask, dim=-1)  # p is the index of the last True in mask
         eigs = eigs * (p_range < p.unsqueeze(-1))
         s_shrink = torch.sqrt(eigs * (N - 1))
         x_denoised = torch.matmul(u * s_shrink.unsqueeze(1), v) + xm
