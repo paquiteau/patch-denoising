@@ -3,6 +3,7 @@
 
 import logging
 import re
+import time
 from enum import StrEnum
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any
@@ -104,10 +105,6 @@ def parse_extra_args(extras: list[str] | None) -> dict[str, Any]:
 
 
 app = typer.Typer(help="Patch denoising CLI tool.")
-
-###########################
-## Shared Argument Types ##
-###########################
 
 MethodOpt = Annotated[
     DenoiserEnum,
@@ -227,7 +224,7 @@ def _load_validate_input(
     verbose: int,
 ) -> tuple[NDArray, NDArray, "NiftiMasker", NDArray | None]:
     from nilearn.image import resample_img
-    from nilearn.maskers import NiftiMasker  # noqa: F811 (runtime import)
+    from nilearn.maskers import NiftiMasker
 
     if input_phase is not None:
         input_data, affine = load_complex_nifti(input_file, input_phase)
@@ -249,8 +246,9 @@ def _load_validate_input(
     masker = NiftiMasker(verbose=verbose, mask_strategy="epi")
     if mask != "auto":
         masker.mask_img = mask
-
-    masker.fit(input_file)
+        masker.fit()
+    else:
+        masker.fit(input_file)
 
     affine_mask = masker.mask_img_.affine
 
@@ -351,13 +349,13 @@ def main(
     ] = None,
 ):
     """Perform local-low-rank denoising on 4D MRI data."""
+    tic0 = tic = time.perf_counter()
     kwargs = parse_extra_args(extras)
 
     levels = [logging.WARNING, logging.INFO, logging.DEBUG]
     level = levels[min(verbose, len(levels) - 1)]
     logging.getLogger("patch_denoise").setLevel(level)
     logging.getLogger("py.warnings").setLevel(level)
-
     if output_file is None:
         output_file = input_file.parent / f"D{input_file.name}"
 
@@ -401,6 +399,7 @@ def main(
         report.save_as_html(output_file.with_suffix(".html"))
     mask_data = masker.mask_img_.get_fdata().astype(bool)
 
+    toc = time.perf_counter()
     from patch_denoise.space_time.base import _patch_param
 
     # substitute any -1 in patch_shape or patch_overlap with the corresponding dimension
@@ -408,6 +407,7 @@ def main(
     patch_shape_ = _patch_param(patch_shape, input_data.shape)
 
     patch_overlap_ = _patch_param(patch_overlap, input_data.shape)
+    log.debug("Preprocessing and data loading completed in %.2f seconds.", toc - tic)
     log.info(f"denoising method: {method}.")
     log.info(f"patch shape: {patch_shape_} (from {patch_shape}).")
     log.info(f"patch overlap: {patch_overlap_} (from {patch_overlap}).")
@@ -458,6 +458,7 @@ def main(
             raise RuntimeError("A noise map must be specified for this method.")
         kwargs["noise_std"] = noise_std_map
 
+    tic = time.perf_counter()
     denoised_data, _, noise_std_map, _ = denoise_func(
         input_data,
         patch_shape=patch_shape_,
@@ -467,10 +468,15 @@ def main(
         recombination=recombination,
         **kwargs,
     )
-
+    toc = time.perf_counter()
+    log.debug("Denoising completed in %.2f seconds.", toc - tic)
+    tic = time.perf_counter()
     save_array(denoised_data, affine, output_file)
     if output_noise_std_map_file is not None:
         save_array(noise_std_map, affine, output_noise_std_map_file)
+    toc = time.perf_counter()
+    log.debug("Saving completed in %.2f seconds.", toc - tic)
+    log.debug("Total time: %.2f seconds.", toc - tic0)
 
 
 if __name__ == "__main__":
