@@ -26,9 +26,7 @@ class OptimalSVDDenoiser(torch.nn.Module):
 
         beta = patch_shape[-1] / np.prod(patch_shape[:-1])
 
-        # Precompute all constants to save math ops in the forward pass. They are
-        # python scalars, not tensors: inductor folds them into the elementwise
-        # kernels as immediates, and there is no 0-d tensor to broadcast or move.
+        # Precompute all constants to save math ops in the forward pass. .
         self.beta = float(beta)
         self.sqrt_beta = float(np.sqrt(beta))
         self.mp_median = float(
@@ -57,30 +55,56 @@ class OptimalSVDDenoiser(torch.nn.Module):
             ) / ((tmp**2) * singvals)
 
         elif self.loss == "fro":
-            # eta(y) = sqrt((y**2 - beta - 1)**2 - 4 beta) / y for y >= 1 + sqrt(beta),
-            # 0 otherwise. Factorized as (y**2 - hi)(y**2 - lo) with hi/lo the squared
-            # MP edges: the radicand is also positive *below* the lower edge, so the
-            # relu on (y**2 - hi) is what enforces the support, not just positivity.
+            # eta(y) = sqrt((y**2 - beta - 1)**2 - 4 beta) / y
+            # for y >= 1 + sqrt(beta), 0 otherwise.
+            # Factorized as (y**2 - hi)(y**2 - lo)/y with hi/lo the squared
+            # MP edges. relu on (y**2 - hi) enforces constraint.
             y2 = singvals * singvals
             above = torch.nn.functional.relu(y2 - self.mp_edge_hi)
-            # Branchless: the relu already zeroes everything below the upper edge, so
-            # the clamp only exists to keep the 0/0 of a null singular value finite.
             return torch.sqrt(above * (y2 - self.mp_edge_lo)) / singvals.clamp_min(
                 torch.finfo(singvals.dtype).tiny
             )
 
-    def forward(self, x: torch.Tensor):
-        """Apply optimal SVD denoising to a batch of patches."""
+    def forward(self, x: torch.Tensor, var_apriori: torch.Tensor | None = None):
+        """Apply optimal SVD denoising to a batch of patches.
+
+        Parameters
+        ----------
+        x : (B, *patch_shape) tensor
+            Batch of patches to denoise.
+        var_apriori : (B,) tensor, optional
+            Per-patch noise variance (mean of the squared noise std over the
+            patch footprint), matching CPU's ``noise_std`` path. If None,
+            sigma is self-estimated from the median singular value
+            (Marchenko-Pastur), matching CPU's ``noise_std=None`` path.
+
+        Returns
+        -------
+        x_denoised : (B, *patch_shape) tensor
+            Denoised patches.
+        weight : (B,) tensor
+            Per-patch recombination weight, for weighted patch recombination.
+        var_estimate : (B,) tensor
+            Per-patch noise variance estimate.
+        maxidx : (B,) tensor
+            Per-patch rank after denoising.
+        """
         # Flatten and mean center
         x_flat = x.reshape(x.shape[0], -1, x.shape[-1])  # (B, N, T)
+        n_dim = x_flat.shape[-2]
         m = torch.mean(x_flat, dim=-2, keepdim=True)
         xc = x_flat - m
         u, s, v = torch.linalg.svd(xc, full_matrices=False, driver="gesvda")
-        # Calculate noise scale. `torch.quantile(..., 0.5)` (not torch.median,
-        # which returns the lower of the two middle values on an even-length
-        # input) matches np.median's interpolated behavior used on CPU.
-        median_s = torch.quantile(s, 0.5, dim=-1)
-        scale_factor = median_s / self.mp_median
+
+        if var_apriori is not None:
+            sigma = torch.sqrt(var_apriori)
+        else:
+            n_svals = s.shape[-1]
+            # manual median because s is already sorted.
+            lo, hi = (n_svals - 1) // 2, n_svals // 2
+            median_s = 0.5 * (s[..., lo] + s[..., hi])
+            sigma = median_s / (self.mp_median * (n_dim**0.5))
+        scale_factor = sigma * (n_dim**0.5)
 
         # Apply shrink
         scale_factor_exp = scale_factor.unsqueeze(-1)
@@ -97,8 +121,12 @@ class OptimalSVDDenoiser(torch.nn.Module):
 
         x_denoised = torch.matmul(u * s_shrink.unsqueeze(1), v) + m
 
-        M = x_flat.shape[-1]
-        return x_denoised.reshape(x.shape), weight, scale_factor**2 / M
+        return (
+            x_denoised.reshape(x.shape),
+            weight,
+            sigma**2,
+            maxidx,
+        )
 
 
 class MPPCADenoiser(torch.nn.Module):
@@ -133,6 +161,7 @@ class MPPCADenoiser(torch.nn.Module):
         cum_eigs = torch.cumsum(eigs, dim=-1)
         rcum_eigs = eigs - cum_eigs + cum_eigs[:, -1:]
 
+        # Original Matlab code for reference:
         # [lambda,order] = sort(lambda,'descend');
         # U = U(:,order);
         # csum = cumsum(lambda,'reverse');
@@ -153,7 +182,7 @@ class MPPCADenoiser(torch.nn.Module):
             (
                 (eigs - eigs[:, -1:]) * (M - p_range) * (N - p_range)
                 < 4 * rcum_eigs * (M * N) ** 0.5 * self.threshold_scale**2
-            ).to(torch.int64),
+            ).to(torch.uint32),
             dim=-1,
         )
         eigs = eigs * (p_range < p.unsqueeze(-1))
@@ -167,4 +196,4 @@ class MPPCADenoiser(torch.nn.Module):
 
         batch_idx = torch.arange(x_flat.shape[0], device=x.device)
         var_estimate = rcum_eigs[batch_idx, p] / (M - p)
-        return x_denoised.reshape(x.shape), weight, var_estimate
+        return x_denoised.reshape(x.shape), weight, var_estimate, p
