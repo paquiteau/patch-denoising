@@ -1,7 +1,5 @@
 """Torch dataloader for the noisy data."""
 
-import gc
-
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -142,10 +140,7 @@ def select_patches_to_process(mask, patch_shape, patch_overlap, mask_threshold=5
         patch_score = patch_score_g.cpu().ravel()
         patch_idxs = torch.where(patch_score > mask_threshold / 100)[0]
 
-    # Mischief managed !
     del mask_g, patch_score_g
-    gc.collect()
-    torch.cuda.empty_cache()
     return patch_idxs
 
 
@@ -185,6 +180,26 @@ class PatchDataset(torch.utils.data.Dataset):
 
         self.input_data = patchify_tensor(input_data, patch_shape, patch_overlap)
         self.grid_shape = self.input_data.shape[: len(data_shape)]
+
+        # Per-selected-patch noise variance
+        self.var_apriori_by_patch = None
+        if noise_map is not None:
+            if isinstance(noise_map, (float, np.floating)):
+                noise_map = torch.full(
+                    data_shape, float(noise_map), dtype=torch.float32
+                )
+            else:
+                if isinstance(noise_map, np.ndarray):
+                    noise_map = torch.from_numpy(noise_map)
+                noise_map = noise_map.to(dtype=torch.float32)
+                if noise_map.shape == data_shape[:-1]:
+                    noise_map = noise_map[..., None].expand(data_shape).contiguous()
+            var_patches = patchify_tensor(noise_map**2, patch_shape, patch_overlap)
+            grid_idx = torch.unravel_index(self.patch_locs, self.grid_shape)
+            selected_var_patches = var_patches[grid_idx]
+            self.var_apriori_by_patch = selected_var_patches.mean(
+                dim=tuple(range(1, selected_var_patches.ndim))
+            )
 
     def __len__(self):
         """Get number of patches to process."""

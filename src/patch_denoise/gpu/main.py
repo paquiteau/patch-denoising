@@ -2,6 +2,7 @@
 
 import logging
 
+import numpy as np
 import torch
 import triton
 import triton.language as tl
@@ -20,10 +21,12 @@ def __atomic_accumulate_kernel(
     global_out_ptr,  # Interpreted as float*
     global_weights_ptr,  # Interpreted as float*
     global_var_est_ptr,  # Interpreted as float*
+    global_rank_ptr,  # Interpreted as float*
     global_count_ptr,  # Interpreted as uint32*
     recon_ptr,  # Interpreted as float*
     weights_ptr,  # Interpreted as float*
     varest_ptr,  # Interpreted as float*
+    rank_ptr,  # Interpreted as float*
     coords_ptr,
     stride_out0: tl.constexpr,
     stride_out1: tl.constexpr,
@@ -57,6 +60,7 @@ def __atomic_accumulate_kernel(
     off_l = tl.load(coords_ptr + pid * 4 + 3)
     w = tl.load(weights_ptr + pid)
     v = tl.load(varest_ptr + pid)
+    r = tl.load(rank_ptr + pid)
 
     for p_idx in range(0, PH * PW * PD * PT, BLOCK_SIZE):
         offsets = p_idx + tl.arange(0, BLOCK_SIZE)
@@ -106,6 +110,7 @@ def __atomic_accumulate_kernel(
 
         # Weights are always 1 float per logical pixel
         tl.atomic_add(global_var_est_ptr + g_idx, v, mask=mask)
+        tl.atomic_add(global_rank_ptr + g_idx, r, mask=mask)
         tl.atomic_add(global_weights_ptr + g_idx, w, mask=mask)
         tl.atomic_add(global_count_ptr + g_idx, 1, mask=mask)
 
@@ -114,10 +119,12 @@ def launch_triton(
     out_acc: torch.Tensor,
     out_weights: torch.Tensor,
     out_var_map: torch.Tensor,
+    out_rank_map: torch.Tensor,
     out_counts: torch.Tensor,
     recon: torch.Tensor,
     weights: torch.Tensor,
     var_est: torch.Tensor,
+    rank_est: torch.Tensor,
     coords: torch.Tensor,
     patch_shape: tuple[int, int, int, int],
 ):
@@ -139,10 +146,12 @@ def launch_triton(
         p_out,
         out_weights,
         out_var_map,
+        out_rank_map,
         out_counts,
         p_recon,
         weights,
         var_est,
+        rank_est,
         coords,
         *out_acc.stride(),  # type: ignore
         *recon.stride(),
@@ -158,10 +167,14 @@ def make_denoiser(
 ) -> OptimalSVDDenoiser | MPPCADenoiser:
     """Create a denoiser model on GPU."""
     if "optimal" in method:
+        # method is "optimal-{loss}" or "optimal-{loss}-noise" ("-noise" only
+        # signals that a noise map is supplied at forward time, see
+        # main_gpu's var_apriori handling; it isn't part of the loss name).
+        loss = method.removeprefix("optimal-").removesuffix("-noise")
         denoiser = OptimalSVDDenoiser(
             patch_shape=patch_shape,
             recombination=recombination,
-            loss=method.split("-")[-1],
+            loss=loss,
             **kwargs,
         )
     elif method == "mp-pca":
@@ -211,12 +224,25 @@ def main_gpu(
     recombination: str,
     method: str,
     mask: NDArray | None,
-    noise_map: NDArray | None = None,
+    noise_std: NDArray | float | None = None,
     batch_size: int | str = "auto",
     compile: bool = False,
     **kwargs,
 ):
     """Denoise loop for the gpu version of patch-denoise."""
+    if recombination == "center":
+        raise ValueError(
+            "recombination='center' is not supported on the GPU backend "
+            "(only 'weighted' and 'average'/'mean' are implemented); use "
+            "the CPU backend for 'center'."
+        )
+
+    # ensure single-precision for GPU compute.
+    if np.iscomplexobj(input_data):
+        input_data = input_data.astype(np.complex64, copy=False)
+    else:
+        input_data = input_data.astype(np.float32, copy=False)
+
     squeeze_z = input_data.ndim == 3
     if squeeze_z:  # 2D + T
         data_shape = input_data.shape
@@ -241,14 +267,14 @@ def main_gpu(
         patch_shape=patch_shape,
         patch_overlap=patch_overlap,
         mask=mask,
-        noise_map=noise_map,
+        noise_map=noise_std,
         mask_threshold=mask_threshold,
     )
     loader = torch.utils.data.DataLoader(
         patch_dataset,
         batch_size=int(batch_size),
         shuffle=False,
-        num_workers=4,
+        num_workers=0,
         pin_memory=True,  # Pin memory for faster CPU-GPU transfer
     )
 
@@ -262,33 +288,42 @@ def main_gpu(
         **kwargs,
     )
 
-    N_STREAMS = 2
-    streams = [torch.cuda.Stream() for _ in range(N_STREAMS)]
     log.info(f"Processing {len(patch_dataset)} patches with batch size {batch_size}...")
 
     out_weights = torch.zeros(input_data_.shape, dtype=torch.float32, device="cuda")
     out_var_map = torch.zeros(input_data_.shape, dtype=torch.float32, device="cuda")
+    out_rank_map = torch.zeros(input_data_.shape, dtype=torch.uint32, device="cuda")
     out_counts = torch.zeros(input_data_.shape, dtype=torch.uint32, device="cuda")
     out_acc = torch.zeros(input_data_.shape, dtype=input_data_.dtype, device="cuda")
-    for i, (patches, indices) in enumerate(tqdm(loader, unit_scale=batch_size)):
-        slot = i % 2
-        stream = streams[slot]
-        with torch.cuda.stream(stream):
-            # H2D -> Compute -> D2H (All Asynchronous)
-            gpu_in = patches.cuda(non_blocking=True)
-            gpu_indices = indices.cuda(non_blocking=True)
-            gpu_out, gpu_weight, gpu_var_est = denoiser(gpu_in)
-            launch_triton(
-                out_acc,
-                out_weights,
-                out_var_map,
-                out_counts,
-                gpu_out,
-                gpu_weight,
-                gpu_var_est,
-                gpu_indices,
-                patch_shape,
+
+    var_apriori_by_patch = patch_dataset.var_apriori_by_patch
+    use_var_apriori = var_apriori_by_patch is not None and "optimal" in method
+
+    cursor = 0
+    for patches, indices in tqdm(loader, unit_scale=batch_size):
+        gpu_in = patches.cuda(non_blocking=True)
+        gpu_indices = indices.cuda(non_blocking=True)
+        if use_var_apriori:
+            var_batch = var_apriori_by_patch[cursor : cursor + gpu_in.shape[0]]
+            gpu_out, gpu_weight, gpu_var_est, gpu_rank = denoiser(
+                gpu_in, var_apriori=var_batch.cuda(non_blocking=True)
             )
+        else:
+            gpu_out, gpu_weight, gpu_var_est, gpu_rank = denoiser(gpu_in)
+        cursor += gpu_in.shape[0]
+        launch_triton(
+            out_acc,
+            out_weights,
+            out_var_map,
+            out_rank_map,
+            out_counts,
+            gpu_out,
+            gpu_weight,
+            gpu_var_est,
+            gpu_rank,
+            gpu_indices,
+            patch_shape,
+        )
 
     # Voxels outside the mask (or missed by every selected patch) never
     # accumulate any weight/count, so these divisions leave nan/inf there;
@@ -299,10 +334,14 @@ def main_gpu(
     out_acc[~mask_arr] = 0
     out_acc = out_acc.cpu().numpy()
 
-    out_var_map /= out_counts.to(torch.float32)
+    out_var_map /= out_counts
     out_var_map = torch.sqrt(out_var_map)
     out_var_map[~mask_arr] = 0
     out_var_map = out_var_map.cpu().numpy()
+
+    out_rank_map /= out_counts
+    out_rank_map[~mask_arr] = 0
+    out_rank_map = out_rank_map.cpu().numpy()
 
     out_weights[~mask_arr] = 0
     out_weights = out_weights.cpu().numpy()
@@ -311,5 +350,6 @@ def main_gpu(
         out_acc = out_acc[:, :, 0, :]
         out_weights = out_weights[:, :, 0, :]
         out_var_map = out_var_map[:, :, 0, :]
+        out_rank_map = out_rank_map[:, :, 0, :]
 
-    return out_acc, out_weights, out_var_map, None
+    return out_acc, out_weights, out_var_map, out_rank_map
