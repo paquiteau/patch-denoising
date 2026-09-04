@@ -8,6 +8,7 @@ import triton.language as tl
 from numpy.typing import NDArray
 from tqdm.rich import tqdm
 
+from .autotune import autotune_batch_size
 from .dataloader import PatchDataset
 from .denoiser import MPPCADenoiser, OptimalSVDDenoiser
 
@@ -211,7 +212,7 @@ def main_gpu(
     method: str,
     mask: NDArray | None,
     noise_map: NDArray | None = None,
-    batch_size: int = 32,
+    batch_size: int | str = "auto",
     compile: bool = False,
     **kwargs,
 ):
@@ -229,7 +230,10 @@ def main_gpu(
                 mask = mask[:, :, None]
 
     # Create the Dataset
-    batch_size = int(batch_size)
+    if batch_size == "auto":
+        batch_size = autotune_batch_size(method, patch_shape, recombination, **kwargs)
+    else:
+        batch_size = int(batch_size)
     # setup dataset and dataloader using pytorch api:
     input_data_ = torch.from_numpy(input_data)
     patch_dataset = PatchDataset(
