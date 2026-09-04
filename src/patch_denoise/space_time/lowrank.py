@@ -113,7 +113,9 @@ class HybridPCADenoiser(BaseSpaceTimeDenoiser):
     def _patch_processing(self, patch, *, patch_idx: int, var_apriori: PatchedArray):
         """Process a patch with the Hybrid-PCA method."""
         varest = np.mean(var_apriori.get_patch(patch_idx))
-        p_center, eig_vals, eig_vec, p_tmean = eig_analysis(patch)
+        p_center, eig_vals, eig_vec, p_tmean = eig_analysis(
+            patch, max_eig_val=patch.shape[1]
+        )
         maxidx = 0
         var_noise = np.mean(eig_vals)
         while var_noise > varest and maxidx < len(eig_vals) - 2:
