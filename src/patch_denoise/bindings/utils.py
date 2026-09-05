@@ -12,17 +12,9 @@ import nibabel as nib
 import numpy as np
 from numpy.typing import NDArray
 
-DENOISER_NAMES = (
-    "mp-pca",
-    "hybrid-pca",
-    "raw",
-    "optimal-fro",
-    "optimal-fro-noise",
-    "optimal-nuc",
-    "optimal-ope",
-    "nordic",
-    "adaptive-qut",
-)
+from patch_denoise.space_time.base import DenoiserName
+
+DENOISER_NAMES = DenoiserName._value2member_map_
 
 
 class _DenoiserMap:
@@ -78,15 +70,11 @@ class _DenoiserMap:
 
 DENOISER_MAP = _DenoiserMap()
 
-_RECOMBINATION = {"w": "weighted", "c": "center", "a": "average"}
-
 
 def load_as_array(input: Path) -> tuple[np.ndarray, np.ndarray]:
     """Load a file as a numpy array, and return affine matrix if available."""
     import nibabel as nib
 
-    if input is None:
-        return None, None
     if input.suffix == ".npy":
         return np.load(input), np.eye(4)
     elif ".nii" in input.suffixes:
@@ -96,7 +84,7 @@ def load_as_array(input: Path) -> tuple[np.ndarray, np.ndarray]:
         raise ValueError("Unsupported file format. use numpy or nifti formats.")
 
 
-def save_array(data: NDArray, affine: NDArray, filename: Path) -> Path:
+def save_array(data: NDArray, affine: NDArray | None, filename: Path) -> Path:
     """Save array to file, with affine matrix if required."""
     if ".nii" in filename.suffixes:
         if affine is None:
