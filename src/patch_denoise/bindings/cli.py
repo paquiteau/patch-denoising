@@ -4,29 +4,33 @@
 import logging
 import re
 import time
-from enum import StrEnum
+from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any
 
 if TYPE_CHECKING:
     from nilearn.maskers import NiftiMasker
 
+import cyclopts.validators as validators
 import numpy as np
-import typer
+from cyclopts import App, Parameter, Token
+from cyclopts.types import ExistingFile
 from numpy.typing import NDArray
 from rich.logging import RichHandler
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
-from patch_denoise import __version__
 from patch_denoise.bindings.utils import (
     DENOISER_MAP,
-    DENOISER_NAMES,
     fast_cuda_check,
     load_as_array,
     load_complex_nifti,
     save_array,
 )
-from patch_denoise.space_time.base import RecombinationEnum
+from patch_denoise.space_time.base import (
+    DenoiserName,
+    ExtraOutput,
+    Recombination,
+)
 
 GPU_AVAILABLE = fast_cuda_check()
 
@@ -41,167 +45,105 @@ logging.basicConfig(
 )
 logging.captureWarnings(True)
 
-DENOISER_NAMES_HELP = ", ".join(DENOISER_NAMES)
 
-
-class DenoiserEnum(StrEnum):
-    """Enum for denoising methods."""
-
-    MP_PCA = "mp-pca"
-    HYBRID_PCA = "hybrid-pca"
-    RAW = "raw"
-    OPTIMAL_FRO = "optimal-fro"
-    OPTIMAL_FRO_NOISE = "optimal-fro-noise"
-    OPTIMAL_NUC = "optimal-nuc"
-    OPTIMAL_OPE = "optimal-ope"
-    NORDIC = "nordic"
-    ADAPTIVE_QUT = "adaptive-qut"
-
-
-def parse_dims(value: Any) -> tuple[int, ...]:
+def parse_dims(_, tokens: Sequence[Token]) -> tuple[int, ...]:
     """Parse a string representing dimensions into a 3 or 4-tuple of integers."""
-    if not isinstance(value, str):
-        return value  # Already a tuple of ints
+    value = tokens[0].value
     dims = [int(x) for x in re.findall(r"-?\d+", value)]
     if len(dims) in (1, 3, 4):
         return tuple(dims)
 
-    raise typer.BadParameter(
+    raise ValueError(
         "Must be an int, 3-tuple, or 4-tuple ('11' or '11x11x11')"
         " any 1-character separator is allowed (except space and -): "
         "('11x11x11', 11_11_11', '11,11,11')"
     )
 
 
-def parse_mask_arg(value: str):
-    """Validate if value is 'auto' or points to an existing file."""
-    if value == "auto":
-        return value
-    path = Path(value)
-    if not path.exists() or not path.is_file():
-        raise typer.BadParameter(
-            f"Path should point to a file, or be 'auto': <{value}>."
-        )
-    return path.absolute()
+def bids_extra_path(output_file: Path, name: str) -> Path:
+    """Insert a BIDS-like ``_<name>`` suffix before the NIfTI extension."""
+    for ext in (".nii.gz", ".nii"):
+        if output_file.name.endswith(ext):
+            stem = output_file.name[: -len(ext)]
+            return output_file.with_name(f"{stem}_{name}{ext}")
+    return output_file.with_name(f"{output_file.stem}_{name}{output_file.suffix}")
 
 
-def parse_gpu_batch_size(value: str) -> str | int:
-    """Validate if value is 'auto' or an integer batch size."""
-    if value == "auto":
-        return value
-    try:
-        return int(value)
-    except ValueError:
-        raise typer.BadParameter(f"Must be an integer or 'auto': <{value}>.") from None
+app = App(
+    help="Patch denoising CLI tool.", default_parameter=Parameter(short_alias=True)
+)
 
 
-def parse_extra_args(extras: list[str] | None) -> dict[str, Any]:
-    """Parse extra arguments passed as key=value pairs into a dictionary."""
-    kwargs = dict()
-    if extras is None:
-        return kwargs
-    for kv in extras:
-        if "=" not in kv:
-            raise typer.BadParameter(
-                f"Extra parameter '{kv}' is not in key=value format."
-            )
-        key, value = kv.split("=", 1)
-        try:
-            value = float(value)
-        except ValueError:
-            pass  # keep as string if not a float
-        kwargs[key] = value
-    return kwargs
+_PATCH_PARAM_HELP = (
+    'Dimension separated by ",". Use -1 to use the entire dimension. '
+    "Example: 11,11,11,-1."
+)
 
-
-app = typer.Typer(help="Patch denoising CLI tool.")
-
-MethodOpt = Annotated[
-    DenoiserEnum,
-    typer.Option(
-        "-m", "--method", help=f"Denoising Method: Available: {DENOISER_NAMES_HELP}"
-    ),
-]
+MethodOpt = Annotated[DenoiserName, Parameter(help="Denoising method.")]
 PatchShapeOpt = Annotated[
-    str,
-    typer.Option(
-        "-ps",
-        "--patch-shape",
-        parser=parse_dims,
-        metavar="X,Y,Z[,T]",
-        help="Patch shape. If 4D a sliding window is used. "
-        "If -1 is specified for a dimension, the entire dimension is put the patch.",
+    tuple[int, ...],
+    Parameter(
+        alias="-ps",
+        negative="",
+        converter=parse_dims,
+        help="Patch shape. " + _PATCH_PARAM_HELP,
     ),
 ]
 PatchOverlapOpt = Annotated[
-    str,
-    typer.Option(
-        "-po",
-        "--patch-overlap",
-        parser=parse_dims,
-        metavar="X,Y,Z[,T]",
-        help="Patch overlap. If 4D a sliding window is used. "
-        "If -1 is specified for a dimension, the entire dimension is put the patch.",
+    tuple[int, ...],
+    Parameter(
+        alias="-po",
+        negative="",
+        converter=parse_dims,
+        help="Patch overlap. " + _PATCH_PARAM_HELP,
     ),
 ]
 
 RecombinationOpt = Annotated[
-    RecombinationEnum,
-    typer.Option("-r", "--recombination", help="Recombination method."),
+    Recombination,
+    Parameter(name=("--recombination", "-r"), help="Recombination method."),
 ]
 MaskOpt = Annotated[
-    str,
-    typer.Option(
-        "-k",
-        "--mask",
-        callback=parse_mask_arg,
-        help="Mask NIfTI file (3D). if auto, mask is computed automatically.",
-        metavar="MASK_FILE | auto",
+    ExistingFile | None,
+    Parameter(
+        name=("--mask", "-k"),
+        help="Mask NIfTI file (3D). if None, mask is computed automatically.",
     ),
 ]
 MaskThreshOpt = Annotated[
     int,
-    typer.Option(
-        "-t",
-        "--mask-threshold",
+    Parameter(
+        name=("--mask-threshold", "-t"),
         help="Min % of overlap between a patch and the mask to trigger computation.",
     ),
 ]
 ExtraOpts = Annotated[
-    list[str] | None,
-    typer.Option(
-        "-e",
-        "--extra",
-        help="Extra parameters for the denoising method, passed as key=value pairs. "
-        "For example: --extra param1=val1 --extra param2=val2",
-        metavar="KEY=VALUE",
-    ),
+    dict[str, float | str] | None,
+    Parameter(alias="-e", help="Extra parameters for the denoiser as -e.key=value"),
 ]
 
 NaN2NumOpt = Annotated[
-    float | None, typer.Option(help="Replace any NaN in input-data with VALUE")
+    float | None, Parameter(help="Replace any NaN in input-data with VALUE")
 ]
+
 VerboseOpt = Annotated[
-    int,
-    typer.Option(
-        "-v", "--verbose", count=True, help="Increase verbosity level (e.g., -vvv)."
-    ),
+    int, Parameter(count=True, help="Repeat for increase verbosity (-vvv)")
 ]
+
 GpuFlag = Annotated[
     bool,
-    typer.Option(
-        "--gpu/--cpu",
+    Parameter(
+        name="--gpu",
+        negative="--cpu",
         help="Use GPU or CPU for computation. Requires patch_denoise.gpu module. "
-        "GPU is enabled by default if available.",
+        "GPU is enabled by default if available",
     ),
 ]
 GpuBatchSizeOpt = Annotated[
-    str,
-    typer.Option(
+    int,
+    Parameter(
         "--gpu-batch-size",
-        callback=parse_gpu_batch_size,
-        metavar="INTEGER | auto",
-        help="Number of patches processed per GPU batch, or 'auto' to measure "
+        help="Number of patches processed per GPU batch. If 0, measure "
         "the fastest size for this GPU/method/patch-shape once and cache it "
         "(~/.cache/patch_denoise/gpu_batch_size.json) for future runs. "
         "Ignored on CPU.",
@@ -209,13 +151,23 @@ GpuBatchSizeOpt = Annotated[
 ]
 GpuCompileFlag = Annotated[
     bool,
-    typer.Option(
-        "--gpu-compile/--no-gpu-compile",
+    Parameter(
+        "--gpu-compile",
+        negative="",
         help="Compile the GPU denoiser with torch.compile. Ignored on CPU. "
         "Adds warmup cost and currently fails on inputs whose last batch is a "
         "different size (i.e. n_patches is not a multiple of --gpu-batch-size).",
     ),
 ]
+OutMapExtraOpt = Annotated[
+    ExtraOutput,
+    Parameter(
+        "--outmap",
+        negative="",
+        consume_multiple=True,
+    ),
+]
+_NO_EXTRA_OUTPUT = ExtraOutput(0)
 
 
 #############
@@ -248,7 +200,7 @@ def _load_noise_std(
 def _load_validate_input(
     input_file: Path,
     input_phase: Path | None,
-    mask: Path | str,
+    mask: Path | None,
     noise_std_map_file: Path | None,
     noise_std_map_phase_file: Path | None,
     nan_to_num: float | None,
@@ -275,7 +227,7 @@ def _load_validate_input(
         )
 
     masker = NiftiMasker(verbose=verbose, mask_strategy="epi")
-    if mask != "auto":
+    if mask is not None:
         masker.mask_img = mask
         masker.fit()
     else:
@@ -309,81 +261,49 @@ def _load_validate_input(
     return input_data, affine, masker, noise_std_map
 
 
-@app.command()
+@app.default()
 def main(
-    input_file: Annotated[
-        Path,
-        typer.Argument(
-            exists=True,
-            dir_okay=False,
-            resolve_path=True,
-            help="Input noisy NIfTI file (4D).",
-        ),
-    ],
+    input_file: ExistingFile,
     output_file: Annotated[
         Path | None,
-        typer.Argument(
-            dir_okay=False,
-            resolve_path=True,
+        Parameter(
+            validator=validators.Path(dir_okay=False),
             help="Output denoised NIfTI file (4D). Default is D<input_file>.",
         ),
     ] = None,
-    output_noise_std_map_file: Annotated[
-        Path | None,
-        typer.Option(
-            "--output-noise-std-map",
-            dir_okay=False,
-            resolve_path=True,
-            help="Output noise level estimation NIfTI file (3D).",
-        ),
-    ] = None,
-    method: MethodOpt = DenoiserEnum.OPTIMAL_FRO,
-    patch_shape: PatchShapeOpt = "11,11,11,-1",
-    patch_overlap: PatchOverlapOpt = "5,5,5,-1",
-    recombination: RecombinationOpt = RecombinationEnum.WEIGHTED,
-    mask: MaskOpt = "auto",
+    *,
+    method: MethodOpt = DenoiserName.OPTIMAL_FRO,
+    patch_shape: PatchShapeOpt = (11, 11, 11, -1),
+    patch_overlap: PatchOverlapOpt = (5, 5, 5, -1),
+    recombination: RecombinationOpt = Recombination.WEIGHTED,
+    mask: MaskOpt = None,
     mask_threshold: MaskThreshOpt = 50,
     extras: ExtraOpts = None,
-    nan_to_num: NaN2NumOpt = None,
+    nan_to_num: NaN2NumOpt = 0.0,
     verbose: VerboseOpt = 0,
     gpu: GpuFlag = GPU_AVAILABLE,
-    gpu_batch_size: GpuBatchSizeOpt = "auto",
+    gpu_batch_size: GpuBatchSizeOpt = 0,
     gpu_compile: GpuCompileFlag = False,
+    outmap_extra: OutMapExtraOpt = _NO_EXTRA_OUTPUT,
     input_phase: Annotated[
-        Path | None,
-        typer.Option(
-            "-ip",
-            "--input-phase",
-            exists=True,
-            dir_okay=False,
-            resolve_path=True,
+        ExistingFile | None,
+        Parameter(
+            alias="-ip",
             help="Input phase NIfTI file (4D). If provided, process complex data.",
         ),
     ] = None,
-    noise_std_map_file: Annotated[
-        Path | None,
-        typer.Option(
-            "--noise-std-map",
-            exists=True,
-            dir_okay=False,
-            resolve_path=True,
-            help="Input Noise std map",
-        ),
+    noise_std_map: Annotated[
+        ExistingFile | None,
+        Parameter(help="Input Noise std map"),
     ] = None,
-    noise_std_map_phase_file: Annotated[
-        Path | None,
-        typer.Option(
-            "--noise-std-map-phase",
-            exists=True,
-            dir_okay=False,
-            resolve_path=True,
-            help="Input Noise std map, phase component.",
-        ),
+    noise_std_map_phase: Annotated[
+        ExistingFile | None,
+        Parameter(help="Input Noise std map, phase component."),
     ] = None,
 ):
     """Perform local-low-rank denoising on 4D MRI data."""
     tic0 = tic = time.perf_counter()
-    kwargs = parse_extra_args(extras)
+    kwargs: dict[str, Any] = dict(extras or {})
 
     levels = [logging.WARNING, logging.INFO, logging.DEBUG]
     level = levels[min(verbose, len(levels) - 1)]
@@ -399,31 +319,35 @@ def main(
     if output_file.exists():
         log.warning(f"{output_file} will be overwritten")
 
-    if output_noise_std_map_file is not None:
-        parent_dir = output_noise_std_map_file.parent
-        if not output_noise_std_map_file.parent.exists():
-            parent_dir.mkdir(exist_ok=True, parents=True)
-            log.info(f"{output_noise_std_map_file.parent} created")
-        if output_noise_std_map_file.exists():
-            log.warning(f"{output_noise_std_map_file} will be overwritten")
+    if ExtraOutput.COUNT in outmap_extra and not gpu:
+        raise ValueError("--outmap.count requires --gpu")
 
-    # 1. Define only the columns you want (just the spinner and the text)
+    extra_output_files = {
+        n: bids_extra_path(output_file, n.name.lower()) for n in outmap_extra
+    }
+    for extra_file in extra_output_files.values():
+        if not extra_file.parent.exists():
+            extra_file.parent.mkdir(exist_ok=True, parents=True)
+            log.info(f"{extra_file.parent} created")
+        if extra_file.exists():
+            log.warning(f"{extra_file} will be overwritten")
+
     with Progress(
         SpinnerColumn(spinner_name="dots"),
         TextColumn("[progress.description]{task.description}"),
     ) as progress:
         progress.add_task(description="Loading and validating input...", total=None)
         # 2. Add your task and start the progress display
-        input_data, affine, masker, noise_std_map = _load_validate_input(
+        input_data, affine, masker, noise_std_map_data = _load_validate_input(
             input_file,
             input_phase,
             mask,
-            noise_std_map_file,
-            noise_std_map_phase_file,
+            noise_std_map,
+            noise_std_map_phase,
             nan_to_num,
             verbose,
         )
-    if mask == "auto":
+    if mask is None:
         mask_filename = output_file.with_stem("mask_" + output_file.stem)
         log.info("Saving automatically computed mask to {mask_filename}.")
         masker.mask_img_.to_filename(mask_filename)
@@ -451,21 +375,23 @@ def main(
     log.info(f"nan_to_num: {nan_to_num}.")
     log.info(f"input data shape: {input_data.shape}.")
     log.info(msg=f"mask shape: {masker.mask_img_.shape}.")
-    log.info(
-        f"noise std map: {noise_std_map.shape if noise_std_map is not None else None}."
+    noise_std_map_shape = (
+        noise_std_map_data.shape if noise_std_map_data is not None else None
     )
+    log.info(f"noise std map: {noise_std_map_shape}.")
     log.info(f"output file: {output_file}.")
-    log.info(f"output noise std map file: {output_noise_std_map_file}.")
+    log.info(f"extra outputs: {outmap_extra or 'none'}.")
+    log.debug(f"extra output files: {list(extra_output_files.values())}.")
     log.debug(f"input affine:\n{affine}.")
     log.debug(f"mask affine: \n{masker.mask_img_.affine}.")
 
     if gpu:
         if method not in [
-            DenoiserEnum.MP_PCA,
-            DenoiserEnum.OPTIMAL_FRO,
-            DenoiserEnum.OPTIMAL_FRO_NOISE,
-            DenoiserEnum.OPTIMAL_NUC,
-            DenoiserEnum.OPTIMAL_OPE,
+            DenoiserName.MP_PCA,
+            DenoiserName.OPTIMAL_FRO,
+            DenoiserName.OPTIMAL_FRO_NOISE,
+            DenoiserName.OPTIMAL_NUC,
+            DenoiserName.OPTIMAL_OPE,
         ]:
             raise ValueError(f"Method {method} is not supported on GPU. ")
         if not GPU_AVAILABLE:
@@ -480,21 +406,23 @@ def main(
         kwargs["method"] = method
         kwargs["batch_size"] = gpu_batch_size
         kwargs["compile"] = gpu_compile
+        # Only accumulate/return the extras actually requested for saving.
+        kwargs["extra_output"] = outmap_extra
     else:
         denoise_func = DENOISER_MAP[method]
 
     if method in [
-        DenoiserEnum.NORDIC,
-        DenoiserEnum.HYBRID_PCA,
-        DenoiserEnum.ADAPTIVE_QUT,
-        DenoiserEnum.OPTIMAL_FRO_NOISE,
+        DenoiserName.NORDIC,
+        DenoiserName.HYBRID_PCA,
+        DenoiserName.ADAPTIVE_QUT,
+        DenoiserName.OPTIMAL_FRO_NOISE,
     ]:
         if noise_std_map is None:
             raise RuntimeError("A noise map must be specified for this method.")
-        kwargs["noise_std"] = noise_std_map
+        kwargs["noise_std"] = noise_std_map_data
 
     tic = time.perf_counter()
-    denoised_data, _, noise_std_map, _ = denoise_func(
+    result = denoise_func(
         input_data,
         patch_shape=patch_shape_,
         patch_overlap=patch_overlap_,
@@ -503,12 +431,23 @@ def main(
         recombination=recombination,
         **kwargs,
     )
+    # GPU returns a 5-tuple (..., count_map), CPU a 4-tuple (no count output).
+    denoised_data, weights_map, var_map, rank_map, *extra_tail = result
+    count_map = extra_tail[0] if extra_tail else None
     toc = time.perf_counter()
     log.debug("Denoising completed in %.2f seconds.", toc - tic)
     tic = time.perf_counter()
     save_array(denoised_data, affine, output_file)
-    if output_noise_std_map_file is not None:
-        save_array(noise_std_map, affine, output_noise_std_map_file)
+    extra_arrays = {
+        ExtraOutput.WEIGHTS: weights_map,
+        ExtraOutput.NOISE_STD: var_map,
+        ExtraOutput.RANK: rank_map,
+        ExtraOutput.COUNT: count_map,
+    }
+    for name, extra_file in extra_output_files.items():
+        array = extra_arrays[name]
+        assert array is not None, f"{name} was requested but not returned"
+        save_array(array, affine, extra_file)
     toc = time.perf_counter()
     log.debug("Saving completed in %.2f seconds.", toc - tic)
     log.debug("Total time: %.2f seconds.", toc - tic0)

@@ -1,10 +1,10 @@
 """Base Structure for patch-based denoising on spatio-temporal dimension."""
 
 import abc
+import enum
 import logging
 import warnings
 from collections.abc import Callable
-from enum import StrEnum
 from typing import Any
 
 import numpy as np
@@ -16,7 +16,21 @@ from .._docs import fill_doc
 log = logging.getLogger(__name__)
 
 
-class RecombinationEnum(StrEnum):
+class DenoiserName(enum.StrEnum):
+    """Enum for denoising methods."""
+
+    MP_PCA = "mp-pca"
+    HYBRID_PCA = "hybrid-pca"
+    RAW = "raw"
+    OPTIMAL_FRO = "optimal-fro"
+    OPTIMAL_FRO_NOISE = "optimal-fro-noise"
+    OPTIMAL_NUC = "optimal-nuc"
+    OPTIMAL_OPE = "optimal-ope"
+    NORDIC = "nordic"
+    ADAPTIVE_QUT = "adaptive-qut"
+
+
+class Recombination(enum.StrEnum):
     """Enum for recombination methods."""
 
     WEIGHTED = "weighted"
@@ -24,6 +38,17 @@ class RecombinationEnum(StrEnum):
     CENTER = "center"
 
 
+class ExtraOutput(enum.Flag):
+    """Enum for output options."""
+
+    WEIGHTS = enum.auto()
+    """Save the patch weights."""
+    NOISE_STD = enum.auto()
+    """Save the noise standard deviation estimate."""
+    RANK = enum.auto()
+    """Save the rank estimate."""
+    COUNT = enum.auto()
+    """Save the patch count."""
 class PatchedArray:
     """A container for accessing custom view of array easily.
 
@@ -41,8 +66,6 @@ class PatchedArray:
         patch_shape: tuple[int, ...],
         patch_overlap: tuple[int, ...],
         dtype: DTypeLike | None = None,
-        padding_mode: str = "edge",
-        **kwargs,
     ):
         if isinstance(array, tuple):
             array = np.zeros(array, dtype=dtype)
@@ -141,23 +164,6 @@ class PatchedArray:
         # self.set_patch(idx, patch + value)
         patch += value
 
-    # def sync(self):
-    #     """Apply the padded value to the array back."""
-    #     np.copyto(
-    #         self._array,
-    #         self._padded_array[
-    #             tuple(
-    #                 np.s_[: (s + 1 - ps) if (s - ps) else s]
-    #                 for ps, s in zip(self._ps, self._padded_array.shape)
-    #             )
-    #         ],
-    #     )
-
-    # def get(self):
-    #     """Return the regular array, after applying the padded values."""
-    #     self.sync()
-    #     return self._array
-
     def __getattr__(self, name):
         """Get attribute of underlying array."""
         return getattr(self._arr, name)
@@ -179,9 +185,9 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         self.p_shape = patch_shape
         self.p_ovl = patch_overlap
 
-        if recombination not in RecombinationEnum:
+        if recombination not in Recombination:
             raise ValueError(
-                f"recombination must be one of {[e.value for e in RecombinationEnum]}."
+                f"recombination must be one of {[e.value for e in Recombination]}."
                 f" Got {recombination}."
             )
 
@@ -215,6 +221,8 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         log.debug(f"Starting denoising process. with {self}")
         data_shape = input_data.shape
         p_s, p_o = self._get_patch_param(data_shape)
+        if self.recombination == Recombination.CENTER:
+            check_center_recombination_overlap(p_s, p_o, data_shape)
 
         input_data_ = PatchedArray(input_data, p_s, p_o)
         output_data = PatchedArray(data_shape, p_s, p_o, dtype=input_data_.dtype)
@@ -277,17 +285,17 @@ class BaseSpaceTimeDenoiser(abc.ABC):
             noise_std_estimate.add2patch(i, noise_var)
             patch_counts.add2patch(i, 1)
 
-            if self.recombination == RecombinationEnum.CENTER:
+            if self.recombination == Recombination.CENTER:
                 output_data.get_patch(i)[center_pos] = p_denoise[center_pos]
-            elif self.recombination == RecombinationEnum.WEIGHTED:
+            elif self.recombination == Recombination.WEIGHTED:
                 theta = 1 / (2 + maxidx)
                 output_data.add2patch(i, p_denoise * theta)
                 patch_weights.add2patch(i, theta)
-            elif self.recombination == RecombinationEnum.AVERAGE:
+            elif self.recombination == Recombination.AVERAGE:
                 output_data.add2patch(i, p_denoise)
                 patch_weights.add2patch(i, 1)
             else:
-                valid = [e.value for e in RecombinationEnum]
+                valid = [e.value for e in Recombination]
                 raise ValueError(f"recombination must be one of {valid}.")
             if progbar:
                 progbar.update()
