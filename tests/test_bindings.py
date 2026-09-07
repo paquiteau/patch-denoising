@@ -63,7 +63,7 @@ def test_cli(noisy_phantom, nifti_noisy_phantom, tmpdir_factory, denoised_ref):
 
     exit_status = subprocess.call(
         f"patch-denoise {nifti_noisy_phantom} {outfile} --mask mask.nii "
-        "-m mp-pca -ps 6 -po 5 -r weighted --extra threshold_scale=2.3",
+        "-m mp-pca -ps 6 -po 5 -r weighted --extras.threshold_scale=2.3",
         shell=True,
     )
     assert exit_status == 0
