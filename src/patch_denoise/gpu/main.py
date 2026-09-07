@@ -29,7 +29,6 @@ def make_denoiser(
     patch_shape,
     recombination,
     batch_size,
-    compile=True,
     full_time=False,
     **kwargs,
 ) -> OptimalSVDDenoiser | MPPCADenoiser:
@@ -60,29 +59,6 @@ def make_denoiser(
 
     torch.set_float32_matmul_precision("high")
 
-    if compile:
-        logging.info("starting module compilation.")
-        with torch.inference_mode():
-            # warm up to create working memory
-            dummy_input = torch.randn(
-                batch_size, *patch_shape, device="cuda", dtype=torch.float32
-            )
-            denoiser(dummy_input)
-            # Triton bmm templates routinely exceed this GPU's shared-memory
-            # budget for our patch sizes (OutOfMemoryError during autotuning)
-            # and never beat cuBLAS anyway, so skip them and go straight to
-            # ATEN/cuBLAS for matmuls.
-            torch._inductor.config.max_autotune_gemm_backends = "ATEN"
-            denoiser = torch.compile(
-                denoiser,
-                fullgraph=True,
-                # "max-autotune" crashes
-                # see https://github.com/pytorch/pytorch/issues/195731
-                mode="max-autotune-no-cudagraphs",
-            )  # Compile the model for faster inference
-            # warm up the model with a dummy input to trigger compilation before timing
-            denoiser(dummy_input)
-        logging.info("Model compiled and warmed up on GPU.")
     # Clear overhead memory from autotuning benchmarks
     torch.cuda.empty_cache()
 
@@ -102,7 +78,6 @@ def main_gpu(
     mask: NDArray | None,
     noise_std: NDArray | float | None = None,
     batch_size: int = 0,
-    compile: bool = False,
     extra_output: ExtraOutput = _NO_EXTRA_OUTPUT,
     **kwargs,
 ):
@@ -177,7 +152,6 @@ def main_gpu(
         patch_shape=patch_shape,
         recombination=recombination,
         batch_size=batch_size,
-        compile=compile,
         full_time=full_time,
         **kwargs,
     )

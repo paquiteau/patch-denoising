@@ -75,7 +75,6 @@ def autotune_batch_size(
                 patch_shape=patch_shape,
                 recombination=recombination,
                 batch_size=bs,
-                compile=False,
                 **denoiser_kwargs,
             )
             dummy = torch.randn(bs, *patch_shape, device="cuda", dtype=torch.float32)
