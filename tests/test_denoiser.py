@@ -30,6 +30,31 @@ def test_mppca_denoiser(phantom, noisy_phantom, recombination):
     assert noise_std_after < noise_std_before
 
 
+def test_mppca_denoiser_center_full_time(phantom, noisy_phantom):
+    """'center' recombination with a full-extent time axis (-1 in the CLI).
+
+    Regression test: the time axis of a patch spanning the whole data
+    extent (patch_shape[-1] == data_shape[-1], as produced by `-ps X,Y,-1`)
+    must be kept whole at each spatial patch center, not collapsed to a
+    single time point -- which used to leave every other volume at 0 (NaN
+    on the GPU backend, see test_gpu.py).
+    """
+    denoised, weights, noise, rank_map = mp_pca(
+        noisy_phantom,
+        patch_shape=(6, 6, -1),
+        patch_overlap=(5, 5, -1),
+        threshold_scale=2.3,
+        recombination="center",
+    )
+    assert np.all(np.isfinite(denoised))
+    written_per_volume = np.count_nonzero(denoised, axis=(0, 1))
+    assert np.all(written_per_volume > 0)
+
+    noise_std_before = np.sqrt(np.nanmean(np.nanvar(noisy_phantom - phantom, axis=-1)))
+    noise_std_after = np.sqrt(np.nanmean(np.nanvar(denoised - phantom, axis=-1)))
+    assert noise_std_after < noise_std_before
+
+
 @pytest.mark.parametrize("recombination", ["weighted", "average", "center"])
 def test_hybridpca_denoiser(phantom, noisy_phantom, recombination):
     """Test the Hybrid-PCA denoiser."""
