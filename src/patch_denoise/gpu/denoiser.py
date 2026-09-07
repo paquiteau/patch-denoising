@@ -4,14 +4,15 @@ import numpy as np
 import torch
 
 from ..space_time.utils import marchenko_pastur_median
+from ._svd import FastPatchSVD
 
 
 def _center_indices(patch_shape: tuple[int, ...]) -> tuple[int, int]:
     """Flattened spatial index and time index of a patch's center voxel.
 
     Used by "center" recombination: only that single voxel of each denoised
-    patch is ever kept, so only the row of ``u`` and column of ``v`` that
-    produce it need to be computed.
+    patch is ever kept, so only its row/column need to be computed -- see
+    ``FastPatchSVD.center_reconstruct`` in ``_svd.py``.
     """
     spatial_shape = patch_shape[:-1]
     spatial_idx = 0
@@ -21,7 +22,7 @@ def _center_indices(patch_shape: tuple[int, ...]) -> tuple[int, int]:
 
 
 class OptimalSVDDenoiser(torch.nn.Module):
-    """Optimal SVD denoiser for a batch of patches (Optimized for torch.compile)."""
+    """Optimal SVD denoiser for a batch of patches."""
 
     def __init__(
         self,
@@ -41,17 +42,23 @@ class OptimalSVDDenoiser(torch.nn.Module):
         # center instead of collapsing it to a single time point too.
         self.full_time = full_time
         self.center_spatial_idx, self.center_time_idx = _center_indices(patch_shape)
+        if full_time:
+            self.center_time_idx = None
+
+        self._svd = FastPatchSVD(patch_shape[-1])
 
         if loss not in ["fro", "nuc", "ope"]:
             raise ValueError(f"Invalid loss {loss}, must be 'fro', 'nuc', or 'ope'")
 
-        beta = patch_shape[-1] / np.prod(patch_shape[:-1])
+        self.N = np.prod(patch_shape[:-1])
+        self.T = patch_shape[-1]
+
+        self.beta = float(self.T / self.N)
 
         # Precompute all constants to save math ops in the forward pass. .
-        self.beta = float(beta)
-        self.sqrt_beta = float(np.sqrt(beta))
-        self.mp_median = float(
-            np.sqrt(marchenko_pastur_median(beta=beta, eps=eps_marshenko_pastur))
+        self.sqrt_beta = float(np.sqrt(self.beta))
+        self.sqrt_mp_med = float(
+            np.sqrt(marchenko_pastur_median(beta=self.beta, eps=eps_marshenko_pastur))
         )
         self.mp_edge = 1.0 + self.sqrt_beta  # upper Marchenko-Pastur edge
         self.mp_edge_hi = self.mp_edge**2  # squared edges, for the "fro" branch
@@ -110,22 +117,20 @@ class OptimalSVDDenoiser(torch.nn.Module):
         maxidx : (B,) tensor
             Per-patch rank after denoising.
         """
-        # Flatten and mean center
-        x_flat = x.reshape(x.shape[0], -1, x.shape[-1])  # (B, N, T)
-        n_dim = x_flat.shape[-2]
-        m = torch.mean(x_flat, dim=-2, keepdim=True)
-        xc = x_flat - m
-        u, s, v = torch.linalg.svd(xc, full_matrices=False, driver="gesvda")
+        # Flatten and eigendecompose the centered Gram matrix (no U, see _svd.py)
+        x_flat = x.reshape(x.shape[0], self.N, self.T)  # (B, N, T)
+        s, vh, m, xc = self._svd.eigh(x_flat)
 
         if var_apriori is not None:
             sigma = torch.sqrt(var_apriori)
+            scale_factor = sigma * (self.T**0.5)
         else:
-            n_svals = s.shape[-1]
             # manual median because s is already sorted.
-            lo, hi = (n_svals - 1) // 2, n_svals // 2
-            median_s = 0.5 * (s[..., lo] + s[..., hi])
-            sigma = median_s / (self.mp_median * (n_dim**0.5))
-        scale_factor = sigma * (n_dim**0.5)
+            lo, hi = (self.T - 1) // 2, self.T // 2
+            # compute the estimator y_med / sqrt(med_mp), and the associated
+            # scale factor to apply to the singular values before shrinkage.
+            scale_factor = s[..., lo] + s[..., hi]
+            scale_factor /= 2 * self.sqrt_mp_med
 
         # Apply shrink
         scale_factor_exp = scale_factor.unsqueeze(-1)
@@ -134,26 +139,12 @@ class OptimalSVDDenoiser(torch.nn.Module):
         s_shrink = torch.nan_to_num(s_shrink, nan=0.0)
 
         maxidx = torch.sum(s_shrink > 0, dim=-1)
+        s_safe = s.clamp_min(torch.finfo(s.dtype).tiny)
+        ratio = (s_shrink / s_safe).to(x.dtype if x.is_complex() else s.dtype)
 
         if self.recombination == "center":
-            # Only the spatial center of the reconstructed patch is ever kept
-            # (see base.py's Recombination.CENTER), so skip the full
-            # (B, N, T) reconstruction and project just the row of `u` that
-            # produces it.
-            u_center = u[:, self.center_spatial_idx, :]
-            if self.full_time:
-                # Time axis spans the whole data extent: keep the full
-                # reconstructed time profile at the spatial center instead
-                # of also collapsing it to a single time point.
-                x_center = (
-                    torch.matmul((u_center * s_shrink).unsqueeze(1), v).squeeze(1)
-                    + m[:, 0, :]
-                )
-                return x_center, 1, sigma**2, maxidx.to(torch.int32)
-            v_center = v[:, :, self.center_time_idx]
-            x_center = (
-                torch.sum(u_center * s_shrink * v_center, dim=-1)
-                + m[:, 0, self.center_time_idx]
+            x_center = self._svd.center_reconstruct(
+                x_flat, m, vh, ratio, self.center_spatial_idx, self.center_time_idx
             )
             return x_center, 1, sigma**2, maxidx.to(torch.int32)
 
@@ -162,7 +153,7 @@ class OptimalSVDDenoiser(torch.nn.Module):
         else:
             weight = torch.ones_like(maxidx, dtype=torch.float32)
 
-        x_denoised = torch.matmul(u * s_shrink.unsqueeze(1), v) + m
+        x_denoised = self._svd.reconstruct(x_flat, m, xc, vh, ratio)
 
         return (
             x_denoised.reshape(x.shape),
@@ -186,18 +177,17 @@ class MPPCADenoiser(torch.nn.Module):
         self.patch_shape = patch_shape
         self.threshold_scale = threshold_scale
         self.recombination = recombination
-        self.full_time = full_time
         self.center_spatial_idx, self.center_time_idx = _center_indices(patch_shape)
+        if full_time:
+            self.center_time_idx = None
+        self._svd = FastPatchSVD(patch_shape[-1])
 
     def forward(self, x: torch.Tensor):
         """Apply MP PCA denoising to a batch of patches."""
-        # Flatten and mean center
+        # Flatten and eigendecompose the centered Gram matrix (no U, see _svd.py)
         x_flat = x.reshape(x.shape[0], -1, x.shape[-1])  # (B, N,M)
 
-        xm = torch.mean(x_flat, dim=-2, keepdim=True)
-        xc = x_flat - xm
-
-        u, s, v = torch.linalg.svd(xc, full_matrices=False, driver="gesvda")
+        s, vh, xm, xc = self._svd.eigh(x_flat)
 
         N, M = x_flat.shape[-2], x_flat.shape[-1]
         # Convert singular values to eigenvalues of covariance
@@ -235,22 +225,16 @@ class MPPCADenoiser(torch.nn.Module):
         batch_idx = torch.arange(x_flat.shape[0], device=x.device)
         var_estimate = rcum_eigs[batch_idx, p] / (M - p)
 
+        s_safe = s.clamp_min(torch.finfo(s.dtype).tiny)
+        ratio = (s_shrink / s_safe).to(x.dtype if x.is_complex() else s.dtype)
+
         if self.recombination == "center":
-            u_center = u[:, self.center_spatial_idx, :]
-            if self.full_time:
-                x_center = (
-                    torch.matmul((u_center * s_shrink).unsqueeze(1), v).squeeze(1)
-                    + xm[:, 0, :]
-                )
-                return x_center, 1, var_estimate, p
-            v_center = v[:, :, self.center_time_idx]
-            x_center = (
-                torch.sum(u_center * s_shrink * v_center, dim=-1)
-                + xm[:, 0, self.center_time_idx]
+            x_center = self._svd.center_reconstruct(
+                x_flat, xm, vh, ratio, self.center_spatial_idx, self.center_time_idx
             )
             return x_center, 1, var_estimate, p
 
-        x_denoised = torch.matmul(u * s_shrink.unsqueeze(1), v) + xm
+        x_denoised = self._svd.reconstruct(x_flat, xm, xc, vh, ratio)
 
         if self.recombination == "weighted":
             weight = 1.0 / (2.0 + p)

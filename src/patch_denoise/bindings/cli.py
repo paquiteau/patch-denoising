@@ -204,9 +204,6 @@ def _load_validate_input(
     else:
         input_data, affine = load_as_array(input_file)
 
-    if nan_to_num is not None:
-        input_data = np.nan_to_num(input_data, nan=nan_to_num)
-
     log.info(f"Input data shape: {input_data.shape}")
     n_nans = np.isnan(input_data).sum()
     if n_nans > 0:
@@ -215,6 +212,9 @@ def _load_validate_input(
             "You might want to use --nan-to-num=<value>",
             stacklevel=0,
         )
+
+    if nan_to_num is not None:
+        input_data = np.nan_to_num(input_data, nan=nan_to_num)
 
     masker = NiftiMasker(verbose=verbose, mask_strategy="epi")
     if mask is not None:
@@ -375,13 +375,10 @@ def main(
     log.debug(f"mask affine: \n{masker.mask_img_.affine}.")
 
     if gpu:
-        if method not in [
-            DenoiserName.MP_PCA,
-            DenoiserName.OPTIMAL_FRO,
-            DenoiserName.OPTIMAL_FRO_NOISE,
-            DenoiserName.OPTIMAL_NUC,
-            DenoiserName.OPTIMAL_OPE,
-        ]:
+        from patch_denoise.gpu.main import GPU_SUPPORTED_METHODS
+        from patch_denoise.gpu.main import main_gpu as denoise_func
+
+        if method not in GPU_SUPPORTED_METHODS:
             raise ValueError(f"Method {method} is not supported on GPU. ")
         if not GPU_AVAILABLE:
             raise RuntimeError(
@@ -390,7 +387,6 @@ def main(
                 "a compatible GPU."
             )
         log.info("Using GPU for computation.")
-        from patch_denoise.gpu.main import main_gpu as denoise_func
 
         kwargs["method"] = method
         kwargs["batch_size"] = gpu_batch_size
