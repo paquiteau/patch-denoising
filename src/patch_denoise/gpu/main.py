@@ -30,6 +30,7 @@ def make_denoiser(
     recombination,
     batch_size,
     full_time=False,
+    dtype=torch.float32,
     **kwargs,
 ) -> OptimalSVDDenoiser | MPPCADenoiser:
     """Create a denoiser model on GPU."""
@@ -101,8 +102,10 @@ def main_gpu(
     # ensure single-precision for GPU compute.
     if np.iscomplexobj(input_data):
         input_data = input_data.astype(np.complex64, copy=False)
+        compute_dtype = torch.complex64
     else:
         input_data = input_data.astype(np.float32, copy=False)
+        compute_dtype = torch.float32
 
     squeeze_z = input_data.ndim == 3
     if squeeze_z:  # 2D + T
@@ -126,9 +129,21 @@ def main_gpu(
                 "Use the CPU backend for this configuration."
             )
 
+    # Time axis spans the whole data extent (e.g. from a "-1" patch/overlap):
+    # "center" recombination then keeps the whole time profile at the
+    # spatial center instead of collapsing it to a single time point too.
+    full_time = patch_shape[-1] == input_data.shape[-1]
+
     # Create the Dataset
     if batch_size == 0:
-        batch_size = autotune_batch_size(method, patch_shape, recombination, **kwargs)
+        batch_size = autotune_batch_size(
+            method,
+            patch_shape,
+            recombination,
+            dtype=compute_dtype,
+            full_time=full_time,
+            **kwargs,
+        )
 
     # Move the full volume to GPU once and gather patches directly from it:
     input_data_ = torch.from_numpy(input_data).cuda()
@@ -141,11 +156,6 @@ def main_gpu(
         mask_threshold=mask_threshold,
     )
 
-    # Time axis spans the whole data extent (e.g. from a "-1" patch/overlap):
-    # "center" recombination then keeps the whole time profile at the
-    # spatial center instead of collapsing it to a single time point too.
-    full_time = patch_shape[-1] == input_data.shape[-1]
-
     # Setup the denoiser model on GPU
     denoiser = make_denoiser(
         method,
@@ -153,6 +163,7 @@ def main_gpu(
         recombination=recombination,
         batch_size=batch_size,
         full_time=full_time,
+        dtype=compute_dtype,
         **kwargs,
     )
 

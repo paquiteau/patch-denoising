@@ -24,9 +24,17 @@ N_WARMUP = 2
 N_TRIALS = 5
 
 
-def _cache_key(method: str, patch_shape: tuple[int, ...], recombination: str) -> str:
+def _cache_key(
+    method: str,
+    patch_shape: tuple[int, ...],
+    recombination: str,
+    dtype: torch.dtype,
+    full_time: bool,
+) -> str:
     gpu_name = torch.cuda.get_device_name(0)
-    return f"{gpu_name}|{method}|{tuple(patch_shape)}|{recombination}"
+    return (
+        f"{gpu_name}|{method}|{tuple(patch_shape)}|{recombination}|{dtype}|{full_time}"
+    )
 
 
 def _load_cache() -> dict[str, int]:
@@ -47,17 +55,19 @@ def autotune_batch_size(
     recombination: str,
     candidates: tuple[int, ...] = CANDIDATE_BATCH_SIZES,
     n_trials: int = N_TRIALS,
+    dtype: torch.dtype = torch.float32,
+    full_time: bool = False,
     **denoiser_kwargs,
 ) -> int:
     """Return the fastest batch size for this (GPU, method, patch_shape).
 
-    Cached to disk keyed by GPU model + method + patch shape + recombination;
-    a repeat run with the same configuration reuses the cached value instead
-    of re-measuring.
+    Cached to disk keyed by GPU model + method + patch shape + recombination
+    + dtype + full_time; a repeat run with the same configuration reuses the
+    cached value instead of re-measuring.
     """
     from .main import make_denoiser
 
-    key = _cache_key(method, patch_shape, recombination)
+    key = _cache_key(method, patch_shape, recombination, dtype, full_time)
     cache = _load_cache()
     if key in cache:
         log.info(f"Using cached GPU batch size {cache[key]} for {key!r}.")
@@ -75,9 +85,11 @@ def autotune_batch_size(
                 patch_shape=patch_shape,
                 recombination=recombination,
                 batch_size=bs,
+                full_time=full_time,
+                dtype=dtype,
                 **denoiser_kwargs,
             )
-            dummy = torch.randn(bs, *patch_shape, device="cuda", dtype=torch.float32)
+            dummy = torch.randn(bs, *patch_shape, device="cuda", dtype=dtype)
             with torch.inference_mode():
                 for _ in range(N_WARMUP):
                     denoiser(dummy)
