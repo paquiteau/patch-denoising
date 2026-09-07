@@ -35,7 +35,7 @@ classifiers = [
 
 [project.optional-dependencies]
 optional = ["nipype"]
-gpu = ["torch", "triton; sys_platform == 'linux'"]
+gpu = ["torch", "triton; sys_platform == 'linux'", "nvmath-python; sys_platform == 'linux'"]
 
 [dependency-groups]
 # A combination of dependencies useful for developers

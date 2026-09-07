@@ -9,6 +9,7 @@ from tqdm.rich import tqdm
 
 from .._docs import fill_doc
 from ..space_time.base import (
+    DenoiserName,
     ExtraOutput,
     Recombination,
     check_center_recombination_overlap,
@@ -22,6 +23,13 @@ log = logging.getLogger(__name__)
 
 _NEEDS_COUNT = ExtraOutput.COUNT | ExtraOutput.NOISE_STD | ExtraOutput.RANK
 _NO_EXTRA_OUTPUT = ExtraOutput(0)
+
+# Single source of truth for GPU-supported methods, mirroring make_denoiser's
+# own dispatch below -- callers (e.g. the CLI) should check membership here
+# instead of hardcoding their own method list that can drift out of sync.
+GPU_SUPPORTED_METHODS = frozenset(
+    m for m in DenoiserName if "optimal" in m or m == DenoiserName.MP_PCA
+)
 
 
 def make_denoiser(
@@ -60,10 +68,15 @@ def make_denoiser(
 
     torch.set_float32_matmul_precision("high")
 
-    # Clear overhead memory from autotuning benchmarks
+    # Warm up: builds FastPatchSVD's cuSOLVER workspace and JIT-compiles its
+    # Triton kernels for this batch size before the tracked loop starts, so
+    # construction errors fail fast instead of surfacing on the first batch.
+    with torch.inference_mode():
+        dummy_input = torch.randn(batch_size, *patch_shape, device="cuda", dtype=dtype)
+        denoiser(dummy_input)
     torch.cuda.empty_cache()
 
-    return denoiser  # type: ignore
+    return denoiser
 
 
 @torch.inference_mode()
@@ -214,9 +227,11 @@ def main_gpu(
                 center_pos = (*center_coords[:, :3].unbind(-1), slice(None))
             out_acc[center_pos] = gpu_center
             out_weights[center_pos] = gpu_weight
+            # filter for last batch if it is smaller than batch_size
+            batch_ones = ones_buf[: stop - start] if ones_buf is not None else None
             for out_map, value in zip(
                 (out_var_map, out_rank_map, out_counts),
-                (gpu_var_est, gpu_rank, ones_buf),
+                (gpu_var_est, gpu_rank, batch_ones),
             ):
                 if out_map is not None and value is not None:
                     if full_time:
@@ -250,12 +265,14 @@ def main_gpu(
     out_acc[~mask_arr] = zero_gpu_cpx
     out_acc = out_acc.cpu().numpy()
 
-    # var_map/rank_map normalize by out_counts below: do that before the
-    # with_counts block zeroes it out for return.
+    if out_counts is not None:
+        out_counts_safe = torch.where(
+            out_counts == 0, torch.ones_like(out_counts), out_counts
+        )
+
     if ExtraOutput.NOISE_STD in extra_output:
         assert out_var_map is not None
-        assert out_counts is not None
-        out_var_map /= out_counts
+        out_var_map /= out_counts_safe
         out_var_map = torch.sqrt(out_var_map)
         out_var_map[~mask_arr] = zero_gpu
         out_var_map = out_var_map.cpu().numpy()
@@ -264,10 +281,9 @@ def main_gpu(
 
     if ExtraOutput.RANK in extra_output:
         assert out_rank_map is not None
-        assert out_counts is not None
         out_rank_map = out_rank_map.to(dtype=torch.float32)
+        out_rank_map /= out_counts_safe
         out_rank_map[~mask_arr] = zero_gpu
-        out_rank_map /= out_counts
         out_rank_map = out_rank_map.cpu().numpy()
     else:
         out_rank_map = None
