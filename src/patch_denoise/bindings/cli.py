@@ -149,16 +149,6 @@ GpuBatchSizeOpt = Annotated[
         "Ignored on CPU.",
     ),
 ]
-GpuCompileFlag = Annotated[
-    bool,
-    Parameter(
-        "--gpu-compile",
-        negative="",
-        help="Compile the GPU denoiser with torch.compile. Ignored on CPU. "
-        "Adds warmup cost and currently fails on inputs whose last batch is a "
-        "different size (i.e. n_patches is not a multiple of --gpu-batch-size).",
-    ),
-]
 OutMapExtraOpt = Annotated[
     ExtraOutput,
     Parameter(
@@ -283,7 +273,6 @@ def main(
     verbose: VerboseOpt = 0,
     gpu: GpuFlag = GPU_AVAILABLE,
     gpu_batch_size: GpuBatchSizeOpt = 0,
-    gpu_compile: GpuCompileFlag = False,
     outmap_extra: OutMapExtraOpt = _NO_EXTRA_OUTPUT,
     input_phase: Annotated[
         ExistingFile | None,
@@ -405,7 +394,6 @@ def main(
 
         kwargs["method"] = method
         kwargs["batch_size"] = gpu_batch_size
-        kwargs["compile"] = gpu_compile
         # Only accumulate/return the extras actually requested for saving.
         kwargs["extra_output"] = outmap_extra
     else:
