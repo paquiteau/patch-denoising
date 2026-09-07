@@ -144,8 +144,14 @@ def select_patches_to_process(mask, patch_shape, patch_overlap, mask_threshold=5
     return patch_idxs
 
 
-class PatchDataset(torch.utils.data.Dataset):
-    """Dataset for extracting patches from the input data."""
+class PatchDataset:
+    """GPU-resident collection of patches, batch-gathered from ``input_data``.
+
+    ``input_data`` is expected to already live on the target device: patches
+    are then extracted with a single vectorized advanced-index gather per
+    batch (see :meth:`get_batch`), with no host-device transfer or per-item
+    Python loop in the hot path.
+    """
 
     def __init__(
         self,
@@ -157,10 +163,7 @@ class PatchDataset(torch.utils.data.Dataset):
         mask: torch.Tensor | NDArray | None = None,
         mask_threshold=50,
     ):
-        # TODO: this can be a bit memory demanding on the cpu side
-        # consider implementing a more memory efficient version
-        # (e.g. memmap backed patches)
-
+        device = input_data.device
         data_shape = input_data.shape
         if mask is None:
             mask = torch.ones(data_shape[:-1], dtype=torch.float32)
@@ -173,10 +176,15 @@ class PatchDataset(torch.utils.data.Dataset):
 
         self.patch_locs = select_patches_to_process(
             mask, patch_shape, patch_overlap, mask_threshold
-        )
+        ).to(device)
         self.mask = mask
         self.patch_shape = patch_shape
         self.patch_overlap = patch_overlap
+        self._step = torch.tensor(
+            [ps - po for ps, po in zip(patch_shape, patch_overlap)],
+            dtype=torch.int64,
+            device=device,
+        )
 
         self.input_data = patchify_tensor(input_data, patch_shape, patch_overlap)
         self.grid_shape = self.input_data.shape[: len(data_shape)]
@@ -186,12 +194,12 @@ class PatchDataset(torch.utils.data.Dataset):
         if noise_map is not None:
             if isinstance(noise_map, (float, np.floating)):
                 noise_map = torch.full(
-                    data_shape, float(noise_map), dtype=torch.float32
+                    data_shape, float(noise_map), dtype=torch.float32, device=device
                 )
             else:
                 if isinstance(noise_map, np.ndarray):
                     noise_map = torch.from_numpy(noise_map)
-                noise_map = noise_map.to(dtype=torch.float32)
+                noise_map = noise_map.to(dtype=torch.float32, device=device)
                 if noise_map.shape == data_shape[:-1]:
                     noise_map = noise_map[..., None].expand(data_shape).contiguous()
             var_patches = patchify_tensor(noise_map**2, patch_shape, patch_overlap)
@@ -205,17 +213,14 @@ class PatchDataset(torch.utils.data.Dataset):
         """Get number of patches to process."""
         return len(self.patch_locs)
 
-    def __getitem__(self, idx):  # type: ignore
-        """Get the patch and its corresponding indices."""
-        patch_grid_idx = torch.unravel_index(self.patch_locs[idx], self.grid_shape)
-        patch_data = self.input_data[patch_grid_idx]
-        patch_top_left_idx = torch.tensor(
-            tuple(
-                idx * (ps - po)
-                for idx, ps, po in zip(
-                    patch_grid_idx, self.patch_shape, self.patch_overlap
-                )
-            ),
-            dtype=torch.int64,
-        )
-        return patch_data, patch_top_left_idx
+    def get_batch(self, start: int, stop: int):
+        """Gather patches ``[start, stop)`` and their top-left corner indices.
+
+        A single vectorized advanced-index gather over the (already
+        GPU-resident) strided patch view -- no per-patch Python loop, no
+        host-device copy.
+        """
+        grid_idx = torch.unravel_index(self.patch_locs[start:stop], self.grid_shape)
+        patch_data = self.input_data[grid_idx]
+        top_left_idx = torch.stack(grid_idx, dim=-1) * self._step
+        return patch_data, top_left_idx

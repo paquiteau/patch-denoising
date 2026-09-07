@@ -6,6 +6,20 @@ import torch
 from ..space_time.utils import marchenko_pastur_median
 
 
+def _center_indices(patch_shape: tuple[int, ...]) -> tuple[int, int]:
+    """Flattened spatial index and time index of a patch's center voxel.
+
+    Used by "center" recombination: only that single voxel of each denoised
+    patch is ever kept, so only the row of ``u`` and column of ``v`` that
+    produce it need to be computed.
+    """
+    spatial_shape = patch_shape[:-1]
+    spatial_idx = 0
+    for c, s in zip((p // 2 for p in spatial_shape), spatial_shape):
+        spatial_idx = spatial_idx * s + c
+    return spatial_idx, patch_shape[-1] // 2
+
+
 class OptimalSVDDenoiser(torch.nn.Module):
     """Optimal SVD denoiser for a batch of patches (Optimized for torch.compile)."""
 
@@ -15,11 +29,18 @@ class OptimalSVDDenoiser(torch.nn.Module):
         recombination="weighted",
         loss="fro",
         eps_marshenko_pastur=1e-7,
+        full_time=False,
     ):
         super().__init__()
         self.patch_shape = patch_shape
         self.recombination = recombination
         self.loss = loss
+        # True when the patch spans the full data extent on the time axis
+        # (e.g. patch_shape[-1] == -1 resolved to the full length): "center"
+        # recombination then keeps the whole time profile at the spatial
+        # center instead of collapsing it to a single time point too.
+        self.full_time = full_time
+        self.center_spatial_idx, self.center_time_idx = _center_indices(patch_shape)
 
         if loss not in ["fro", "nuc", "ope"]:
             raise ValueError(f"Invalid loss {loss}, must be 'fro', 'nuc', or 'ope'")
@@ -114,6 +135,28 @@ class OptimalSVDDenoiser(torch.nn.Module):
 
         maxidx = torch.sum(s_shrink > 0, dim=-1)
 
+        if self.recombination == "center":
+            # Only the spatial center of the reconstructed patch is ever kept
+            # (see base.py's Recombination.CENTER), so skip the full
+            # (B, N, T) reconstruction and project just the row of `u` that
+            # produces it.
+            u_center = u[:, self.center_spatial_idx, :]
+            if self.full_time:
+                # Time axis spans the whole data extent: keep the full
+                # reconstructed time profile at the spatial center instead
+                # of also collapsing it to a single time point.
+                x_center = (
+                    torch.matmul((u_center * s_shrink).unsqueeze(1), v).squeeze(1)
+                    + m[:, 0, :]
+                )
+                return x_center, 1, sigma**2, maxidx.to(torch.int32)
+            v_center = v[:, :, self.center_time_idx]
+            x_center = (
+                torch.sum(u_center * s_shrink * v_center, dim=-1)
+                + m[:, 0, self.center_time_idx]
+            )
+            return x_center, 1, sigma**2, maxidx.to(torch.int32)
+
         if self.recombination == "weighted":
             weight = 1.0 / (2.0 + maxidx)
         else:
@@ -125,7 +168,7 @@ class OptimalSVDDenoiser(torch.nn.Module):
             x_denoised.reshape(x.shape),
             weight,
             sigma**2,
-            maxidx,
+            maxidx.to(torch.int32),
         )
 
 
@@ -137,11 +180,14 @@ class MPPCADenoiser(torch.nn.Module):
         patch_shape,
         recombination="weighted",
         threshold_scale=1.0,
+        full_time=False,
     ):
         super().__init__()
         self.patch_shape = patch_shape
         self.threshold_scale = threshold_scale
         self.recombination = recombination
+        self.full_time = full_time
+        self.center_spatial_idx, self.center_time_idx = _center_indices(patch_shape)
 
     def forward(self, x: torch.Tensor):
         """Apply MP PCA denoising to a batch of patches."""
@@ -178,13 +224,32 @@ class MPPCADenoiser(torch.nn.Module):
         # s2_after = s2 - csum(p+1)/(M*N);
 
         p_range = torch.arange(M, device=x.device)
-        # eigs is ascending, so mask is True for all indices < p, and False for all indices >= p
-        mask = (eigs - eigs[:, -1:]) * (M - p_range) * (N - p_range) > 4 * rcum_eigs * (
-            M * N
-        ) ** 0.5 * self.threshold_scale**2
+        # eigs is ascending, so mask is True for all indices < p, and False after
+        mask = ((eigs - eigs[:, -1:]) * (M - p_range) * (N - p_range)) > (
+            4 * rcum_eigs * (M * N) ** 0.5 * self.threshold_scale**2
+        )
         p = torch.sum(mask, dim=-1)  # p is the index of the last True in mask
         eigs = eigs * (p_range < p.unsqueeze(-1))
         s_shrink = torch.sqrt(eigs * (N - 1))
+
+        batch_idx = torch.arange(x_flat.shape[0], device=x.device)
+        var_estimate = rcum_eigs[batch_idx, p] / (M - p)
+
+        if self.recombination == "center":
+            u_center = u[:, self.center_spatial_idx, :]
+            if self.full_time:
+                x_center = (
+                    torch.matmul((u_center * s_shrink).unsqueeze(1), v).squeeze(1)
+                    + xm[:, 0, :]
+                )
+                return x_center, 1, var_estimate, p
+            v_center = v[:, :, self.center_time_idx]
+            x_center = (
+                torch.sum(u_center * s_shrink * v_center, dim=-1)
+                + xm[:, 0, self.center_time_idx]
+            )
+            return x_center, 1, var_estimate, p
+
         x_denoised = torch.matmul(u * s_shrink.unsqueeze(1), v) + xm
 
         if self.recombination == "weighted":
@@ -192,6 +257,4 @@ class MPPCADenoiser(torch.nn.Module):
         else:
             weight = torch.ones_like(p, dtype=torch.float32)
 
-        batch_idx = torch.arange(x_flat.shape[0], device=x.device)
-        var_estimate = rcum_eigs[batch_idx, p] / (M - p)
-        return x_denoised.reshape(x.shape), weight, var_estimate, p
+        return x_denoised.reshape(x.shape), weight, var_estimate, p.to(torch.int32)

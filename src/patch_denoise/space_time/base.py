@@ -49,6 +49,27 @@ class ExtraOutput(enum.Flag):
     """Save the rank estimate."""
     COUNT = enum.auto()
     """Save the patch count."""
+
+
+def check_center_recombination_overlap(
+    patch_shape: tuple[int, ...],
+    patch_overlap: tuple[int, ...],
+    data_shape: tuple[int, ...],
+) -> None:
+    """Raise if 'center' recombination is requested with non-maximal overlap."""
+    non_maximal = [
+        d
+        for d, (ps, po, ds) in enumerate(zip(patch_shape, patch_overlap, data_shape))
+        if ps < ds and po != ps - 1
+    ]
+    if non_maximal:
+        raise ValueError(
+            "recombination='center' requires maximal overlap."
+            "(patch_overlap = patch_shape - 1) on every axis"
+            " that does not have the full data size."
+        )
+
+
 class PatchedArray:
     """A container for accessing custom view of array easily.
 
@@ -242,11 +263,11 @@ class BaseSpaceTimeDenoiser(abc.ABC):
                 f"Mask shape {mask.shape} is incompatible with input {data_shape}."
             )
 
-        process_mask = PatchedArray(
-            process_mask, p_s, p_o, padding_mode="constant", constant_values=0
-        )
+        process_mask = PatchedArray(process_mask, p_s, p_o)
 
-        center_pos = tuple(p // 2 for p in p_s)
+        center_pos = tuple(
+            slice(None) if ps == ds else ps // 2 for ps, ds in zip(p_s, data_shape)
+        )
         patch_space_size = np.prod(p_s[:-1])
         # select only queue index where process_mask is valid.
         get_it = np.zeros(input_data_.n_patches, dtype=bool)
