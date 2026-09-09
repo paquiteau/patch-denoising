@@ -75,23 +75,25 @@ def test_eigh_mean_and_singular_values_match_reference(x):
     assert _rel_err(s, s_ref) < TOL, "singular value mismatch"
 
 
-def test_eigh_vh_is_unitary(svd, x):
+def test_eigh_vh_is_unitary(x):
     """Each patch's ``Vh`` must be a unitary ``(T, T)`` matrix."""
     T = x.shape[-1]
     eye = torch.eye(T, device="cuda", dtype=x.dtype).expand(x.shape[0], T, T)
+    fastsvd = FastPatchSVD(x.shape[-1])
     with torch.inference_mode():
-        _, vh, _, _ = svd.eigh(x)
+        _, vh, _, _ = fastsvd.eigh(x)
     gram = torch.matmul(vh, _hermitian_t(vh))
     assert _rel_err(gram, eye, scale=1.0) < TOL
 
 
-def test_eigh_reconstructs_centered_gram_matrix(svd, x):
+def test_eigh_reconstructs_centered_gram_matrix(x):
     """``Vh^H diag(s^2) Vh`` must equal the centered Gram matrix ``Xc^H Xc``."""
     xc_ref = x - torch.mean(x, dim=-2, keepdim=True)
     gram_ref = torch.matmul(_hermitian_t(xc_ref), xc_ref)
 
+    fastsvd = FastPatchSVD(x.shape[-1])
     with torch.inference_mode():
-        s, vh, _, _ = svd.eigh(x)
+        s, vh, _, _ = fastsvd.eigh(x)
     v = _hermitian_t(vh)
     s2 = (s**2).to(v.dtype)
     gram = torch.matmul(v * s2.unsqueeze(-2), vh)
@@ -99,33 +101,45 @@ def test_eigh_reconstructs_centered_gram_matrix(svd, x):
     assert _rel_err(gram, gram_ref) < TOL
 
 
-def test_reconstruct_full_rank_is_identity(svd, x):
+def test_reconstruct_full_rank(x):
     """``ratio=1`` for every component must round-trip back to the original patches."""
+    fastsvd = FastPatchSVD(x.shape[-1])
     with torch.inference_mode():
-        s, vh, m, xc = svd.eigh(x)
+        s, vh, m, xc = fastsvd.eigh(x)
         ratio = torch.ones_like(s)
-        out = svd.reconstruct(x, m, xc, vh, ratio)
+        out = fastsvd.reconstruct(x, m, xc, vh, ratio)
     assert _rel_err(out, x) < TOL
 
 
-def test_reconstruct_zero_rank_returns_mean(svd, x):
+def test_reconstruct_zero_rank(x):
     """``ratio=0`` for every component must collapse each patch to its own mean."""
+    fastsvd = FastPatchSVD(x.shape[-1])
     with torch.inference_mode():
-        s, vh, m, xc = svd.eigh(x)
+        s, vh, m, xc = fastsvd.eigh(x)
         ratio = torch.zeros_like(s)
-        out = svd.reconstruct(x, m, xc, vh, ratio)
+        out = fastsvd.reconstruct(x, m, xc, vh, ratio)
     assert _rel_err(out, m.expand_as(out)) < TOL
 
 
-def test_reconstruct_matches_reference_at_arbitrary_ratio(svd, x):
+def test_reconstruct_matches_reference_at_arbitrary_ratio(x):
     """Partial-rank reconstruction must match a plain full ``torch.linalg.svd`` filter.
 
     The filter matrix ``V @ diag(ratio) @ Vh`` is invariant to each singular
     vector's arbitrary sign/phase, so this holds even though FastPatchSVD
-    never computes the same ``U``/``V`` as the reference.
+    never computes the same ``U``/``V`` as the reference. ``ratio`` is sorted
+    descending (matching how a real shrink function assigns nearby ratios to
+    nearby singular values): an i.i.d. random ratio can assign very different
+    shrinkage to a pair of near-degenerate singular values, which is
+    genuinely ill-conditioned -- the eigenvectors spanning a near-degenerate
+    subspace aren't well-defined, so two independent, individually-correct
+    solvers (this one and ``gesvda``) can legitimately disagree there.
     """
     torch.manual_seed(1234)
-    ratio = torch.rand(x.shape[0], x.shape[-1], device="cuda")
+    ratio = (
+        torch.rand(x.shape[0], x.shape[-1], device="cuda")
+        .sort(dim=-1, descending=True)
+        .values
+    )
 
     m_ref = torch.mean(x, dim=-2, keepdim=True)
     xc_ref = x - m_ref
@@ -134,26 +148,31 @@ def test_reconstruct_matches_reference_at_arbitrary_ratio(svd, x):
     )
     ref = torch.matmul(u_ref * (s_ref * ratio).unsqueeze(-2), vh_ref) + m_ref
 
+    fastsvd = FastPatchSVD(x.shape[-1])
     with torch.inference_mode():
-        _, vh, m, xc = svd.eigh(x)
-        out = svd.reconstruct(x, m, xc, vh, ratio)
+        _, vh, m, xc = fastsvd.eigh(x)
+        out = fastsvd.reconstruct(x, m, xc, vh, ratio)
 
     assert _rel_err(out, ref) < TOL
 
 
 @pytest.mark.parametrize("full_time", [False, True])
-def test_center_reconstruct_matches_reconstruct_row(svd, x, full_time):
+def test_center_reconstruct_matches_reconstruct_row(x, full_time):
     """``center_reconstruct`` must equal the corresponding row of ``reconstruct``."""
     spatial_idx = x.shape[-2] // 2
     time_idx = None if full_time else x.shape[-1] // 2
 
     torch.manual_seed(1)
-    ratio = torch.rand(x.shape[0], x.shape[-1], device="cuda")
-
+    ratio = (
+        torch.rand(x.shape[0], x.shape[-1], device="cuda")
+        .sort(dim=-1, descending=True)
+        .values
+    )
+    fastsvd = FastPatchSVD(x.shape[-1])
     with torch.inference_mode():
-        s, vh, m, xc = svd.eigh(x)
-        full = svd.reconstruct(x, m, xc, vh, ratio)
-        center = svd.center_reconstruct(x, m, vh, ratio, spatial_idx, time_idx)
+        s, vh, m, xc = fastsvd.eigh(x)
+        full = fastsvd.reconstruct(x, m, xc, vh, ratio)
+        center = fastsvd.center_reconstruct(x, m, vh, ratio, spatial_idx, time_idx)
 
     expected = full[:, spatial_idx, :] if full_time else full[:, spatial_idx, time_idx]
     assert _rel_err(center, expected) < TOL
