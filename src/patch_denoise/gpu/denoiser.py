@@ -40,7 +40,6 @@ class OptimalSVDDenoiser(torch.nn.Module):
         # (e.g. patch_shape[-1] == -1 resolved to the full length): "center"
         # recombination then keeps the whole time profile at the spatial
         # center instead of collapsing it to a single time point too.
-        self.full_time = full_time
         self.center_spatial_idx, self.center_time_idx = _center_indices(patch_shape)
         if full_time:
             self.center_time_idx = None
@@ -131,6 +130,7 @@ class OptimalSVDDenoiser(torch.nn.Module):
             # scale factor to apply to the singular values before shrinkage.
             scale_factor = s[..., lo] + s[..., hi]
             scale_factor /= 2 * self.sqrt_mp_med
+            sigma = scale_factor / (self.T**0.5)
 
         # Apply shrink
         scale_factor_exp = scale_factor.unsqueeze(-1)
