@@ -66,8 +66,6 @@ def make_denoiser(
 
     denoiser = denoiser.cuda()  # Move model to GPU
 
-    torch.set_float32_matmul_precision("high")
-
     # Warm up: builds FastPatchSVD's cuSOLVER workspace and JIT-compiles its
     # Triton kernels for this batch size before the tracked loop starts, so
     # construction errors fail fast instead of surfacing on the first batch.
@@ -131,10 +129,21 @@ def main_gpu(
                 mask = mask[:, :, None, :]
             elif mask.shape == data_shape[:-1]:
                 mask = mask[:, :, None]
+        if isinstance(noise_std, np.ndarray):
+            noise_arr: NDArray = noise_std
+            if noise_arr.shape == data_shape:
+                noise_std = noise_arr[:, :, None, :]
+            elif noise_arr.shape == data_shape[:-1]:
+                noise_std = noise_arr[:, :, None]
 
     if recombination == Recombination.CENTER:
         check_center_recombination_overlap(patch_shape, patch_overlap, input_data.shape)
-        if any(ps == ds for ps, ds in zip(patch_shape[:-1], input_data.shape[:-1])):
+        # The synthetic Z axis injected above for 2D+T inputs always has
+        # patch_shape == data_shape == 1; it isn't a real spatial axis and
+        # must be excluded from the full-extent check below.
+        spatial_patch = patch_shape[:2] if squeeze_z else patch_shape[:-1]
+        spatial_data = input_data.shape[:2] if squeeze_z else input_data.shape[:-1]
+        if any(ps == ds for ps, ds in zip(spatial_patch, spatial_data)):
             raise NotImplementedError(
                 "GPU 'center' recombination only supports a full-extent "
                 "(patch_shape == data_shape) axis on the last (time) axis; "

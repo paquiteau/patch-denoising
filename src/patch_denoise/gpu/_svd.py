@@ -78,7 +78,7 @@ class _XsyevBatched:
             cusolverDn.destroy_params(self.params)
             cusolverDn.destroy(self.handle)
         except Exception:
-            pass
+            log.debug("Failed to release cuSOLVER handle/params.", exc_info=True)
 
     def __call__(self, g):
         """
@@ -133,6 +133,15 @@ class _XsyevBatched:
 # Fixed kernel launch parameters for the fused kernels below.
 _GRAM_REAL_CFG = dict(BLOCK_N=64, num_warps=4, num_stages=3)
 _RECON_REAL_CFG = dict(BLOCK_N=64, num_warps=8, num_stages=3)
+
+# Both fused kernels hold a (BLOCK_T, BLOCK_T) accumulator/filter tile in
+# shared memory, at the above (BLOCK_N, num_stages) pipelining depth; that
+# blows past typical GPU shared-memory limits once BLOCK_T reaches 256
+# (empirically: T <= 128 launches fine, T in (128, 256] hits
+# ``triton.runtime.errors.OutOfResources`` -- e.g. a full-time-extent patch
+# on real fMRI data, T ~ 300). Eigh falls back to the honest (unfused) path
+# above this cap -- see ``eigh``.
+_FUSED_MAX_BLOCK_T = 128
 
 
 def _block_t(T: int) -> int:
@@ -239,10 +248,15 @@ def _fused_reconstruction_kernel(
     BLOCK_N: tl.constexpr,
     BLOCK_T: tl.constexpr,
 ):
-    """out[b] = (x[b]-mean[b]) @ Mm[b] + mean[b].
+    """
+    Compute the reconstruction of a batch of patches.
 
-    x is centered on-the-fly (contraction is over T, not N -- safe, see module
-    docstring).
+    As for the fused Gram kernel, the centered tensor is never materialized in HBM.
+    The mean is taken as an input, so we compute:
+    out[b] = (x[b]-mean[b]) @ Mm[b] + mean[b].
+
+    Where Mm[b] is the filter matrix computed from the SVD of the centered Gram matrix.
+
     """
     pid_b = tl.program_id(0)
     pid_n = tl.program_id(1)
@@ -281,10 +295,20 @@ def _fused_reconstruction_kernel(
     tl.store(out_ptrs, out_tile, mask=mask2d)
 
 
-def _fused_centered_gram(x):
-    """Compute ``(gc, m)`` via the fused Triton kernel above. Float32 only.
+def _fused_centered_gram(x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    """Compute the batched centered Gram matrix and mean of a batch of patches.
 
-    ``m`` is shaped (B,1,T) to match the honest-torch complex64 path's return.
+    Parameters
+    ----------
+    x : (B, N, T) tensor, float32
+
+    Returns
+    -------
+    gc : (B, T, T) tensor, float32
+        Centered Gram matrix: ``gc[b] = (x[b]-mean[b])^T @ (x[b]-mean[b])``.
+    m : (B, 1, T) tensor, float32
+        Per-row mean: ``m[b] = mean(x[b], dim=0, keepdim=True)``.
+
     """
     B, N, T = x.shape
     m = torch.empty(B, T, device=x.device, dtype=torch.float32)
@@ -311,7 +335,22 @@ def _fused_centered_gram(x):
 
 
 def _fused_reconstruction(x, m, Mm):
-    """Compute ``(x-m) @ Mm + m`` via the fused Triton kernel above. Float32 only."""
+    """Compute ``(x-m) @ Mm + m`` via the fused Triton kernel above. Float32 only.
+
+    Parameters
+    ----------
+    x : (B, N, T) tensor, float32
+        Input patches.
+    m : (B, 1, T) tensor, float32
+        Per-row mean.
+    Mm : (B, T, T) tensor, float32
+        Filter matrix computed from the SVD of the centered Gram matrix.
+
+    Returns
+    -------
+    out : (B, N, T) tensor, float32
+        Reconstructed patches: ``out[b] = (x[b]-m[b]) @ Mm[b] + m[b]``.
+    """
     B, N, T = x.shape
     m2 = m.reshape(B, T)
     out = torch.empty_like(x)
@@ -342,15 +381,25 @@ def _fused_reconstruction(x, m, Mm):
 
 
 class FastPatchSVD(torch.nn.Module):
-    """No-``U`` SVD replacement for ``gesvda`` (see module docstring).
+    """
+    Fast batched SVD/eigensolve for patch denoising, replacing ``gesvda``.
 
-    Owns lazily-constructed cuSOLVER eigensolver workspaces, keyed by
-    ``(batch_size, dtype, device)`` -- a denoising run uses one batch size throughout
-    except for a possibly-smaller final batch, so this cache normally holds at
-    most two entries. Subclasses ``nn.Module`` purely for clean submodule
-    composition (``.cuda()``/``.to()`` propagate when a denoiser holds
-    ``self._svd = FastPatchSVD(...)``); it has no parameters and is never
-    called via ``__call__``/``forward`` -- callers use the named methods below.
+    This class implements a custom SVD driver for a batch of tall-skinny
+    matrices (patches) that avoids the FP64 promotion of ``gesvda`` in cuSOLVER.
+
+    It computes the eigendecomposition of the centered Gram matrix and
+    reconstructs the denoised patches without explicitly forming the left
+    singular vectors.
+
+    Moreover, it does not materialize the centered tensor nor the "U" matrix,
+    which saves memory and computation time.
+
+    Example
+    -------
+    >>> svd = FastPatchSVD(T=128)
+    >>> s, vh, m, xc = svd.eigh(x_flat)
+    >>> ratio = s / s.sum(dim=-1, keepdim=True) Shrink the singular values
+    >>> x_denoised = svd.reconstruct(x_flat, m, xc, vh, ratio)
     """
 
     def __init__(self, T: int):
@@ -366,7 +415,9 @@ class FastPatchSVD(torch.nn.Module):
             self._solvers[key] = solver
         return solver
 
-    def eigh(self, x_flat: torch.Tensor):
+    def eigh(
+        self, x_flat: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor | None]:
         """Eigendecompose the centered Gram matrix of a batch of flattened patches.
 
         Parameters
@@ -388,18 +439,19 @@ class FastPatchSVD(torch.nn.Module):
             once here, reused by :meth:`reconstruct` so it isn't recomputed).
         """
         dtype = x_flat.dtype
-        if dtype == torch.float32:
-            gc, m = _fused_centered_gram(x_flat)
-            xc = None
-        elif dtype == torch.complex64:
-            m = torch.mean(x_flat, dim=-2, keepdim=True)
-            xc = x_flat - m
-            xch = xc.conj().transpose(-2, -1)
-            gc = torch.matmul(xch, xc)
-        else:
+        if dtype not in (torch.float32, torch.complex64):
             raise TypeError(
                 f"FastPatchSVD only supports float32/complex64, got {dtype}"
             )
+
+        if dtype == torch.float32 and _block_t(x_flat.shape[-1]) <= _FUSED_MAX_BLOCK_T:
+            gc, m = _fused_centered_gram(x_flat)
+            xc = None
+        else:
+            m = torch.mean(x_flat, dim=-2, keepdim=True)
+            xc = x_flat - m
+            xch = xc.conj().transpose(-2, -1) if dtype == torch.complex64 else xc.mT
+            gc = torch.matmul(xch, xc)
 
         solver = self._get_solver(x_flat.shape[0], dtype, x_flat.device)
         w = solver(gc)  # in-place: gc now holds eigenvectors; w ascending real.
@@ -443,18 +495,31 @@ class FastPatchSVD(torch.nn.Module):
         spatial_idx: int,
         time_idx: int | None = None,
     ) -> torch.Tensor:
-        """``center`` recombination: one row (``time_idx=None``) or one scalar/patch.
-
-        Never forms the full (B,N,T) output, and -- unlike a ``U``-based
-        implementation -- never needs a full SVD just to read one row of
-        ``U``: only the center row of ``Xc`` is ever computed.
+        """
+        Perform ``center`` recombination: one row (``time_idx=None``) or one scalar/patch.
 
         Parameters
         ----------
-        time_idx : int or None
-            None keeps the whole time profile at the spatial center (patch's
-            time axis spans the full data extent). An int collapses to a
-            single scalar per patch (both space and time centered).
+        x_flat : (B, N, T) tensor
+            Input patches.
+        m : (B, 1, T) tensor
+            Per-row mean.
+        vh : (B, T, T) tensor
+            Right singular vectors, ``Vh`` row-convention (matches
+            ``torch.linalg.svd``'s ``vh``). ``U`` is never computed
+        ratio : (B, T) tensor
+            Singular value shrinkage ratio.
+        spatial_idx : int
+            Index of the spatial location to reconstruct (0 <= spatial_idx < N).
+        time_idx : int or None, optional
+            Index of the time point to reconstruct (0 <= time_idx < T). If None,
+            reconstructs the entire row (``(B, T)``).
+
+        Returns
+        -------
+        out : (B, T) tensor if time_idx is None, else (B,)
+            Reconstructed row or scalar for the specified spatial and time indices.
+
         """
         M = self._filter_matrix(vh, ratio)
         xc_center = x_flat[:, spatial_idx, :] - m[:, 0, :]  # (B,T)

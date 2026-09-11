@@ -14,7 +14,7 @@ from numpy.typing import NDArray
 
 from patch_denoise.space_time.base import DenoiserName
 
-DENOISER_NAMES = DenoiserName._value2member_map_
+DENOISER_NAMES = {m.value: m for m in DenoiserName}
 
 
 class _DenoiserMap:
