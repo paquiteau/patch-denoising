@@ -130,7 +130,7 @@ class OptimalSVDDenoiser(torch.nn.Module):
             # scale factor to apply to the singular values before shrinkage.
             scale_factor = s[..., lo] + s[..., hi]
             scale_factor /= 2 * self.sqrt_mp_med
-            sigma = scale_factor / (self.N**0.5)
+            sigma = scale_factor / (self.T**0.5)
 
         # Apply shrink
         scale_factor_exp = scale_factor.unsqueeze(-1)

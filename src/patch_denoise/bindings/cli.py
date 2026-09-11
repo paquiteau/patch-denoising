@@ -269,7 +269,7 @@ def main(
     mask: MaskOpt = None,
     mask_threshold: MaskThreshOpt = 50,
     extras: ExtraOpts = None,
-    nan_to_num: NaN2NumOpt = 0.0,
+    nan_to_num: NaN2NumOpt = None,
     verbose: VerboseOpt = 0,
     gpu: GpuFlag = GPU_AVAILABLE,
     gpu_batch_size: GpuBatchSizeOpt = 0,
@@ -430,7 +430,8 @@ def main(
     }
     for name, extra_file in extra_output_files.items():
         array = extra_arrays[name]
-        assert array is not None, f"{name} was requested but not returned"
+        if array is None:
+            raise RuntimeError(f"{name} was requested but not returned")
         save_array(array, affine, extra_file)
     toc = time.perf_counter()
     log.debug("Saving completed in %.2f seconds.", toc - tic)

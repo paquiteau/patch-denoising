@@ -11,6 +11,7 @@ fastest, then caches the result to disk so repeat runs skip calibration.
 
 import json
 import logging
+import os
 import time
 from pathlib import Path
 
@@ -31,7 +32,7 @@ def _cache_key(
     dtype: torch.dtype,
     full_time: bool,
 ) -> str:
-    gpu_name = torch.cuda.get_device_name(0)
+    gpu_name = torch.cuda.get_device_name(torch.cuda.current_device())
     return (
         f"{gpu_name}|{method}|{tuple(patch_shape)}|{recombination}|{dtype}|{full_time}"
     )
@@ -46,7 +47,11 @@ def _load_cache() -> dict[str, int]:
 
 def _save_cache(cache: dict[str, int]) -> None:
     CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    CACHE_PATH.write_text(json.dumps(cache, indent=2))
+    # Write-then-rename so a crash or concurrent writer never leaves a
+    # truncated/invalid JSON file behind (os.replace is atomic).
+    tmp_path = CACHE_PATH.with_suffix(f".{os.getpid()}.tmp")
+    tmp_path.write_text(json.dumps(cache, indent=2))
+    os.replace(tmp_path, CACHE_PATH)
 
 
 def autotune_batch_size(
@@ -113,6 +118,9 @@ def autotune_batch_size(
     log.info(
         f"Auto-tuned GPU batch size: {best_bs} ({best_us_per_patch:.1f} us/patch)."
     )
+    # Re-read before writing so a concurrent process's result for a
+    # different key isn't lost to a last-writer-wins overwrite.
+    cache = _load_cache()
     cache[key] = best_bs
     _save_cache(cache)
     return best_bs

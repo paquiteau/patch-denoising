@@ -166,11 +166,11 @@ class PatchDataset:
         device = input_data.device
         data_shape = input_data.shape
         if mask is None:
-            mask = torch.ones(data_shape[:-1], dtype=torch.float32)
+            mask = torch.ones(data_shape[:-1], dtype=torch.float32, device=device)
         else:
             if isinstance(mask, np.ndarray):
                 mask = torch.from_numpy(mask)
-            mask = mask.to(dtype=torch.float32)
+            mask = mask.to(dtype=torch.float32, device=device)
         if mask.shape == data_shape[:-1]:  # only spatial mask provided
             mask = mask[..., None].expand(data_shape).contiguous()
 

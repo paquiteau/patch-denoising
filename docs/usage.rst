@@ -29,7 +29,6 @@ Magnitude only
     patch-denoise \
         sub-01/func/sub-01_task-rest_part-mag_bold.nii.gz \
         sub-01_task-rest_part-mag_desc-denoised_bold.nii.gz \
-        --mask auto \
         --method optimal-fro \
         --patch-shape 11 \
         --patch-overlap 5 \
@@ -46,7 +45,6 @@ Magnitude with noise volumes
         sub-01/func/sub-01_task-rest_part-mag_bold.nii.gz \
         sub-01_task-rest_part-mag_desc-denoised_bold.nii.gz \
         --noise-map sub-01/func/sub-01_task-rest_part-mag_noRF.nii.gz \
-        --mask auto \
         --method optimal-fro \
         --patch-shape 11 \
         --patch-overlap 5 \
@@ -63,7 +61,6 @@ Magnitude and phase
         sub-01/func/sub-01_task-rest_part-mag_bold.nii.gz \
         sub-01_task-rest_part-mag_desc-denoised_bold.nii.gz \
         --input-phase sub-01/func/sub-01_task-rest_part-phase_bold.nii.gz \
-        --mask auto \
         --method optimal-fro \
         --patch-shape 11 \
         --patch-overlap 5 \
@@ -82,7 +79,6 @@ Magnitude and phase with noise volumes
         --input-phase sub-01/func/sub-01_task-rest_part-phase_bold.nii.gz \
         --noise-map sub-01/func/sub-01_task-rest_part-mag_noRF.nii.gz \
         --noise-map-phase sub-01/func/sub-01_task-rest_part-phase_noRF.nii.gz \
-        --mask auto \
         --method optimal-fro \
         --patch-shape 11 \
         --patch-overlap 5 \

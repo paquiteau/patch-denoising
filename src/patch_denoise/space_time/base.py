@@ -308,6 +308,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
 
             if self.recombination == Recombination.CENTER:
                 output_data.get_patch(i)[center_pos] = p_denoise[center_pos]
+                patch_weights.get_patch(i)[center_pos] = 1
             elif self.recombination == Recombination.WEIGHTED:
                 theta = 1 / (2 + maxidx)
                 output_data.add2patch(i, p_denoise * theta)

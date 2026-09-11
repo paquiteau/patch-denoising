@@ -78,7 +78,7 @@ class _XsyevBatched:
             cusolverDn.destroy_params(self.params)
             cusolverDn.destroy(self.handle)
         except Exception:
-            pass
+            log.debug("Failed to release cuSOLVER handle/params.", exc_info=True)
 
     def __call__(self, g):
         """
