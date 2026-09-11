@@ -66,8 +66,6 @@ def make_denoiser(
 
     denoiser = denoiser.cuda()  # Move model to GPU
 
-    torch.set_float32_matmul_precision("high")
-
     # Warm up: builds FastPatchSVD's cuSOLVER workspace and JIT-compiles its
     # Triton kernels for this batch size before the tracked loop starts, so
     # construction errors fail fast instead of surfacing on the first batch.

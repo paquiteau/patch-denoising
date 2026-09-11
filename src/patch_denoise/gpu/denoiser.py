@@ -49,8 +49,8 @@ class OptimalSVDDenoiser(torch.nn.Module):
         if loss not in ["fro", "nuc", "ope"]:
             raise ValueError(f"Invalid loss {loss}, must be 'fro', 'nuc', or 'ope'")
 
-        self.N = np.prod(patch_shape[:-1])
-        self.T = patch_shape[-1]
+        self.N: int = np.prod(patch_shape[:-1])
+        self.T: int = patch_shape[-1]
 
         self.beta = float(self.T / self.N)
 
@@ -130,7 +130,7 @@ class OptimalSVDDenoiser(torch.nn.Module):
             # scale factor to apply to the singular values before shrinkage.
             scale_factor = s[..., lo] + s[..., hi]
             scale_factor /= 2 * self.sqrt_mp_med
-            sigma = scale_factor / (self.T**0.5)
+            sigma = scale_factor / (self.N**0.5)
 
         # Apply shrink
         scale_factor_exp = scale_factor.unsqueeze(-1)
@@ -140,7 +140,7 @@ class OptimalSVDDenoiser(torch.nn.Module):
 
         maxidx = torch.sum(s_shrink > 0, dim=-1)
         s_safe = s.clamp_min(torch.finfo(s.dtype).tiny)
-        ratio = (s_shrink / s_safe).to(x.dtype if x.is_complex() else s.dtype)
+        ratio = (s_shrink / s_safe).to(s.dtype, copy=False)
 
         if self.recombination == "center":
             x_center = self._svd.center_reconstruct(
