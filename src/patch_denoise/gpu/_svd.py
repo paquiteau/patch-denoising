@@ -82,7 +82,7 @@ class _XsyevBatched:
 
     def __call__(self, g):
         """
-        Compute the Batched eigendecomposition of a (B,T,T) Hermitian/symmetric matrix ``g``.
+        Compute the batched eigendecomposition of a (B,T,T) Hermitian/symmetric matrix.
 
         Parameters
         ----------
@@ -95,9 +95,8 @@ class _XsyevBatched:
 
         Notes
         -----
-        The eigenvectors are returned in-place in ``g``. The eigenvalues are always real.
-
-
+        The eigenvectors are returned in-place in ``g``. The eigenvalues are always
+        real.
         """
         B, T = self.batch_size, self.T
         cusolverDn.set_stream(self.handle, torch.cuda.current_stream().cuda_stream)
@@ -149,7 +148,8 @@ def _block_t(T: int) -> int:
 
     ``tl.dot`` requires its contraction dimension to be >= 16 (a tensor-core
     hardware minimum) -- ``triton.next_power_of_2(T)`` alone isn't enough
-    whenever T is itself an exact power of 2 below 16, since it then returns T unchanged.
+    whenever T is itself an exact power of 2 below 16, since it then returns
+    T unchanged.
     """
     return max(triton.next_power_of_2(T), 16)
 
@@ -495,8 +495,7 @@ class FastPatchSVD(torch.nn.Module):
         spatial_idx: int,
         time_idx: int | None = None,
     ) -> torch.Tensor:
-        """
-        Perform ``center`` recombination: one row (``time_idx=None``) or one scalar/patch.
+        """Perform ``center`` recombination: one row or one scalar/patch.
 
         Parameters
         ----------
