@@ -1,0 +1,44 @@
+patch\_denoise.space\_time.base
+===============================
+
+.. automodule:: patch_denoise.space_time.base
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+      :nosignatures:
+   
+      check_center_recombination_overlap
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      BaseSpaceTimeDenoiser
+      DenoiserName
+      ExtraOutput
+      PatchedArray
+      Recombination
+   
+   
+
+   
+   
+   
+
+
+

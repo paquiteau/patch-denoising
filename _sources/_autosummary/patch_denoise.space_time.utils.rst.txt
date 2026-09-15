@@ -1,0 +1,37 @@
+patch\_denoise.space\_time.utils
+================================
+
+.. automodule:: patch_denoise.space_time.utils
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+      :nosignatures:
+   
+      eig_analysis
+      eig_synthesis
+      estimate_noise
+      get_patch_locs
+      marchenko_pastur_median
+      svd_analysis
+      svd_synthesis
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,27 @@
+ExtraOutput
+===========
+
+.. currentmodule:: patch_denoise.space_time.base
+
+.. autoclass:: ExtraOutput
+   :members:
+   :private-members:
+   :show-inheritance:
+   :special-members: __call__, __add__, __mul__, __matmul__
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ExtraOutput.WEIGHTS
+      ~ExtraOutput.NOISE_STD
+      ~ExtraOutput.RANK
+      ~ExtraOutput.COUNT
+   
+   

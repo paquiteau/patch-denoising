@@ -1,0 +1,34 @@
+﻿patch\_denoise
+==============
+
+.. automodule:: patch_denoise
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   bindings
+   denoise
+   gpu
+   simulation
+   space_time
+

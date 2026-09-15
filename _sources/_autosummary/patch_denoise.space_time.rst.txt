@@ -1,0 +1,32 @@
+patch\_denoise.space\_time
+==========================
+
+.. automodule:: patch_denoise.space_time
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   base
+   lowrank
+   utils
+

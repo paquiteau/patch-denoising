@@ -1,0 +1,37 @@
+patch\_denoise.bindings.nipype
+==============================
+
+.. automodule:: patch_denoise.bindings.nipype
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      NoiseStdMap
+      NoiseStdMapInputSpec
+      NoiseStdMapOutputSpec
+      PatchDenoise
+      PatchDenoiseInputSpec
+      PatchDenoiseOutputSpec
+   
+   
+
+   
+   
+   
+
+
+

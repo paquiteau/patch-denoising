@@ -1,0 +1,6 @@
+patch\_denoise.bindings.cli.bids\_extra\_path
+=============================================
+
+.. currentmodule:: patch_denoise.bindings.cli
+
+.. autofunction:: bids_extra_path

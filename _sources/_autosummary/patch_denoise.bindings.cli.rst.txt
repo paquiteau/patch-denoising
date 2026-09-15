@@ -1,0 +1,33 @@
+patch\_denoise.bindings.cli
+===========================
+
+.. automodule:: patch_denoise.bindings.cli
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+      :nosignatures:
+   
+      bids_extra_path
+      main
+      parse_dims
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

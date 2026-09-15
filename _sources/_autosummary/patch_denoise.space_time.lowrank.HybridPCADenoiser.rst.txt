@@ -1,0 +1,26 @@
+HybridPCADenoiser
+=================
+
+.. currentmodule:: patch_denoise.space_time.lowrank
+
+.. autoclass:: HybridPCADenoiser
+   :members:
+   :private-members:
+   :show-inheritance:
+   :special-members: __call__, __add__, __mul__, __matmul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~HybridPCADenoiser.__init__
+      ~HybridPCADenoiser.denoise
+   
+   
+
+   
+   
+   

@@ -1,0 +1,6 @@
+patch\_denoise.denoise.adaptive\_thresholding
+=============================================
+
+.. currentmodule:: patch_denoise.denoise
+
+.. autofunction:: adaptive_thresholding

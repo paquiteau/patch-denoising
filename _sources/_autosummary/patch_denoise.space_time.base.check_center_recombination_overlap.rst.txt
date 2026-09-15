@@ -1,0 +1,6 @@
+patch\_denoise.space\_time.base.check\_center\_recombination\_overlap
+=====================================================================
+
+.. currentmodule:: patch_denoise.space_time.base
+
+.. autofunction:: check_center_recombination_overlap

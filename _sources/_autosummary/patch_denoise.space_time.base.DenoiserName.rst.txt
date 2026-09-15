@@ -1,0 +1,86 @@
+DenoiserName
+============
+
+.. currentmodule:: patch_denoise.space_time.base
+
+.. autoclass:: DenoiserName
+   :members:
+   :private-members:
+   :show-inheritance:
+   :special-members: __call__, __add__, __mul__, __matmul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~DenoiserName.encode
+      ~DenoiserName.replace
+      ~DenoiserName.split
+      ~DenoiserName.rsplit
+      ~DenoiserName.join
+      ~DenoiserName.capitalize
+      ~DenoiserName.casefold
+      ~DenoiserName.title
+      ~DenoiserName.center
+      ~DenoiserName.count
+      ~DenoiserName.expandtabs
+      ~DenoiserName.find
+      ~DenoiserName.partition
+      ~DenoiserName.index
+      ~DenoiserName.ljust
+      ~DenoiserName.lower
+      ~DenoiserName.lstrip
+      ~DenoiserName.rfind
+      ~DenoiserName.rindex
+      ~DenoiserName.rjust
+      ~DenoiserName.rstrip
+      ~DenoiserName.rpartition
+      ~DenoiserName.splitlines
+      ~DenoiserName.strip
+      ~DenoiserName.swapcase
+      ~DenoiserName.translate
+      ~DenoiserName.upper
+      ~DenoiserName.startswith
+      ~DenoiserName.endswith
+      ~DenoiserName.removeprefix
+      ~DenoiserName.removesuffix
+      ~DenoiserName.isascii
+      ~DenoiserName.islower
+      ~DenoiserName.isupper
+      ~DenoiserName.istitle
+      ~DenoiserName.isspace
+      ~DenoiserName.isdecimal
+      ~DenoiserName.isdigit
+      ~DenoiserName.isnumeric
+      ~DenoiserName.isalpha
+      ~DenoiserName.isalnum
+      ~DenoiserName.isidentifier
+      ~DenoiserName.isprintable
+      ~DenoiserName.zfill
+      ~DenoiserName.format
+      ~DenoiserName.format_map
+      ~DenoiserName.maketrans
+      ~DenoiserName.__init__
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~DenoiserName.MP_PCA
+      ~DenoiserName.HYBRID_PCA
+      ~DenoiserName.RAW
+      ~DenoiserName.OPTIMAL_FRO
+      ~DenoiserName.OPTIMAL_FRO_NOISE
+      ~DenoiserName.OPTIMAL_NUC
+      ~DenoiserName.OPTIMAL_OPE
+      ~DenoiserName.NORDIC
+      ~DenoiserName.ADAPTIVE_QUT
+   
+   

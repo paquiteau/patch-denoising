@@ -1,0 +1,45 @@
+patch\_denoise.space\_time.lowrank
+==================================
+
+.. automodule:: patch_denoise.space_time.lowrank
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+      :nosignatures:
+   
+      sure_atn_cost
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      AdaptiveDenoiser
+      HybridPCADenoiser
+      MPPCADenoiser
+      NordicDenoiser
+      OptimalSVDDenoiser
+      RawSVDDenoiser
+   
+   
+
+   
+   
+   
+
+
+

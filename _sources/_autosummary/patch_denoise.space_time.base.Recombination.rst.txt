@@ -1,0 +1,81 @@
+Recombination
+=============
+
+.. currentmodule:: patch_denoise.space_time.base
+
+.. autoclass:: Recombination
+   :members:
+   :private-members:
+   :show-inheritance:
+   :special-members: __call__, __add__, __mul__, __matmul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~Recombination.encode
+      ~Recombination.replace
+      ~Recombination.split
+      ~Recombination.rsplit
+      ~Recombination.join
+      ~Recombination.capitalize
+      ~Recombination.casefold
+      ~Recombination.title
+      ~Recombination.center
+      ~Recombination.count
+      ~Recombination.expandtabs
+      ~Recombination.find
+      ~Recombination.partition
+      ~Recombination.index
+      ~Recombination.ljust
+      ~Recombination.lower
+      ~Recombination.lstrip
+      ~Recombination.rfind
+      ~Recombination.rindex
+      ~Recombination.rjust
+      ~Recombination.rstrip
+      ~Recombination.rpartition
+      ~Recombination.splitlines
+      ~Recombination.strip
+      ~Recombination.swapcase
+      ~Recombination.translate
+      ~Recombination.upper
+      ~Recombination.startswith
+      ~Recombination.endswith
+      ~Recombination.removeprefix
+      ~Recombination.removesuffix
+      ~Recombination.isascii
+      ~Recombination.islower
+      ~Recombination.isupper
+      ~Recombination.istitle
+      ~Recombination.isspace
+      ~Recombination.isdecimal
+      ~Recombination.isdigit
+      ~Recombination.isnumeric
+      ~Recombination.isalpha
+      ~Recombination.isalnum
+      ~Recombination.isidentifier
+      ~Recombination.isprintable
+      ~Recombination.zfill
+      ~Recombination.format
+      ~Recombination.format_map
+      ~Recombination.maketrans
+      ~Recombination.__init__
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Recombination.WEIGHTED
+      ~Recombination.MEAN
+      ~Recombination.AVERAGE
+      ~Recombination.CENTER
+   
+   
