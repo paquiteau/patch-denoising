@@ -97,7 +97,7 @@ class OptimalSVDDenoiser(torch.nn.Module):
 
         Parameters
         ----------
-        x : (B, *patch_shape) tensor
+        x : ``(B, *patch_shape)`` tensor
             Batch of patches to denoise.
         var_apriori : (B,) tensor, optional
             Per-patch noise variance (mean of the squared noise std over the
@@ -107,7 +107,7 @@ class OptimalSVDDenoiser(torch.nn.Module):
 
         Returns
         -------
-        x_denoised : (B, *patch_shape) tensor
+        x_denoised : ``(B, *patch_shape)`` tensor
             Denoised patches.
         weight : (B,) tensor
             Per-patch recombination weight, for weighted patch recombination.

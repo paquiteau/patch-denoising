@@ -13,5 +13,4 @@
    api
    denoisers
    usage
-
-   .. auto_examples/index
+   gpu

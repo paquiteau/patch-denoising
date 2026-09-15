@@ -56,7 +56,6 @@ doc = [
   "pydata-sphinx-theme",
   "numpydoc",
   "sphinx_gallery",
-  "sphinx-argparse",
   "sphinx",
 ]
 

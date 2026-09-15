@@ -15,6 +15,7 @@ htmlcov
 
 docs/_autosummary
 docs/auto_examples/
+docs/cli_generated.rst
 docs_build/
 
 src/patch_denoise/_version.py

@@ -39,7 +39,6 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",
     # "sphinx_gallery.gen_gallery",
-    "sphinxarg.ext",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -48,7 +47,7 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = ["build", "Thumbs.db", ".DS_Store", "cli_generated.rst"]
 
 _python_doc_base = "https://docs.python.org/3.9"
 
@@ -94,3 +93,18 @@ html_theme = "pydata_sphinx_theme"
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = []
 html_context = {"default_mode": "light"}
+
+
+def _generate_cli_docs(app):
+    """Render the cyclopts CLI app help as RST, included from usage.rst."""
+    from patch_denoise.bindings.cli import app as cli_app
+
+    rst = cli_app.generate_docs(output_format="rst", heading_level=2)
+    out_path = os.path.join(app.srcdir, "cli_generated.rst")
+    with open(out_path, "w") as f:
+        f.write(rst)
+
+
+def setup(app):
+    """Register the CLI doc generation hook on the Sphinx build."""
+    app.connect("builder-inited", _generate_cli_docs)

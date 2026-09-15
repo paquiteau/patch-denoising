@@ -23,7 +23,7 @@ def patchify_tensor(data, patch_shape, patch_overlap):
     -------
     torch.Tensor
         A view of the original tensor containing the extracted patches, with
-        shape (grid_patches, *patch_shape).
+        shape ``(grid_patches, *patch_shape)``.
 
     """
     _ps = np.array(patch_shape)
