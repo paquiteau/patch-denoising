@@ -8,7 +8,8 @@ of any denoiser.
 import itertools
 
 import pytest
-import torch
+
+torch = pytest.importorskip("torch")
 
 from patch_denoise.bindings.cli import GPU_AVAILABLE
 from patch_denoise.gpu._svd import FastPatchSVD
