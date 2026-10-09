@@ -43,8 +43,10 @@ class MPPCADenoiser(BaseSpaceTimeDenoiser):
 
     def _patch_processing(self, patch, patch_idx=None, threshold_scale=1.0):
         """Process a patch with the MP-PCA method (Veraart 2016 MP threshold)."""
-        N, M = patch.shape  # N: spatial samples, M: temporal/feature dimension
-        p_center, eig_vals, eig_vec, p_tmean = eig_analysis(patch, max_eig_val=M)
+        N = patch.shape[0]  # spatial samples
+        p_center, eig_vals, eig_vec, p_tmean = eig_analysis(patch)
+        # Centering along time leaves an N x (T - 1) noise matrix: M = T - 1.
+        M = len(eig_vals)
         # `eig_analysis` returns eigenvalues in increasing order; flip to
         # decreasing order to match the classical MP-PCA formulation.
         eig_vals = eig_vals[::-1]
@@ -113,9 +115,7 @@ class HybridPCADenoiser(BaseSpaceTimeDenoiser):
     def _patch_processing(self, patch, *, patch_idx: int, var_apriori: PatchedArray):
         """Process a patch with the Hybrid-PCA method."""
         varest = np.mean(var_apriori.get_patch(patch_idx))
-        p_center, eig_vals, eig_vec, p_tmean = eig_analysis(
-            patch, max_eig_val=patch.shape[1]
-        )
+        p_center, eig_vals, eig_vec, p_tmean = eig_analysis(patch)
         maxidx = 0
         var_noise = np.mean(eig_vals)
         while var_noise > varest and maxidx < len(eig_vals) - 2:
@@ -230,12 +230,13 @@ class NordicDenoiser(RawSVDDenoiser):
 
         """
         patch_shape, _ = self._get_patch_param(input_data.shape)
-        # compute the threshold using Monte-Carlo Simulations.
+        # compute the threshold using Monte-Carlo Simulations. Patches are
+        # centered along time, so their noise is an N x (T - 1) matrix.
         max_sval = sum(
             max(
                 svd(
                     np.random.randn(
-                        int(np.prod(patch_shape[:-1])), input_data.shape[-1]
+                        int(np.prod(patch_shape[:-1])), input_data.shape[-1] - 1
                     ),
                     compute_uv=False,
                 )
@@ -373,11 +374,12 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         """
         p_s, p_o = self._get_patch_param(input_data.shape)
 
+        # Patches are centered along time: the noise is an N x (T - 1) matrix.
         self.input_denoising_kwargs["mp_median"] = marchenko_pastur_median(
             beta=(
-                p_s[-1] / np.prod(p_s[:-1])
+                (p_s[-1] - 1) / np.prod(p_s[:-1])
                 if len(p_s) == len(input_data.shape)
-                else input_data.shape[-1] / np.prod(p_s)
+                else (input_data.shape[-1] - 1) / np.prod(p_s)
             ),
             eps=eps_marshenko_pastur,
         )
@@ -406,7 +408,7 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         **kwargs,
     ):
         u_vec, s_values, v_vec, p_tmean = svd_analysis(patch)
-        n_dim = patch.shape[-1]
+        n_dim = patch.shape[-1] - 1  # time dimension left after temporal centering
         if var_apriori is not None:
             sigma = np.sqrt(np.mean(var_apriori.get_patch(patch_idx)))
         else:
@@ -415,7 +417,7 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         scale_factor = np.sqrt(n_dim) * sigma
         thresh_s_values = scale_factor * shrink_func(
             s_values / scale_factor,
-            beta=patch.shape[1] / patch.shape[0],
+            beta=n_dim / patch.shape[0],
         )
         thresh_s_values[np.isnan(thresh_s_values)] = 0
 
@@ -638,11 +640,14 @@ class AdaptiveDenoiser(BaseSpaceTimeDenoiser):
         stdest = np.sqrt(np.mean(var_apriori.get_patch(patch_idx)))
 
         u_vec, sing_vals, v_vec, p_tmean = svd_analysis(patch)
+        patch_eff = u_vec * sing_vals
 
         if method == "qut":
-            gamma, tau = _get_gamma_tau_qut(patch, sing_vals, stdest, gamma0, nbsim)
+            gamma, tau = _get_gamma_tau_qut(patch_eff, sing_vals, stdest, gamma0, nbsim)
         else:
-            gamma, tau = _get_gamma_tau(patch, sing_vals, stdest, method, gamma0, tau0)
+            gamma, tau = _get_gamma_tau(
+                patch_eff, sing_vals, stdest, method, gamma0, tau0
+            )
         # end of parameter selection
         # Perform thresholding
 

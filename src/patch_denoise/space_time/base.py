@@ -12,6 +12,7 @@ from numpy.typing import DTypeLike, NDArray
 from tqdm.rich import tqdm
 
 from .._docs import fill_doc
+from .utils import patch_starts
 
 log = logging.getLogger(__name__)
 
@@ -108,35 +109,11 @@ class PatchedArray:
 
         # Ensure patch size is not larger than self._array size along each axis
         self._ps = np.minimum(self._ps, self._arr.shape)
-
-        # Calculate the shape and strides of the sliding view
-        grid_shape = tuple(
-            (
-                ((self._arr.shape[i] - self._ps[i]) // step[i] + 1)
-                if self._ps[i] < self._arr.shape[i]
-                else 1
-            )
-            for i in range(dimensions)
-        )
-        shape = grid_shape + tuple(self._ps)
-        strides = (
-            tuple(
-                (
-                    self._arr.strides[i] * step[i]
-                    if self._ps[i] < self._arr.shape[i]
-                    else 0
-                )
-                for i in range(dimensions)
-            )
-            + self._arr.strides
-        )
-
-        # Create the sliding view
-        self.sliding_view = np.lib.stride_tricks.as_strided(
-            self._arr, shape=shape, strides=strides
-        )
-
-        self._grid_shape = grid_shape
+        self._starts = [
+            patch_starts(ds, ps, st)
+            for ds, ps, st in zip(self._arr.shape, self._ps, step)
+        ]
+        self._grid_shape = tuple(len(st) for st in self._starts)
 
     @property
     def n_patches(self) -> int:
@@ -144,40 +121,30 @@ class PatchedArray:
         return int(np.prod(self._grid_shape))
 
     def get_patch(self, idx: int) -> NDArray:
-        """Get patch at linear index ``idx``."""
-        return self.sliding_view[np.unravel_index(idx, self._grid_shape)]
+        """Get patch at linear index ``idx``, as a view."""
+        return self._arr[self.idx2slice(idx)]
 
     def set_patch(self, idx: int, value: Any):
         """Set patch at linear index ``idx`` with value."""
-        self.sliding_view[np.unravel_index(idx, self._grid_shape)] = value
+        self._arr[self.idx2slice(idx)] = value
 
     def idx2slice(self, idx):
         """Convert linear patch index to slice."""
         grid_idx = np.unravel_index(idx, self._grid_shape)
         return tuple(
-            slice(g * (ps - po), g * (ps - po) + ps)
-            for g, ps, po in zip(grid_idx, self._ps, self._po)
+            slice(st[g], st[g] + ps)
+            for g, st, ps in zip(grid_idx, self._starts, self._ps)
         )
 
     @classmethod
     def linear_to_patch_indices(cls, idx, data_shape, patch_shape, patch_overlap):
         """Convert linear patch index to patch indices."""
-        grid_shape = tuple(
-            (
-                (
-                    (data_shape[i] - patch_shape[i])
-                    // (patch_shape[i] - patch_overlap[i])
-                    + 1
-                )
-                if patch_shape[i] < data_shape[i]
-                else 1
-            )
-            for i in range(len(data_shape))
-        )
-        grid_idx = np.unravel_index(idx, grid_shape)
-        return tuple(
-            g * (ps - po) for g, ps, po in zip(grid_idx, patch_shape, patch_overlap)
-        )
+        starts = [
+            patch_starts(ds, ps, ps - po)
+            for ds, ps, po in zip(data_shape, patch_shape, patch_overlap)
+        ]
+        grid_idx = np.unravel_index(idx, tuple(len(st) for st in starts))
+        return tuple(int(st[g]) for g, st in zip(grid_idx, starts))
 
     def add2patch(self, idx, value):
         """Add to patch, in place."""
