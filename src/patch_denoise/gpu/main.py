@@ -27,6 +27,51 @@ log = logging.getLogger(__name__)
 
 _NEEDS_COUNT = ExtraOutput.COUNT | ExtraOutput.NOISE_STD | ExtraOutput.RANK
 _NO_EXTRA_OUTPUT = ExtraOutput(0)
+# Device-to-host copies go through two pinned buffers of this size: copying
+# straight into pageable memory runs at a fraction of the PCIe bandwidth, and
+# pinning a whole output costs more than it saves for a single copy.
+_STAGING_BYTES = 4 * 2**20
+
+
+class _HostStager:
+    """Copy device tensors into new NumPy arrays through pinned staging buffers.
+
+    Double-buffered: the device-to-host copy of a chunk overlaps with the
+    host-side copy of the previous one out of its pinned buffer.
+    """
+
+    def __init__(self):
+        self._bufs = [torch.empty(_STAGING_BYTES, dtype=torch.uint8, pin_memory=True)]
+        self._bufs.append(torch.empty_like(self._bufs[0], pin_memory=True))
+        self._events = [torch.cuda.Event(), torch.cuda.Event()]
+        self._stream = torch.cuda.Stream()
+
+    def __call__(self, t: torch.Tensor) -> NDArray:
+        src = t.contiguous().reshape(-1).view(torch.uint8)
+        # NumPy, not torch, allocates the output: it backs large arrays with
+        # transparent huge pages, and page faults on a fresh 4 KiB-paged
+        # buffer otherwise cost more than the copy itself.
+        out = np.empty(t.shape, dtype=torch.empty(0, dtype=t.dtype).numpy().dtype)
+        dst = out.reshape(-1).view(np.uint8)
+        self._stream.wait_stream(torch.cuda.current_stream())
+        pending: list[tuple[int, int, int]] = []
+        for i, a in enumerate(range(0, src.numel(), _STAGING_BYTES)):
+            k, b = i % 2, min(a + _STAGING_BYTES, src.numel())
+            if len(pending) == 2:
+                self._drain(dst, *pending.pop(0))
+            with torch.cuda.stream(self._stream):
+                self._bufs[k][: b - a].copy_(src[a:b], non_blocking=True)
+                self._events[k].record()
+            pending.append((a, b, k))
+        for chunk in pending:
+            self._drain(dst, *chunk)
+        src.record_stream(self._stream)
+        return out
+
+    def _drain(self, dst, a, b, k):
+        self._events[k].synchronize()
+        dst[a:b] = self._bufs[k][: b - a].numpy()
+
 
 # Single source of truth for GPU-supported methods, mirroring make_denoiser's
 # own dispatch below -- callers (e.g. the CLI) should check membership here
@@ -329,6 +374,7 @@ def main_gpu(
     mask_arr = patch_dataset.mask.to(device="cuda", dtype=torch.bool)
     del patch_dataset, input_data_
     torch.cuda.empty_cache()
+    to_host = _HostStager()
 
     zero_gpu = torch.tensor(0, device="cuda", dtype=torch.float32)
     zero_gpu_cpx = torch.tensor(0, device="cuda", dtype=out_acc.dtype)
@@ -337,47 +383,44 @@ def main_gpu(
     )
     out_acc /= out_weights_safe
     out_acc[~mask_arr] = zero_gpu_cpx
-    out_acc = out_acc.cpu().numpy()
+    denoised = to_host(out_acc)
 
     if out_counts is not None:
         out_counts_safe = torch.where(
             out_counts == 0, torch.ones_like(out_counts), out_counts
         )
 
+    noise_std_map: NDArray | None = None
     if ExtraOutput.NOISE_STD in extra_output:
         assert out_var_map is not None
         out_var_map /= out_counts_safe
         out_var_map = torch.sqrt(out_var_map)
         out_var_map[~mask_arr] = zero_gpu
-        out_var_map = out_var_map.cpu().numpy()
-    else:
-        out_var_map = None
+        noise_std_map = to_host(out_var_map)
 
+    rank_map: NDArray | None = None
     if ExtraOutput.RANK in extra_output:
         assert out_rank_map is not None
         out_rank_map = out_rank_map.to(dtype=torch.float32)
         out_rank_map /= out_counts_safe
         out_rank_map[~mask_arr] = zero_gpu
-        out_rank_map = out_rank_map.cpu().numpy()
-    else:
-        out_rank_map = None
+        rank_map = to_host(out_rank_map)
 
+    counts: NDArray | None = None
     if ExtraOutput.COUNT in extra_output:
         assert out_counts is not None
         out_counts[~mask_arr] = 0
-        out_counts = out_counts.cpu().numpy()
-    else:
-        out_counts = None
+        counts = to_host(out_counts)
 
+    weights: NDArray | None = None
     if ExtraOutput.WEIGHTS in extra_output:
         out_weights[~mask_arr] = zero_gpu
-        out_weights = out_weights.cpu().numpy()
-    else:
-        out_weights = None
+        weights = to_host(out_weights)
 
+    outputs = (denoised, weights, noise_std_map, rank_map, counts)
     if squeeze_z:
-        out_acc, out_weights, out_var_map, out_rank_map, out_counts = (
-            arr.squeeze(-2) if arr is not None else None
-            for arr in (out_acc, out_weights, out_var_map, out_rank_map, out_counts)
-        )
-    return out_acc, out_weights, out_var_map, out_rank_map, out_counts
+        outputs = tuple(arr.squeeze(-2) if arr is not None else None for arr in outputs)
+    if pad is not None:
+        crop = tuple(slice(lo, n - hi) for (lo, hi), n in zip(pad, padded_shape))
+        outputs = tuple(arr[crop] if arr is not None else None for arr in outputs)
+    return outputs

@@ -5,62 +5,37 @@ import torch
 import torch.nn.functional as F
 from numpy.typing import NDArray
 
+from ..space_time.utils import patch_starts
 
-def patchify_tensor(data, patch_shape, patch_overlap):
-    """
-    Transform a tensor into a collection of patches with specified shape and overlap.
 
-    Parameters
-    ----------
-    data : torch.Tensor
-        The input tensor.
-    patch_shape : tuple of int
-        The shape of each patch.
-    patch_overlap : tuple of int
-        The number of overlapping elements between adjacent patches along each dimension
+def patch_grid(data_shape, patch_shape, patch_overlap, device=None):
+    """Start index of every patch, along each axis.
+
+    See :func:`~patch_denoise.space_time.utils.patch_starts`: the last patch of
+    each axis is aligned on the border, so that every voxel is covered.
 
     Returns
     -------
-    torch.Tensor
-        A view of the original tensor containing the extracted patches, with
-        shape ``(grid_patches, *patch_shape)``.
-
+    list of (n_d,) int64 tensors
+        The patch grid is their Cartesian product, in C order.
     """
-    _ps = np.array(patch_shape)
-    _po = np.array(patch_overlap)
-    dimensions = data.ndim
-
-    step = _ps - _po
+    step = np.subtract(patch_shape, patch_overlap)
     if np.any(step < 0):
         raise ValueError("overlap should be smaller than patch on every dimension.")
-
-    if _ps.size != dimensions or step.size != dimensions:
+    if not len(data_shape) == len(patch_shape) == len(patch_overlap):
         raise ValueError(
-            "_ps and step must have the same number of dimensions as the input _array."
+            "patch_shape and patch_overlap must have the same number of dimensions "
+            "as the input data."
         )
-
-    # Ensure patch size is not larger than _array size along each axis
-    _ps = np.minimum(_ps, data.shape)
-
-    # Calculate the shape and strides of the sliding view
-    grid_shape = tuple(
-        (((data.shape[i] - _ps[i]) // step[i] + 1) if _ps[i] < data.shape[i] else 1)
-        for i in range(dimensions)
-    )
-    shape = grid_shape + tuple(_ps)
-    strides = (
-        tuple(
-            (data.stride()[i] * step[i] if _ps[i] < data.shape[i] else 0)
-            for i in range(dimensions)
-        )
-        + data.stride()
-    )
-    return torch.as_strided(data, shape, strides)
+    return [
+        torch.from_numpy(patch_starts(ds, ps, st)).to(device)
+        for ds, ps, st in zip(data_shape, patch_shape, step)
+    ]
 
 
-def sliding_sum_nd(data, patch_shape, patch_overlap):
+def sliding_sum_nd(data, patch_shape, starts):
     """
-    Compute a sliding sum across all dimensions using sequential 1D convolutions.
+    Sum ``data`` over every patch of the grid, with separable 1D convolutions.
 
     Parameters
     ----------
@@ -68,59 +43,45 @@ def sliding_sum_nd(data, patch_shape, patch_overlap):
         The input tensor.
     patch_shape : tuple of int
         The shape of each patch.
-    patch_overlap : tuple of int
-        The number of overlapping elements between adjacent patches along each dimension
+    starts : list of (n_d,) int64 tensors
+        Start index of the patches along each axis, see :func:`patch_grid`.
 
     Returns
     -------
     torch.Tensor
-        results of the sliding sum, with the same grid shape as the output of
-        patchify_tensor, but with the values being the sum of the corresponding
-        patches in the input data.
+        Tensor of shape ``(n_0, n_1, ...)``: the sum of ``data`` over each patch
+        of the grid.
 
     Notes
     -----
-    Here a convolution-based approach is used to efficiently compute the sliding
-    sum over each dimension (problem is separable). This is (significantly) more
-    memory efficient than working on the patchified tensor.
+    The problem is separable: along each axis, the sum over every window (a
+    stride-1 convolution) is computed, then only the patch starts are kept.
+    This is (significantly) more memory efficient than gathering patches.
     """
     res = data
-    patch_step = tuple(s - o for s, o in zip(patch_shape, patch_overlap))
     for dim in range(res.ndim):
         k = patch_shape[dim]
-        s = patch_step[dim]
-
-        if k <= 1:
-            continue  # A patch of size 1 sums to the data itself, nothing to do
-
-        # Move the target dimension to the last position, other dims are seen as batch
-        curr_shape = res.shape
-        res = res.movedim(dim, -1)
-        res_shape_moved = res.shape
-        res = res.reshape(-1, 1, curr_shape[dim])
-
-        weight = torch.ones((1, 1, k), dtype=res.dtype, device=res.device)
-        res = F.conv1d(res, weight, stride=s if s > 0 else k)
-
-        new_dim_len = res.shape[-1]
-        new_shape = list(res_shape_moved)
-        new_shape[-1] = new_dim_len
-
-        res = res.view(new_shape).movedim(-1, dim)
+        if k > 1:
+            # Move the target dimension last, the other ones are seen as batch.
+            moved = res.movedim(dim, -1)
+            weight = torch.ones((1, 1, k), dtype=res.dtype, device=res.device)
+            windows = F.conv1d(moved.reshape(-1, 1, moved.shape[-1]), weight)
+            res = windows.view(*moved.shape[:-1], -1).movedim(-1, dim)
+        res = res.index_select(dim, starts[dim])
     return res
 
 
-def select_patches_to_process(mask, patch_shape, patch_overlap, mask_threshold=50):
+def select_patches_to_process(mask, patch_shape, starts, mask_threshold=50):
     """Select patches to process based on the mask and threshold.
 
     Parameters
     ----------
-    mask : numpy.ndarray
-        The input mask, with the same spatial dimensions as the input data.
+    mask : torch.Tensor
+        The input mask, with the same shape as the input data.
     patch_shape : tuple of int
         The shape of each patch.
-    patch_overlap : tuple of int
-        The number of overlapping elements between adjacent patches along each dimension
+    starts : list of (n_d,) int64 tensors
+        Start index of the patches along each axis, see :func:`patch_grid`.
     mask_threshold : float, default 50
         The percentage threshold for selecting patches. Patches with a
         percentage of masked pixels above this threshold will be selected for
@@ -128,20 +89,13 @@ def select_patches_to_process(mask, patch_shape, patch_overlap, mask_threshold=5
 
     Returns
     -------
-    list of int
-        A list of indices corresponding to the selected patches to process.
+    torch.Tensor
+        Linear indices, in the patch grid, of the patches to process.
     """
-    # move to cuda to be super fast
     with torch.inference_mode():
-        mask_g = mask.to(dtype=torch.float32, device="cuda")
-        patch_score_g = sliding_sum_nd(mask_g, patch_shape, patch_overlap)
-        patch_score_g /= np.prod(patch_shape)
-
-        patch_score = patch_score_g.cpu().ravel()
-        patch_idxs = torch.where(patch_score > mask_threshold / 100)[0]
-
-    del mask_g, patch_score_g
-    return patch_idxs
+        patch_score = sliding_sum_nd(mask.to(torch.float32), patch_shape, starts)
+        patch_score /= np.prod(patch_shape)
+        return torch.where(patch_score.ravel() > mask_threshold / 100)[0]
 
 
 class PatchDataset:
@@ -174,20 +128,18 @@ class PatchDataset:
         if mask.shape == data_shape[:-1]:  # only spatial mask provided
             mask = mask[..., None].expand(data_shape).contiguous()
 
+        self._starts = patch_grid(data_shape, patch_shape, patch_overlap, device)
+        self.grid_shape = tuple(len(st) for st in self._starts)
         self.patch_locs = select_patches_to_process(
-            mask, patch_shape, patch_overlap, mask_threshold
-        ).to(device)
+            mask, patch_shape, self._starts, mask_threshold
+        )
         self.mask = mask
         self.patch_shape = patch_shape
         self.patch_overlap = patch_overlap
-        self._step = torch.tensor(
-            [ps - po for ps, po in zip(patch_shape, patch_overlap)],
-            dtype=torch.int64,
-            device=device,
+        self.input_data = input_data
+        self._strides = torch.tensor(
+            input_data.stride(), dtype=torch.int64, device=device
         )
-
-        self.input_data = patchify_tensor(input_data, patch_shape, patch_overlap)
-        self.grid_shape = self.input_data.shape[: len(data_shape)]
 
         # Per-selected-patch noise variance
         self.var_apriori_by_patch = None
@@ -202,25 +154,42 @@ class PatchDataset:
                 noise_map = noise_map.to(dtype=torch.float32, device=device)
                 if noise_map.shape == data_shape[:-1]:
                     noise_map = noise_map[..., None].expand(data_shape).contiguous()
-            var_patches = patchify_tensor(noise_map**2, patch_shape, patch_overlap)
-            grid_idx = torch.unravel_index(self.patch_locs, self.grid_shape)
-            selected_var_patches = var_patches[grid_idx]
-            self.var_apriori_by_patch = selected_var_patches.mean(
-                dim=tuple(range(1, selected_var_patches.ndim))
+            var_sums = sliding_sum_nd(noise_map**2, patch_shape, self._starts)
+            self.var_apriori_by_patch = var_sums.ravel()[self.patch_locs] / np.prod(
+                patch_shape
             )
 
     def __len__(self):
         """Get number of patches to process."""
         return len(self.patch_locs)
 
+    def _top_left(self, start: int, stop: int) -> torch.Tensor:
+        """Top-left corner indices of patches ``[start, stop)``, ``(B, ndim)``."""
+        grid_idx = torch.unravel_index(self.patch_locs[start:stop], self.grid_shape)
+        return torch.stack([st[g] for st, g in zip(self._starts, grid_idx)], dim=-1)
+
     def get_batch(self, start: int, stop: int):
         """Gather patches ``[start, stop)`` and their top-left corner indices.
 
         A single vectorized advanced-index gather over the (already
-        GPU-resident) strided patch view -- no per-patch Python loop, no
-        host-device copy.
+        GPU-resident) input data -- no per-patch Python loop, no host-device
+        copy.
         """
-        grid_idx = torch.unravel_index(self.patch_locs[start:stop], self.grid_shape)
-        patch_data = self.input_data[grid_idx]
-        top_left_idx = torch.stack(grid_idx, dim=-1) * self._step
-        return patch_data, top_left_idx
+        top_left_idx = self._top_left(start, stop)
+        ndim = len(self.patch_shape)
+        index = tuple(
+            (
+                top_left_idx[:, d, None] + torch.arange(ps, device=top_left_idx.device)
+            ).view(-1, *(ps if j == d else 1 for j in range(ndim)))
+            for d, ps in enumerate(self.patch_shape)
+        )
+        return self.input_data[index], top_left_idx
+
+    def get_offsets(self, start: int, stop: int):
+        """Element offsets and top-left corner indices of patches ``[start, stop)``.
+
+        The offsets locate each patch's first voxel in the input data, for
+        kernels that read patches in place instead of gathering them.
+        """
+        top_left_idx = self._top_left(start, stop)
+        return (top_left_idx * self._strides).sum(-1), top_left_idx
