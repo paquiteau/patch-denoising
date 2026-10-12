@@ -9,15 +9,6 @@ import numpy as np
 import numpy.testing as npt
 import pytest
 
-from patch_denoise.bindings.cli import main
-
-NIPYPE_AVAILABLE = True
-try:
-    import nipype
-except ImportError as e:
-    NIPYPE_AVAILABLE = False
-
-
 from patch_denoise.bindings.cli import GPU_AVAILABLE
 from patch_denoise.bindings.nipype import PatchDenoise
 from patch_denoise.denoise import mp_pca
@@ -43,12 +34,6 @@ def nifti_noisy_phantom(noisy_phantom, tmpdir_factory):
     return os.path.abspath("noisy_phantom.nii")
 
 
-def test_entrypoint():
-    """Test entrypoint of patch-denoise function."""
-    exit_status = subprocess.call("patch-denoise --help", shell=True)
-    assert exit_status == 0
-
-
 def test_cli(noisy_phantom, nifti_noisy_phantom, tmpdir_factory, denoised_ref):
     tempdir = tmpdir_factory.mktemp("test")
     tempdir.chdir()
@@ -63,7 +48,9 @@ def test_cli(noisy_phantom, nifti_noisy_phantom, tmpdir_factory, denoised_ref):
 
     exit_status = subprocess.call(
         f"patch-denoise {nifti_noisy_phantom} {outfile} --mask mask.nii "
-        "-m mp-pca -ps 6 -po 5 -r weighted --extras.threshold_scale=2.3",
+        # same patch as ``denoised_ref``: a single "6" on the CLI would span the
+        # whole time axis, while ``mp_pca(patch_shape=6)`` uses 6 time points.
+        "-m mp-pca -ps 6,6,6 -po 5,5,5 -r weighted --extras.threshold_scale=2.3",
         shell=True,
     )
     assert exit_status == 0

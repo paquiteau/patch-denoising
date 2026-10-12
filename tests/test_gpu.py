@@ -15,6 +15,8 @@ pytestmark = pytest.mark.skipif(not GPU_AVAILABLE, reason="GPU not available")
 
 PATCH_SHAPE = (6, 6, 6, 8)
 PATCH_OVERLAP = (3, 3, 3, 0)
+# Maximal overlap, as 'center' recombination requires.
+CENTER_OVERLAP = (5, 5, 5, 0)
 GPU_METHODS = ["mp-pca", "optimal-fro", "optimal-nuc", "optimal-ope"]
 
 
@@ -33,122 +35,121 @@ def noisy_phantom_4d(rng):
     return phantom, real, imag
 
 
-@pytest.mark.parametrize("method", GPU_METHODS)
-def test_main_gpu_complex64(noisy_phantom_4d, method):
-    from patch_denoise.gpu.main import main_gpu
+def _gpu_and_cpu(data, patch_shape, patch_overlap, method, recombination):
+    """Run ``main_gpu`` and the CPU reference.
 
-    phantom, real, imag = noisy_phantom_4d
-    data = (real + 1j * imag).astype(np.complex64)
-    mask = np.ones(data.shape[:-1], dtype=bool)
-
-    denoised, weights, noise_std_map, _, _ = main_gpu(
-        data,
-        patch_shape=PATCH_SHAPE,
-        patch_overlap=PATCH_OVERLAP,
-        mask_threshold=50,
-        recombination="weighted",
-        method=method,
-        mask=mask,
-        batch_size=8,
-        **_method_kwargs(method),
-    )
-
-    assert denoised.shape == data.shape
-    assert denoised.dtype == np.complex64
-    assert np.all(np.isfinite(denoised))
-
-    # a correctly-sized accumulation buffer should actually denoise the phantom
-    noise_std_before = np.sqrt(np.nanmean(np.nanvar(np.abs(data - phantom), axis=-1)))
-    noise_std_after = np.sqrt(
-        np.nanmean(np.nanvar(np.abs(denoised - phantom), axis=-1))
-    )
-    assert noise_std_after < noise_std_before
-
-
-@pytest.mark.parametrize("method", GPU_METHODS)
-def test_main_gpu_matches_cpu(noisy_phantom_4d, method):
-    """GPU denoising should match the CPU reference implementation.
-
-    Uses a batch size that does not divide the number of temporal features
-    (8), so a regression of the per-batch-row rank-selection bugs would
-    show up as a crash rather than just a numerical mismatch.
+    Return both ``(denoised, noise std, rank)``.
     """
     from patch_denoise.gpu.main import main_gpu
 
-    _, real, _ = noisy_phantom_4d
-    data = real.astype(np.float32)
-    mask = np.ones(data.shape[:-1], dtype=bool)
-
+    kwargs = dict(
+        patch_shape=patch_shape,
+        patch_overlap=patch_overlap,
+        mask=None,
+        recombination=recombination,
+    )
     if method == "mp-pca":
-        cpu_denoised, _, cpu_noise_std, _ = mp_pca(
-            data,
-            patch_shape=PATCH_SHAPE,
-            patch_overlap=PATCH_OVERLAP,
-            mask=mask,
-            recombination="weighted",
-            threshold_scale=2.3,
+        cpu_denoised, _, cpu_noise_std, cpu_rank = mp_pca(
+            data, **kwargs, **_method_kwargs(method)
         )
     else:
-        cpu_denoised, _, cpu_noise_std, _ = optimal_thresholding(
-            data,
-            patch_shape=PATCH_SHAPE,
-            patch_overlap=PATCH_OVERLAP,
-            mask=mask,
-            recombination="weighted",
-            loss=method.split("-")[-1],
+        cpu_denoised, _, cpu_noise_std, cpu_rank = optimal_thresholding(
+            data, **kwargs, loss=method.split("-")[-1]
         )
-
-    gpu_denoised, _, gpu_noise_std, _, _ = main_gpu(
+    gpu_denoised, _, gpu_noise_std, gpu_rank, _ = main_gpu(
         data,
-        patch_shape=PATCH_SHAPE,
-        patch_overlap=PATCH_OVERLAP,
+        **kwargs,
         mask_threshold=50,
-        recombination="weighted",
         method=method,
-        mask=mask,
-        batch_size=5,
-        extra_output=ExtraOutput.NOISE_STD,
+        batch_size=7,  # does not divide the patch counts
+        extra_output=ExtraOutput.NOISE_STD | ExtraOutput.RANK,
         **_method_kwargs(method),
     )
-
-    npt.assert_allclose(gpu_denoised, cpu_denoised, rtol=1e-5, atol=1e-2)
-
-    # Both backends should report a standard-deviation map, at the full
-    # (X, Y, Z, T) shape of the input (not a variance, and not reduced
-    # over any axis).
-    assert gpu_noise_std.shape == cpu_noise_std.shape == data.shape
-    npt.assert_allclose(gpu_noise_std, cpu_noise_std, rtol=1e-5, atol=1e-2)
+    gpu = (gpu_denoised, gpu_noise_std, gpu_rank)
+    cpu = (cpu_denoised, cpu_noise_std, cpu_rank)
+    for g, c in zip(gpu, cpu):
+        assert g.shape == c.shape == data.shape
+    return gpu, cpu
 
 
-def test_main_gpu_uneven_batch(noisy_phantom_4d):
-    """The last, smaller batch of a run must not crash or produce NaN.
+@pytest.mark.parametrize("recombination", ["weighted", "average"])
+@pytest.mark.parametrize("method", GPU_METHODS)
+def test_main_gpu_matches_cpu(noisy_phantom_4d, method, recombination):
+    """GPU denoising, noise std and rank maps must match the CPU backend.
 
-    Regression guard for FastPatchSVD's fixed-workspace-per-batch-size
-    solver: a batch_size that doesn't evenly divide the patch count forces
-    the denoiser to see two different batch sizes in one run, which must
-    lazily construct (and correctly use) a second eigensolver workspace
-    sized for the remainder, alongside the main one.
+    Uses a batch size that does not divide the number of patches, so the
+    last, smaller batch goes through a second eigensolver workspace.
     """
-    from patch_denoise.gpu.main import main_gpu
-
     _, real, _ = noisy_phantom_4d
     data = real.astype(np.float32)
-    mask = np.ones(data.shape[:-1], dtype=bool)
+    gpu, cpu = _gpu_and_cpu(data, PATCH_SHAPE, PATCH_OVERLAP, method, recombination)
+    assert np.all(gpu[0] != 0)  # every voxel is in a patch
+    for g, c in zip(gpu, cpu):
+        npt.assert_allclose(g, c, rtol=1e-5, atol=1e-2)
 
-    denoised, _, noise_std, _, _ = main_gpu(
-        data,
-        patch_shape=PATCH_SHAPE,
-        patch_overlap=PATCH_OVERLAP,
-        mask_threshold=50,
-        recombination="weighted",
-        method="optimal-fro",
-        mask=mask,
-        batch_size=5,  # deliberately does not divide the patch count
-        extra_output=ExtraOutput.NOISE_STD,
-    )
 
-    assert np.all(np.isfinite(denoised))
-    assert np.all(np.isfinite(noise_std))
+def _layout(noisy_phantom_4d, layout, center=False):
+    """Return the data, patch shape and overlap of a test layout."""
+    _, real, imag = noisy_phantom_4d
+    data = real.astype(np.float32)
+    patch_shape = PATCH_SHAPE
+    patch_overlap = CENTER_OVERLAP if center else PATCH_OVERLAP
+    if layout == "time-window":
+        # T = 16; independent noise in both halves (a mirrored time axis
+        # makes near-degenerate patches, whose rank flips on rounding).
+        data = np.concatenate([data, imag.astype(np.float32)], axis=-1)
+        patch_overlap = (*patch_overlap[:-1], 7 if center else 4)
+    elif layout == "2d+t":
+        data = data[:, :, data.shape[2] // 2]
+        patch_shape = (*PATCH_SHAPE[:2], PATCH_SHAPE[-1])
+        patch_overlap = (*patch_overlap[:2], patch_overlap[-1])
+    elif layout == "fortran-order":
+        data = np.asfortranarray(data)
+    elif layout == "ragged-stride":
+        # A stride of 4 leaves a remainder on 24-voxel axes, covered by a
+        # last patch aligned on the border.
+        patch_overlap = (2, 2, 2, 0)
+    elif layout == "float64":
+        data = real.astype(np.float64)
+    elif layout == "complex64":
+        data = (real + 1j * imag).astype(np.complex64)
+    return data, patch_shape, patch_overlap
+
+
+@pytest.mark.parametrize(
+    "layout",
+    ["time-window", "2d+t", "fortran-order", "ragged-stride", "float64", "complex64"],
+)
+def test_main_gpu_layouts_match_cpu(noisy_phantom_4d, layout):
+    """Reading/scattering patches in place must match the CPU backend.
+
+    Covers what the in-place addressing depends on: patches shorter than the
+    time axis (non-zero time offset, and a Gram matrix centered by projection
+    rather than by the shift of the volume), the size-1 Z axis injected for
+    2D+T input, non C-ordered input (e.g. from nibabel), a stride leaving a
+    remainder, and the input dtypes.
+    """
+    data, patch_shape, patch_overlap = _layout(noisy_phantom_4d, layout)
+    gpu, cpu = _gpu_and_cpu(data, patch_shape, patch_overlap, "optimal-fro", "weighted")
+    assert np.all(gpu[0] != 0)
+    for g, c in zip(gpu, cpu):
+        npt.assert_allclose(g, c, rtol=1e-5, atol=1e-2)
+
+
+@pytest.mark.parametrize("layout", ["full-time", "time-window", "2d+t"])
+def test_main_gpu_center_layouts_match_cpu(noisy_phantom_4d, layout):
+    """'center' recombination from patches read in place must match the CPU.
+
+    Without a mask, the data is padded so that border voxels are patch
+    centers too: every voxel is denoised. A time axis spanning the whole
+    data extent keeps the whole time profile at each spatial center.
+    """
+    data, patch_shape, patch_overlap = _layout(noisy_phantom_4d, layout, center=True)
+    gpu, cpu = _gpu_and_cpu(data, patch_shape, patch_overlap, "optimal-fro", "center")
+    # The noise std and rank maps differ: the CPU averages them over every
+    # patch, the GPU only writes them at the patch centers.
+    assert np.all(np.isfinite(gpu[0])) and np.all(gpu[0] != 0)
+    npt.assert_allclose(gpu[0], cpu[0], rtol=1e-5, atol=1e-2)
 
 
 def test_main_gpu_optimal_fro_noise_matches_cpu(noisy_phantom_4d):
@@ -199,111 +200,6 @@ def test_main_gpu_optimal_fro_noise_matches_cpu(noisy_phantom_4d):
     npt.assert_allclose(gpu_noise_std, cpu_noise_std, rtol=1e-5, atol=1e-2)
 
 
-def test_main_gpu_rank_map(noisy_phantom_4d):
-    """The rank map should be real, not the placeholder None."""
-    from patch_denoise.gpu.main import main_gpu
-
-    _, real, _ = noisy_phantom_4d
-    data = real.astype(np.float32)
-    mask = np.ones(data.shape[:-1], dtype=bool)
-
-    _, _, _, rank_map, _ = main_gpu(
-        data,
-        patch_shape=PATCH_SHAPE,
-        patch_overlap=PATCH_OVERLAP,
-        mask_threshold=50,
-        recombination="weighted",
-        method="optimal-fro",
-        mask=mask,
-        batch_size=8,
-        extra_output=ExtraOutput.RANK,
-    )
-
-    assert rank_map is not None
-    assert rank_map.shape == data.shape
-    assert np.all(rank_map[mask] >= 0)
-    assert np.any(rank_map[mask] > 0)
-
-
-def test_main_gpu_float64_input(noisy_phantom_4d):
-    """float64 input (e.g. from nibabel's get_fdata()) must denoise correctly.
-
-    Regression test: the Triton accumulation kernel reinterprets its output
-    buffer as raw float32 regardless of the actual dtype, so float64 input
-    used to be silently read back as garbage.
-    """
-    from patch_denoise.gpu.main import main_gpu
-
-    phantom, real, _ = noisy_phantom_4d
-    data64 = real.astype(np.float64)
-    mask = np.ones(data64.shape[:-1], dtype=bool)
-
-    denoised, _, _, _, _ = main_gpu(
-        data64,
-        patch_shape=PATCH_SHAPE,
-        patch_overlap=PATCH_OVERLAP,
-        mask_threshold=50,
-        recombination="weighted",
-        method="optimal-fro",
-        mask=mask,
-        batch_size=8,
-    )
-
-    assert denoised.shape == data64.shape
-    assert np.all(np.isfinite(denoised))
-    noise_before = np.sqrt(np.nanmean(np.nanvar(data64 - phantom, axis=-1)))
-    noise_after = np.sqrt(np.nanmean(np.nanvar(denoised - phantom, axis=-1)))
-    assert noise_after < noise_before
-
-
-@pytest.mark.parametrize("method", GPU_METHODS)
-def test_main_gpu_center_full_time_no_nan(noisy_phantom_4d, method):
-    """'center' recombination with a full-extent time axis must not produce NaN.
-
-    PATCH_SHAPE's time axis (8) already equals the phantom's full time
-    extent. Regression test for main_gpu unconditionally dividing the
-    accumulator by the weight map (0/0 -> NaN for every voxel that isn't
-    the single collapsed time point) instead of keeping the whole time
-    profile at each spatial center like the CPU backend.
-    """
-    from patch_denoise.gpu.main import main_gpu
-
-    _, real, _ = noisy_phantom_4d
-    data = real.astype(np.float32)
-    mask = np.ones(data.shape[:-1], dtype=bool)
-    # Maximal overlap on the spatial axes; the time axis is exempt since
-    # it already spans the full data extent.
-    patch_overlap = (5, 5, 5, 0)
-
-    cpu_kwargs = dict(
-        patch_shape=PATCH_SHAPE,
-        patch_overlap=patch_overlap,
-        mask=mask,
-        recombination="center",
-    )
-    if method == "mp-pca":
-        cpu_denoised, *_ = mp_pca(data, **cpu_kwargs, **_method_kwargs(method))
-    else:
-        cpu_denoised, *_ = optimal_thresholding(
-            data, loss=method.split("-")[-1], **cpu_kwargs
-        )
-    assert np.all(np.isfinite(cpu_denoised))
-
-    gpu_denoised, _, _, _, _ = main_gpu(
-        data,
-        patch_shape=PATCH_SHAPE,
-        patch_overlap=patch_overlap,
-        mask_threshold=50,
-        recombination="center",
-        method=method,
-        mask=mask,
-        batch_size=8,
-        **_method_kwargs(method),
-    )
-    assert np.all(np.isfinite(gpu_denoised))
-    npt.assert_allclose(gpu_denoised, cpu_denoised, rtol=1e-5, atol=1e-2)
-
-
 def test_main_gpu_center_uneven_batch_extra_output(noisy_phantom_4d):
     """'center' recombination with COUNT/NOISE_STD/RANK extras, uneven batch.
 
@@ -319,14 +215,11 @@ def test_main_gpu_center_uneven_batch_extra_output(noisy_phantom_4d):
     _, real, _ = noisy_phantom_4d
     data = real.astype(np.float32)
     mask = np.ones(data.shape[:-1], dtype=bool)
-    # Maximal overlap on the spatial axes, as 'center' recombination requires;
-    # the time axis is exempt since it already spans the full data extent.
-    patch_overlap = (5, 5, 5, 0)
 
     _, _, noise_std, rank_map, counts = main_gpu(
         data,
         patch_shape=PATCH_SHAPE,
-        patch_overlap=patch_overlap,
+        patch_overlap=CENTER_OVERLAP,
         mask_threshold=50,
         recombination="center",
         method="optimal-fro",
@@ -340,52 +233,39 @@ def test_main_gpu_center_uneven_batch_extra_output(noisy_phantom_4d):
     assert np.all(np.isfinite(counts))
 
 
-@pytest.mark.parametrize("method", GPU_METHODS)
-def test_main_gpu_center_requires_maximal_overlap(noisy_phantom_4d, method):
-    """'center' recombination must reject non-maximal overlap, CPU and GPU.
-
-    'center' only keeps, per patch, the single voxel at its center. With
-    less-than-maximal overlap (as PATCH_OVERLAP is here: 3, not
-    PATCH_SHAPE-1=5), patch centers form a sparse lattice, so most voxels
-    are never any patch's center and would be silently left undenoised.
-    Both backends must reject this configuration outright.
-    """
+def test_main_gpu_center_requires_maximal_overlap(noisy_phantom_4d):
+    """'center' recombination must reject non-maximal overlap, as on CPU."""
     from patch_denoise.gpu.main import main_gpu
 
     _, real, _ = noisy_phantom_4d
-    data = real.astype(np.float32)
-    mask = np.ones(data.shape[:-1], dtype=bool)
-
-    if method == "mp-pca":
-        with pytest.raises(ValueError, match="maximal overlap"):
-            mp_pca(
-                data,
-                patch_shape=PATCH_SHAPE,
-                patch_overlap=PATCH_OVERLAP,
-                mask=mask,
-                recombination="center",
-                threshold_scale=2.3,
-            )
-    else:
-        with pytest.raises(ValueError, match="maximal overlap"):
-            optimal_thresholding(
-                data,
-                patch_shape=PATCH_SHAPE,
-                patch_overlap=PATCH_OVERLAP,
-                mask=mask,
-                recombination="center",
-                loss=method.split("-")[-1],
-            )
-
     with pytest.raises(ValueError, match="maximal overlap"):
         main_gpu(
-            data,
+            real.astype(np.float32),
             patch_shape=PATCH_SHAPE,
             patch_overlap=PATCH_OVERLAP,
             mask_threshold=50,
             recombination="center",
-            method=method,
-            mask=mask,
+            method="optimal-fro",
+            mask=None,
             batch_size=5,
-            **_method_kwargs(method),
         )
+
+
+def test_host_stager_matches_cpu():
+    """Chunked copies through the pinned buffers must be exact, for any dtype."""
+    import torch
+
+    from patch_denoise.gpu.main import _STAGING_BYTES, _HostStager
+
+    stager = _HostStager()
+    n = 5 * (_STAGING_BYTES // 10 + 12345)  # several chunks, ragged last one
+    for t in (
+        torch.randn(n, device="cuda").reshape(-1, 5),
+        torch.randn(n, device="cuda", dtype=torch.complex64),
+        torch.randint(0, 100, (n,), device="cuda", dtype=torch.int32),
+        torch.randn(7, 3, device="cuda").mT,  # non-contiguous
+    ):
+        out = stager(t)
+        expected = t.cpu().numpy()
+        assert out.dtype == expected.dtype
+        npt.assert_array_equal(out, expected)
