@@ -29,7 +29,7 @@ def denoised_ref(noisy_phantom):
         noisy_phantom,
         patch_shape=6,
         patch_overlap=5,
-        threshold_scale=2.3,
+        threshold_scale=0.9,
         recombination="weighted",
     )[0]
 
@@ -63,7 +63,7 @@ def test_cli(noisy_phantom, nifti_noisy_phantom, tmpdir_factory, denoised_ref):
 
     exit_status = subprocess.call(
         f"patch-denoise {nifti_noisy_phantom} {outfile} --mask mask.nii "
-        "-m mp-pca -ps 6 -po 5 -r weighted --extras.threshold_scale=2.3",
+        "-m mp-pca -ps 6 -po 5 -r weighted --extras.threshold_scale=0.9",
         shell=True,
     )
     assert exit_status == 0
@@ -83,7 +83,7 @@ def test_nipype_mag(nifti_noisy_phantom, denoised_ref):
     interface.inputs.patch_shape = 6
     interface.inputs.patch_overlap = 5
     interface.inputs.recombination = "weighted"
-    interface.inputs.extra_kwargs = {"threshold_scale": 2.3}
+    interface.inputs.extra_kwargs = {"threshold_scale": 0.9}
 
     output_file = interface.run().outputs.denoised_file
 
@@ -100,7 +100,7 @@ def test_nipype_cpx(nifti_noisy_phantom):
     interface.inputs.patch_shape = 6
     interface.inputs.patch_overlap = 5
     interface.inputs.recombination = "weighted"
-    interface.inputs.extra_kwargs = {"threshold_scale": 2.3}
+    interface.inputs.extra_kwargs = {"threshold_scale": 0.9}
 
     output_file = interface.run().outputs.denoised_file
 

@@ -22,7 +22,7 @@ def test_mppca_denoiser(phantom, noisy_phantom, recombination):
         noisy_phantom,
         patch_shape=6,
         patch_overlap=5,
-        threshold_scale=2.3,
+        threshold_scale=0.9,
         recombination=recombination,
     )
     noise_std_before = np.sqrt(np.nanmean(np.nanvar(noisy_phantom - phantom, axis=-1)))
@@ -43,7 +43,7 @@ def test_mppca_denoiser_center_full_time(phantom, noisy_phantom):
         noisy_phantom,
         patch_shape=(6, 6, -1),
         patch_overlap=(5, 5, -1),
-        threshold_scale=2.3,
+        threshold_scale=0.9,
         recombination="center",
     )
     assert np.all(np.isfinite(denoised))

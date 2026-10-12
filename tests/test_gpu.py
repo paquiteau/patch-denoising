@@ -20,7 +20,7 @@ GPU_METHODS = ["mp-pca", "optimal-fro", "optimal-nuc", "optimal-ope"]
 
 def _method_kwargs(method):
     """Extra denoising kwargs that only apply to a given method."""
-    return {"threshold_scale": 2.3} if method == "mp-pca" else {}
+    return {"threshold_scale": 0.9} if method == "mp-pca" else {}
 
 
 @pytest.fixture(scope="module")
@@ -86,7 +86,7 @@ def test_main_gpu_matches_cpu(noisy_phantom_4d, method):
             patch_overlap=PATCH_OVERLAP,
             mask=mask,
             recombination="weighted",
-            threshold_scale=2.3,
+            threshold_scale=0.9,
         )
     else:
         cpu_denoised, _, cpu_noise_std, _ = optimal_thresholding(
@@ -364,7 +364,7 @@ def test_main_gpu_center_requires_maximal_overlap(noisy_phantom_4d, method):
                 patch_overlap=PATCH_OVERLAP,
                 mask=mask,
                 recombination="center",
-                threshold_scale=2.3,
+                threshold_scale=0.9,
             )
     else:
         with pytest.raises(ValueError, match="maximal overlap"):
