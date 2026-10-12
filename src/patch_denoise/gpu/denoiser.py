@@ -103,16 +103,18 @@ class _LowRankDenoiser(torch.nn.Module):
         """Denoise patches read in place from ``vol``, accumulated in place.
 
         Never materializes the batch of patches nor of their reconstruction:
-        see ``FastPatchSVD.eigh_patches``/``reconstruct_patches``. Float32
-        only, weighted/average recombination only.
+        see ``FastPatchSVD.eigh_patches``/``reconstruct_patches``. Weighted/
+        average recombination only.
 
         Parameters
         ----------
-        vol : (X, Y, Z, T') tensor, float32
-            Volume the patches are read from.
+        vol : (X, Y, Z, T') tensor, float32 or complex64
+            Volume the patches are read from, shifted by (about) the temporal
+            mean of each voxel for accuracy, see ``_svd.py``.
         bases : (B,) int64 tensor
             Element offset in ``vol`` of the first voxel of each patch.
-        out, wsum : tensor, float32
+        out : tensor, same dtype as ``vol``
+        wsum : tensor, float32
             Accumulators for the weighted reconstruction and the weights,
             with the same shape and strides as ``vol``.
         var_apriori : (B,) tensor, optional
@@ -140,8 +142,9 @@ class _LowRankDenoiser(torch.nn.Module):
         """Denoise the center of patches read in place from ``vol``.
 
         "center" recombination counterpart of :meth:`forward_patches`: only
-        the center voxel (or time profile, with ``full_time``) of each patch
-        is reconstructed, and returned as in :meth:`forward`.
+        the time profile at the spatial center of each patch is reconstructed,
+        as a ``(B, T)`` tensor; which of its frames are kept is up to the
+        caller (see ``center_time_slice``). Otherwise returns as :meth:`forward`.
         """
         s, vh = self._svd.eigh_patches(vol, bases, self.patch_shape)
         ratio, var, rank = self._shrink_spectrum(s, var_apriori)
@@ -152,7 +155,7 @@ class _LowRankDenoiser(torch.nn.Module):
             self.T, device=vol.device
         )
         x_row = vol.as_strided((vol.numel(),), (1,))[row_idx]
-        x_center = self._svd.reconstruct_row(x_row, vh, ratio, self.center_time_idx)
+        x_center = self._svd.reconstruct_row(x_row, vh, ratio)
         return x_center, 1, var, rank
 
 

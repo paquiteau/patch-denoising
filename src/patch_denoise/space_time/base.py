@@ -83,6 +83,12 @@ def center_padding(
     part of that margin reached by ``mask`` (everything, without a mask) is
     padded. Axes the patch spans entirely are never padded.
 
+    The last (time) axis is never padded either: reflected frames would
+    duplicate columns of the border patches, making them rank deficient, which
+    breaks the noise model (e.g. MP-PCA's ``T - 1`` noise dimensions). Border
+    frames are instead taken from the first/last window, see
+    :func:`center_time_slice`.
+
     Parameters
     ----------
     patch_shape: tuple[int, ...]
@@ -95,7 +101,8 @@ def center_padding(
     """
     pad = []
     for d, (ps, ds) in enumerate(zip(patch_shape, data_shape)):
-        lo, hi = (ps // 2, ps - 1 - ps // 2) if ps < ds else (0, 0)
+        is_time = d == len(data_shape) - 1
+        lo, hi = (ps // 2, ps - 1 - ps // 2) if ps < ds and not is_time else (0, 0)
         if mask is not None and d < mask.ndim and (lo or hi):
             other_axes = tuple(a for a in range(mask.ndim) if a != d)
             hit = np.flatnonzero(np.any(mask, axis=other_axes))
@@ -106,6 +113,29 @@ def center_padding(
                 hi = max(0, hi - (ds - 1 - hit[-1]))
         pad.append((int(lo), int(hi)))
     return pad
+
+
+def center_time_slice(start: int, patch_t: int, data_t: int) -> slice:
+    """Frames of a time window kept by 'center' recombination.
+
+    Its center frame, plus, for the first (resp. last) window, the frames
+    before (resp. after) it: these are the center of no window, the time axis
+    not being padded (see :func:`center_padding`). Windows have maximal
+    overlap, so every frame is kept by exactly one window.
+
+    Parameters
+    ----------
+    start: int
+        First frame of the window.
+    patch_t: int
+        Length of the window.
+    data_t: int
+        Length of the time axis.
+    """
+    c = patch_t // 2
+    return slice(
+        0 if start == 0 else c, patch_t if start == data_t - patch_t else c + 1
+    )
 
 
 class PatchedArray:
@@ -292,7 +322,8 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         process_mask = PatchedArray(process_mask, p_s, p_o)
 
         center_pos = tuple(
-            slice(None) if ps == ds else ps // 2 for ps, ds in zip(p_s, data_shape)
+            slice(None) if ps == ds else ps // 2
+            for ps, ds in zip(p_s[:-1], data_shape[:-1])
         )
         patch_space_size = np.prod(p_s[:-1])
         # select only queue index where process_mask is valid.
@@ -333,8 +364,13 @@ class BaseSpaceTimeDenoiser(abc.ABC):
             patch_counts.add2patch(i, 1)
 
             if self.recombination == Recombination.CENTER:
-                output_data.get_patch(i)[center_pos] = p_denoise[center_pos]
-                patch_weights.get_patch(i)[center_pos] = 1
+                t_start = output_data.idx2slice(i)[-1].start
+                pos = (
+                    *center_pos,
+                    center_time_slice(t_start, p_s[-1], data_shape[-1]),
+                )
+                output_data.get_patch(i)[pos] = p_denoise[pos]
+                patch_weights.get_patch(i)[pos] = 1
             elif self.recombination == Recombination.WEIGHTED:
                 theta = 1 / (2 + maxidx)
                 output_data.add2patch(i, p_denoise * theta)

@@ -31,13 +31,13 @@ def _cache_key(
     recombination: str,
     dtype: torch.dtype,
     full_time: bool,
-    fused: bool,
 ) -> str:
     gpu_name = torch.cuda.get_device_name(torch.cuda.current_device())
-    path = "fused" if fused else "batched"
+    # The suffix names the kernels the timings were measured with: bump it
+    # when they change, so that stale cached sizes are re-measured.
     return (
         f"{gpu_name}|{method}|{tuple(patch_shape)}|{recombination}|{dtype}|{full_time}"
-        f"|{path}"
+        "|tiled"
     )
 
 
@@ -73,10 +73,9 @@ def autotune_batch_size(
     + dtype + full_time; a repeat run with the same configuration reuses the
     cached value instead of re-measuring.
     """
-    from .main import _dummy_run, _uses_fused, make_denoiser
+    from .main import _dummy_run, make_denoiser
 
-    fused = _uses_fused(dtype, patch_shape)
-    key = _cache_key(method, patch_shape, recombination, dtype, full_time, fused)
+    key = _cache_key(method, patch_shape, recombination, dtype, full_time)
     cache = _load_cache()
     if key in cache:
         log.info(f"Using cached GPU batch size {cache[key]} for {key!r}.")
@@ -99,7 +98,7 @@ def autotune_batch_size(
                 **denoiser_kwargs,
             )
             with torch.inference_mode():
-                run = _dummy_run(denoiser, bs, patch_shape, dtype, fused)
+                run = _dummy_run(denoiser, bs, patch_shape, dtype)
                 for _ in range(N_WARMUP):
                     run()
                 torch.cuda.synchronize()
