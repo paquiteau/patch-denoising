@@ -293,17 +293,16 @@ class MPPCADenoiser(_LowRankDenoiser):
         # s2_after = s2 - csum(p+1)/(M*N);
 
         p_range = torch.arange(M, device=s.device)
-        # eigs is ascending, so mask is True for all indices < p, and False after
-        mask = ((eigs - eigs[:, -1:]) * (M - p_range) * (N - p_range)) > (
+        below = ((eigs - eigs[:, -1:]) * (M - p_range) * (N - p_range)) < (
             4 * rcum_eigs * (M * N) ** 0.5 * self.threshold_scale**2
         )
-        p = torch.sum(mask, dim=-1)  # p is the index of the last True in mask
-        eigs = eigs * (p_range < p.unsqueeze(-1))
-        s_shrink = torch.sqrt(eigs * (N - 1))
+        # The criterion isn't monotonic in p: take its first hit, as find(.., 1)
+        # does (argmax returns the first maximum), and 0 if none, as on CPU.
+        p = torch.where(below.any(dim=-1), below.to(torch.uint8).argmax(dim=-1), 0)
 
         batch_idx = torch.arange(s.shape[0], device=s.device)
         var_estimate = rcum_eigs[batch_idx, p] / (M - p)
 
-        s_safe = s.clamp_min(torch.finfo(s.dtype).tiny)
-        ratio = s_shrink / s_safe
+        # Projection on the first p components: they are kept unscaled.
+        ratio = (p_range < p.unsqueeze(-1)).to(s.dtype)
         return ratio, var_estimate, p.to(torch.int32)

@@ -20,7 +20,7 @@ def denoised_ref(noisy_phantom):
         noisy_phantom,
         patch_shape=6,
         patch_overlap=5,
-        threshold_scale=2.3,
+        threshold_scale=0.9,
         recombination="weighted",
     )[0]
 
@@ -70,7 +70,7 @@ def test_nipype_mag(nifti_noisy_phantom, denoised_ref):
     interface.inputs.patch_shape = 6
     interface.inputs.patch_overlap = 5
     interface.inputs.recombination = "weighted"
-    interface.inputs.extra_kwargs = {"threshold_scale": 2.3}
+    interface.inputs.extra_kwargs = {"threshold_scale": 0.9}
 
     output_file = interface.run().outputs.denoised_file
 
@@ -87,7 +87,7 @@ def test_nipype_cpx(nifti_noisy_phantom):
     interface.inputs.patch_shape = 6
     interface.inputs.patch_overlap = 5
     interface.inputs.recombination = "weighted"
-    interface.inputs.extra_kwargs = {"threshold_scale": 2.3}
+    interface.inputs.extra_kwargs = {"threshold_scale": 0.9}
 
     output_file = interface.run().outputs.denoised_file
 

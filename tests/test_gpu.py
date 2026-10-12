@@ -22,7 +22,7 @@ GPU_METHODS = ["mp-pca", "optimal-fro", "optimal-nuc", "optimal-ope"]
 
 def _method_kwargs(method):
     """Extra denoising kwargs that only apply to a given method."""
-    return {"threshold_scale": 2.3} if method == "mp-pca" else {}
+    return {"threshold_scale": 0.9} if method == "mp-pca" else {}
 
 
 @pytest.fixture(scope="module")
@@ -49,8 +49,13 @@ def _gpu_and_cpu(data, patch_shape, patch_overlap, method, recombination):
         recombination=recombination,
     )
     if method == "mp-pca":
-        cpu_denoised, _, cpu_noise_std, cpu_rank = mp_pca(
-            data, **kwargs, **_method_kwargs(method)
+        cpu_denoised, _, cpu_noise_std, _ = mp_pca(
+            data,
+            patch_shape=PATCH_SHAPE,
+            patch_overlap=PATCH_OVERLAP,
+            mask=mask,
+            recombination="weighted",
+            threshold_scale=0.9,
         )
     else:
         cpu_denoised, _, cpu_noise_std, cpu_rank = optimal_thresholding(
@@ -238,6 +243,33 @@ def test_main_gpu_center_requires_maximal_overlap(noisy_phantom_4d):
     from patch_denoise.gpu.main import main_gpu
 
     _, real, _ = noisy_phantom_4d
+<<<<<<< variant A
+>>>>>>> variant B
+    data = real.astype(np.float32)
+    mask = np.ones(data.shape[:-1], dtype=bool)
+
+    if method == "mp-pca":
+        with pytest.raises(ValueError, match="maximal overlap"):
+            mp_pca(
+                data,
+                patch_shape=PATCH_SHAPE,
+                patch_overlap=PATCH_OVERLAP,
+                mask=mask,
+                recombination="center",
+                threshold_scale=0.9,
+            )
+    else:
+        with pytest.raises(ValueError, match="maximal overlap"):
+            optimal_thresholding(
+                data,
+                patch_shape=PATCH_SHAPE,
+                patch_overlap=PATCH_OVERLAP,
+                mask=mask,
+                recombination="center",
+                loss=method.split("-")[-1],
+            )
+
+======= end
     with pytest.raises(ValueError, match="maximal overlap"):
         main_gpu(
             real.astype(np.float32),
