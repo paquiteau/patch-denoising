@@ -38,11 +38,22 @@ def test_marchenko_pastur_median(beta):
     assert marchenko_pastur_median(beta, eps=1e-7) == pytest.approx(expected, rel=1e-5)
 
 
-def test_noise_estimation():
-    """The patch-wise standard deviation of white noise is close to 1."""
-    noise_map = estimate_noise(np.random.default_rng(0).normal(size=(40, 40, 100)), 5)
-    # Only voxels at the center of a patch are estimated.
-    npt.assert_allclose(noise_map[2:-2, 2:-2], 1, rtol=0.1)
+@pytest.mark.parametrize("block_dim", [5, 10])
+@pytest.mark.parametrize("seed", range(10))
+def test_noise_estimation(block_dim, seed):
+    """The patch-wise standard deviation of white noise is close to 1 everywhere.
+
+    Including the border, where patches are padded by reflection.
+    """
+    rng = np.random.default_rng(seed)
+
+    medium_random_matrix = rng.normal(size=(200, 200, 100))
+
+    noise_map = estimate_noise(medium_random_matrix, block_dim)
+
+    assert noise_map.shape == (200, 200)
+    assert np.all(np.isfinite(noise_map))
+    np.testing.assert_allclose(noise_map, 1, atol=0.1)
 
 
 def test_svd(matrix):

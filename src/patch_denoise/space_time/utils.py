@@ -248,7 +248,9 @@ def marchenko_pastur_median(beta: float, eps: float = 1e-7) -> float:
 def estimate_noise(noise_sequence: NDArray, block_size: int = 1) -> NDArray:
     """Estimate a noise map from a noise only sequence.
 
-    The noise map is the standard deviation of the noise in each patch.
+    The noise map is the standard deviation of the noise in the patch centered
+    on each voxel. The spatial axes are padded by reflection, so that border
+    voxels are the center of a patch too.
 
     Parameters
     ----------
@@ -266,18 +268,14 @@ def estimate_noise(noise_sequence: NDArray, block_size: int = 1) -> NDArray:
     noise_map = np.empty(volume_shape)
     patch_shape = (block_size,) * len(volume_shape)
     patch_overlap = (block_size - 1,) * len(volume_shape)
+    pad = [(block_size // 2, block_size - 1 - block_size // 2)] * len(volume_shape)
+    padded = np.pad(noise_sequence, [*pad, (0, 0)], mode="reflect")
 
-    for patch_tl in get_patch_locs(patch_shape, patch_overlap, volume_shape):
-        # Get the index of voxels in the patch
+    # With this padding, the patch starting at ``patch_tl`` in ``padded`` is
+    # centered on voxel ``patch_tl`` of the volume.
+    for patch_tl in get_patch_locs(patch_shape, patch_overlap, padded.shape[:-1]):
         patch_slice = tuple(
             slice(ptl, ptl + ps) for ptl, ps in zip(patch_tl, patch_shape)
         )
-        # Identify the voxel in the center of the patch
-        patch_center_img = tuple(
-            slice(ptl + ps // 2, ptl + ps // 2 + 1)
-            for ptl, ps in zip(patch_tl, patch_shape)
-        )
-        # Set the value of the voxel in the center of the patch to the SD of
-        # the patch
-        noise_map[patch_center_img] = np.std(noise_sequence[patch_slice])
+        noise_map[tuple(patch_tl)] = np.std(padded[patch_slice])
     return noise_map
