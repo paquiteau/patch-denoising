@@ -76,16 +76,17 @@ def __accumulate_recon_kernel(
 
             # Atomic Add Real
             val_r = tl.load(r_ptr_real, mask=mask)
-            tl.atomic_add(g_ptr_real, val_r * w, mask=mask)
+            tl.atomic_add(g_ptr_real, val_r * w, mask=mask, sem="relaxed")
 
             # Atomic Add Imaginary (Next float32 over)
             val_i = tl.load(r_ptr_real + 1, mask=mask)
-            tl.atomic_add(g_ptr_real + 1, val_i * w, mask=mask)
+            tl.atomic_add(g_ptr_real + 1, val_i * w, mask=mask, sem="relaxed")
         else:
             tl.atomic_add(
                 global_out_ptr + g_idx,
                 tl.load(recon_ptr + r_idx, mask=mask) * w,
                 mask=mask,
+                sem="relaxed",
             )
 
 
@@ -139,7 +140,7 @@ def __broadcast_add_kernel(
             + (off_l + curr_l) * stride_out3
         )
 
-        tl.atomic_add(global_ptr + g_idx, s, mask=mask)
+        tl.atomic_add(global_ptr + g_idx, s, mask=mask, sem="relaxed")
 
 
 def launch_accumulate_recon(
