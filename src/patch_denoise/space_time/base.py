@@ -71,6 +71,43 @@ def check_center_recombination_overlap(
         )
 
 
+def center_padding(
+    patch_shape: tuple[int, ...],
+    data_shape: tuple[int, ...],
+    mask: NDArray | None = None,
+) -> list[tuple[int, int]]:
+    """Get the pad widths making every voxel to denoise the center of some patch.
+
+    With 'center' recombination, a voxel closer to the border than half a
+    patch is never at the center of a patch, and is left undenoised. Only the
+    part of that margin reached by ``mask`` (everything, without a mask) is
+    padded. Axes the patch spans entirely are never padded.
+
+    Parameters
+    ----------
+    patch_shape: tuple[int, ...]
+        Shape of the patch.
+    data_shape: tuple[int, ...]
+        Shape of the data.
+    mask: NDArray | None
+        Mask of the data. If provided, the padding will be reduced to avoid
+        padding outside the mask.
+    """
+    pad = []
+    for d, (ps, ds) in enumerate(zip(patch_shape, data_shape)):
+        lo, hi = (ps // 2, ps - 1 - ps // 2) if ps < ds else (0, 0)
+        if mask is not None and d < mask.ndim and (lo or hi):
+            other_axes = tuple(a for a in range(mask.ndim) if a != d)
+            hit = np.flatnonzero(np.any(mask, axis=other_axes))
+            if hit.size == 0:
+                lo = hi = 0
+            else:
+                lo = max(0, lo - hit[0])
+                hi = max(0, hi - (ds - 1 - hit[-1]))
+        pad.append((int(lo), int(hi)))
+    return pad
+
+
 class PatchedArray:
     """A container for accessing custom view of array easily.
 
@@ -207,11 +244,33 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         $denoise_return
         """
         log.debug(f"Starting denoising process. with {self}")
+        pad = None
+        orig_shape = input_data.shape
+        if self.recombination == Recombination.CENTER:
+            pad = center_padding(
+                _patch_param(self.p_shape, input_data.shape), input_data.shape, mask
+            )
+            if any(lo or hi for lo, hi in pad):
+                log.info(f"Padding {pad} for 'center' recombination.")
+                input_data = np.pad(input_data, pad, mode="reflect")
+                if mask is not None:
+                    mask = np.pad(mask, pad[: mask.ndim], mode="reflect")
+            else:
+                pad = None
         data_shape = input_data.shape
         p_s, p_o = self._get_patch_param(data_shape)
         if self.recombination == Recombination.CENTER:
             check_center_recombination_overlap(p_s, p_o, data_shape)
 
+        # Data-shaped arrays (noise maps) are padded along, and patched.
+        patch_kwargs = {
+            k: (
+                PatchedArray(np.pad(v, pad, mode="reflect") if pad else v, p_s, p_o)
+                if isinstance(v, np.ndarray) and v.shape == orig_shape
+                else v
+            )
+            for k, v in self.input_denoising_kwargs.items()
+        }
         input_data_ = PatchedArray(input_data, p_s, p_o)
         output_data = PatchedArray(data_shape, p_s, p_o, dtype=input_data_.dtype)
         patch_weights = PatchedArray(data_shape, p_s, p_o, dtype=np.float32)
@@ -265,7 +324,7 @@ class BaseSpaceTimeDenoiser(abc.ABC):
             p_denoise, maxidx, noise_var = self._patch_processing(
                 input_patch_casorati,
                 patch_idx=i,
-                **self.input_denoising_kwargs,
+                **patch_kwargs,
             )
 
             p_denoise = np.reshape(p_denoise, p_s)
@@ -308,6 +367,12 @@ class BaseSpaceTimeDenoiser(abc.ABC):
         rank_map[~process_mask._arr] = 0
         patch_weights[~process_mask._arr] = 0
 
+        if pad is not None:
+            crop = tuple(slice(lo, n - hi) for (lo, hi), n in zip(pad, data_shape))
+            output_data, patch_weights, noise_std_estimate, rank_map = (
+                a[crop]
+                for a in (output_data, patch_weights, noise_std_estimate, rank_map)
+            )
         return output_data, patch_weights, noise_std_estimate, rank_map
 
     def _get_patch_param(

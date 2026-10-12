@@ -101,15 +101,13 @@ class HybridPCADenoiser(BaseSpaceTimeDenoiser):
         -------
         $denoise_return
         """
-        p_s, p_o = self._get_patch_param(input_data.shape)
         if isinstance(noise_std, (float, np.floating)):
             var_apriori = noise_std**2 * np.ones(input_data.shape[:-1])
         else:
             var_apriori = noise_std**2
-        var_apriori = PatchedArray(
-            np.broadcast_to(var_apriori[..., None], input_data.shape), p_s, p_o
+        self.input_denoising_kwargs["var_apriori"] = np.broadcast_to(
+            var_apriori[..., None], input_data.shape
         )
-        self.input_denoising_kwargs["var_apriori"] = var_apriori
         return super().denoise(input_data, mask, mask_threshold, progbar=progbar)
 
     def _patch_processing(self, patch, *, patch_idx: int, var_apriori: PatchedArray):
@@ -391,10 +389,9 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
                 var_apriori = noise_std**2 * np.ones(input_data.shape[:-1])
             else:
                 var_apriori = noise_std**2
-            var_apriori = PatchedArray(
-                np.broadcast_to(var_apriori[..., None], input_data.shape), p_s, p_o
+            self.input_denoising_kwargs["var_apriori"] = np.broadcast_to(
+                var_apriori[..., None], input_data.shape
             )
-            self.input_denoising_kwargs["var_apriori"] = var_apriori
         return super().denoise(input_data, mask, mask_threshold, progbar=progbar)
 
     def _patch_processing(
@@ -615,15 +612,13 @@ class AdaptiveDenoiser(BaseSpaceTimeDenoiser):
         self.input_denoising_kwargs["gamma0"] = gamma0
         self.input_denoising_kwargs["tau0"] = tau0
 
-        p_s, p_o = self._get_patch_param(input_data.shape)
         if isinstance(noise_std, (float, np.floating)):
             var_apriori = (noise_std**2) * np.ones(input_data.shape[:-1])
         else:
             var_apriori = noise_std**2
-        var_apriori = PatchedArray(
-            np.broadcast_to(var_apriori[..., None], input_data.shape), p_s, p_o
+        self.input_denoising_kwargs["var_apriori"] = np.broadcast_to(
+            var_apriori[..., None], input_data.shape
         )
-        self.input_denoising_kwargs["var_apriori"] = var_apriori
         return super().denoise(input_data, mask, mask_threshold, progbar=progbar)
 
     def _patch_processing(
