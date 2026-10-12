@@ -1,6 +1,7 @@
 """Main loop for the gpu version of patch-denoise."""
 
 import logging
+from functools import partial
 
 import numpy as np
 import torch
@@ -12,9 +13,12 @@ from ..space_time.base import (
     DenoiserName,
     ExtraOutput,
     Recombination,
+    _patch_param,
+    center_padding,
     check_center_recombination_overlap,
 )
 from ._accumulators import launch_accumulate_recon, launch_broadcast_add
+from ._svd import fused_supported
 from .autotune import autotune_batch_size
 from .dataloader import PatchDataset
 from .denoiser import MPPCADenoiser, OptimalSVDDenoiser
@@ -30,6 +34,26 @@ _NO_EXTRA_OUTPUT = ExtraOutput(0)
 GPU_SUPPORTED_METHODS = frozenset(
     m for m in DenoiserName if "optimal" in m or m == DenoiserName.MP_PCA
 )
+
+
+def _uses_fused(dtype, patch_shape) -> bool:
+    """Whether main_gpu reads patches in place, see the main loop."""
+    return fused_supported(dtype, patch_shape[-1])
+
+
+def _dummy_run(denoiser, bs, patch_shape, dtype, fused):
+    """Return a callable denoising ``bs`` random patches the way main_gpu would."""
+    if not fused:
+        dummy = torch.randn(bs, *patch_shape, device="cuda", dtype=dtype)
+        return partial(denoiser, dummy)
+    # Disjoint patches stacked along the first axis of a volume.
+    px, *rest = patch_shape
+    vol = torch.randn(bs * px, *rest, device="cuda", dtype=dtype)
+    bases = torch.arange(bs, device="cuda") * (px * vol.stride(0))
+    out, wsum = torch.zeros_like(vol), torch.zeros_like(vol)
+    if denoiser.recombination == Recombination.CENTER:
+        return partial(denoiser.forward_center, vol, bases)
+    return partial(denoiser.forward_patches, vol, bases, out, wsum)
 
 
 def make_denoiser(
@@ -70,8 +94,8 @@ def make_denoiser(
     # Triton kernels for this batch size before the tracked loop starts, so
     # construction errors fail fast instead of surfacing on the first batch.
     with torch.inference_mode():
-        dummy_input = torch.randn(batch_size, *patch_shape, device="cuda", dtype=dtype)
-        denoiser(dummy_input)
+        fused = _uses_fused(dtype, patch_shape)
+        _dummy_run(denoiser, batch_size, patch_shape, dtype, fused)()
     torch.cuda.empty_cache()
 
     return denoiser
@@ -85,7 +109,7 @@ def main_gpu(
     patch_shape: tuple[int, int, int, int],
     patch_overlap: tuple[int, int, int, int],
     mask_threshold: float,
-    recombination: str,
+    recombination: str | Recombination,
     method: str,
     mask: NDArray | None,
     noise_std: NDArray | float | None = None,
@@ -110,6 +134,23 @@ def main_gpu(
         ``(denoised, weights, var_map, rank_map, counts)``; any entry not
         requested via ``extra_output`` is ``None``.
     """
+    pad = None
+    if recombination == Recombination.CENTER:
+        # Every voxel must be the center of some patch: pad by reflection.
+        patch_shape = _patch_param(patch_shape, input_data.shape)
+        patch_overlap = _patch_param(patch_overlap, input_data.shape)
+        pad = center_padding(patch_shape, input_data.shape, mask)
+        if any(lo or hi for lo, hi in pad):
+            log.info(f"Padding {pad} for 'center' recombination.")
+            input_data = np.pad(input_data, pad, mode="reflect")
+            if mask is not None:
+                mask = np.pad(mask, pad[: mask.ndim], mode="reflect")
+            if isinstance(noise_std, np.ndarray):
+                noise_std = np.pad(noise_std, pad[: noise_std.ndim], mode="reflect")
+            padded_shape = input_data.shape
+        else:
+            pad = None
+
     # ensure single-precision for GPU compute.
     if np.iscomplexobj(input_data):
         input_data = input_data.astype(np.complex64, copy=False)
@@ -168,7 +209,7 @@ def main_gpu(
         )
 
     # Move the full volume to GPU once and gather patches directly from it:
-    input_data_ = torch.from_numpy(input_data).cuda()
+    input_data_ = torch.from_numpy(input_data).cuda().contiguous()
     patch_dataset = PatchDataset(
         input_data_,
         patch_shape=patch_shape,
@@ -191,8 +232,10 @@ def main_gpu(
 
     log.info(f"Processing {len(patch_dataset)} patches with batch size {batch_size}...")
 
-    out_weights = torch.zeros(input_data_.shape, dtype=torch.float32, device="cuda")
-    out_acc = torch.zeros(input_data_.shape, dtype=input_data_.dtype, device="cuda")
+    # zeros_like keeps the exact strides of the input, which the fused path
+    # (reading and accumulating in place, at the same offsets) relies on.
+    out_weights = torch.zeros_like(input_data_, dtype=torch.float32)
+    out_acc = torch.zeros_like(input_data_)
 
     out_var_map: torch.Tensor | None = None
     out_rank_map: torch.Tensor | None = None
@@ -210,7 +253,7 @@ def main_gpu(
     var_apriori_by_patch = patch_dataset.var_apriori_by_patch
     use_var_apriori = var_apriori_by_patch is not None and "optimal" in method
 
-    if recombination == "center":
+    if recombination == Recombination.CENTER:
         # Absolute offset from a patch's top-left corner to its center
         # voxel; a patch's center is unique to it (distinct grid positions
         # give distinct centers), so writing it directly needs no atomics.
@@ -218,18 +261,28 @@ def main_gpu(
             [p // 2 for p in patch_shape], dtype=torch.int64, device="cuda"
         )
 
+    # Read the patches in place instead of gathering a (B, *patch_shape) batch;
+    # their weighted reconstruction is scattered from the same kernel.
+    use_fused = _uses_fused(compute_dtype, patch_shape)
+
     n_patches = len(patch_dataset)
     for start in tqdm(range(0, n_patches, batch_size), unit_scale=batch_size):
         stop = min(start + batch_size, n_patches)
-        gpu_in, gpu_indices = patch_dataset.get_batch(start, stop)
         denoiser_kwargs = {}
         if use_var_apriori:
             denoiser_kwargs["var_apriori"] = var_apriori_by_patch[start:stop]
 
-        if recombination == "center":
-            gpu_center, gpu_weight, gpu_var_est, gpu_rank = denoiser(
-                gpu_in, **denoiser_kwargs
-            )
+        if recombination == Recombination.CENTER:
+            if use_fused:
+                gpu_bases, gpu_indices = patch_dataset.get_offsets(start, stop)
+                gpu_center, gpu_weight, gpu_var_est, gpu_rank = denoiser.forward_center(
+                    input_data_, gpu_bases, **denoiser_kwargs
+                )
+            else:
+                gpu_in, gpu_indices = patch_dataset.get_batch(start, stop)
+                gpu_center, gpu_weight, gpu_var_est, gpu_rank = denoiser(
+                    gpu_in, **denoiser_kwargs
+                )
             center_coords = gpu_indices + center_offset
             center_pos: tuple[slice, ...] = tuple(center_coords.unbind(-1))
             if full_time:
@@ -246,7 +299,19 @@ def main_gpu(
                     if full_time:
                         value = value.unsqueeze(-1)
                     out_map[center_pos] = value
+        elif use_fused:
+            gpu_bases, gpu_indices = patch_dataset.get_offsets(start, stop)
+            gpu_weight, gpu_var_est, gpu_rank = denoiser.forward_patches(
+                input_data_, gpu_bases, out_acc, out_weights, **denoiser_kwargs
+            )
+            for out_map, value in zip(
+                (out_var_map, out_rank_map, out_counts),
+                (gpu_var_est, gpu_rank, ones_buf),
+            ):
+                if out_map is not None and value is not None:
+                    launch_broadcast_add(out_map, value, gpu_indices, patch_shape)
         else:
+            gpu_in, gpu_indices = patch_dataset.get_batch(start, stop)
             gpu_out, gpu_weight, gpu_var_est, gpu_rank = denoiser(
                 gpu_in, **denoiser_kwargs
             )

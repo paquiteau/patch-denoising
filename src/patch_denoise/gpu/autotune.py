@@ -20,7 +20,7 @@ import torch
 log = logging.getLogger(__name__)
 
 CACHE_PATH = Path.home() / ".cache" / "patch_denoise" / "gpu_batch_size.json"
-CANDIDATE_BATCH_SIZES = (32, 64, 96, 128, 192, 256, 384, 512, 768, 1024)
+CANDIDATE_BATCH_SIZES = (32, 64, 96, 128, 192, 256, 384, 512, 768, 1024, 2048)
 N_WARMUP = 2
 N_TRIALS = 5
 
@@ -31,10 +31,13 @@ def _cache_key(
     recombination: str,
     dtype: torch.dtype,
     full_time: bool,
+    fused: bool,
 ) -> str:
     gpu_name = torch.cuda.get_device_name(torch.cuda.current_device())
+    path = "fused" if fused else "batched"
     return (
         f"{gpu_name}|{method}|{tuple(patch_shape)}|{recombination}|{dtype}|{full_time}"
+        f"|{path}"
     )
 
 
@@ -70,9 +73,10 @@ def autotune_batch_size(
     + dtype + full_time; a repeat run with the same configuration reuses the
     cached value instead of re-measuring.
     """
-    from .main import make_denoiser
+    from .main import _dummy_run, _uses_fused, make_denoiser
 
-    key = _cache_key(method, patch_shape, recombination, dtype, full_time)
+    fused = _uses_fused(dtype, patch_shape)
+    key = _cache_key(method, patch_shape, recombination, dtype, full_time, fused)
     cache = _load_cache()
     if key in cache:
         log.info(f"Using cached GPU batch size {cache[key]} for {key!r}.")
@@ -94,14 +98,14 @@ def autotune_batch_size(
                 dtype=dtype,
                 **denoiser_kwargs,
             )
-            dummy = torch.randn(bs, *patch_shape, device="cuda", dtype=dtype)
             with torch.inference_mode():
+                run = _dummy_run(denoiser, bs, patch_shape, dtype, fused)
                 for _ in range(N_WARMUP):
-                    denoiser(dummy)
+                    run()
                 torch.cuda.synchronize()
                 t0 = time.perf_counter()
                 for _ in range(n_trials):
-                    denoiser(dummy)
+                    run()
                 torch.cuda.synchronize()
                 us_per_patch = (time.perf_counter() - t0) / (n_trials * bs) * 1e6
             log.debug(f"  batch_size={bs}: {us_per_patch:.1f} us/patch")

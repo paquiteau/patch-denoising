@@ -162,228 +162,224 @@ def _block_t(T: int) -> int:
     return max(triton.next_power_of_2(T), 16)
 
 
+def fused_supported(dtype: torch.dtype, T: int) -> bool:
+    """Whether the fused Triton kernels handle patches of this dtype and length."""
+    return dtype == torch.float32 and _block_t(T) <= _FUSED_MAX_BLOCK_T
+
+
+@triton.jit
+def _patch_offsets(base, n, sx, sy, sz, PY: tl.constexpr, PZ: tl.constexpr):
+    """Element offset of voxel ``n`` (C order) of a ``(PX, PY, PZ)`` patch."""
+    return base + (n // (PY * PZ)) * sx + (n // PZ % PY) * sy + (n % PZ) * sz
+
+
 @triton.jit
 def _fused_centered_gram_kernel(
     x_ptr,
-    mean_ptr,
+    base_ptr,
     out_ptr,
-    N,
     T,
-    stride_xb,
-    stride_xn,
-    stride_xt,
-    stride_mb,
-    stride_mt,
-    stride_ob,
-    stride_ot1,
-    stride_ot2,
+    sx,
+    sy,
+    sz,
+    st,
+    N: tl.constexpr,
+    PY: tl.constexpr,
+    PZ: tl.constexpr,
     BLOCK_N: tl.constexpr,
     BLOCK_T: tl.constexpr,
 ):
-    """Compute the centered Gram matrix and mean of a batch of patches.
+    """Compute the Gram matrix of a batch of patches centered along time.
 
-    ``out[b] = Xc[b]^T Xc[b]``, ``Xc[b] = x[b] - mean[b]``; ``mean_ptr`` is
-    written too. Fused to avoid materializing the centered tensor in HBM; the
-    mean is computed in-kernel (a first pass over N) rather than taken as an
-    input, so there's no separate host-side reduction to wire up.
+    ``out[b] = Xc[b]^T Xc[b]``, ``Xc[b] = X[b] - mean_t(X[b])``, with ``X[b]``
+    the ``(N, T)`` patch whose first element is at ``x_ptr + base[b]``: patches
+    are read in place, never gathered. A tile spans whole rows, so each
+    voxel's temporal mean is computed in registers, in the same single pass
+    over N that accumulates the Gram matrix.
     """
     pid_b = tl.program_id(0)
+    base = tl.load(base_ptr + pid_b)
     t_idx = tl.arange(0, BLOCK_T)
     t_mask = t_idx < T
-
-    acc_sum = tl.zeros((BLOCK_T,), dtype=tl.float32)
-    for n0 in range(0, N, BLOCK_N):
-        n_idx = n0 + tl.arange(0, BLOCK_N)
-        n_mask = n_idx < N
-        mask2d = n_mask[:, None] & t_mask[None, :]
-        x_ptrs = (
-            x_ptr
-            + pid_b * stride_xb
-            + n_idx[:, None] * stride_xn
-            + t_idx[None, :] * stride_xt
-        )
-        x_tile = tl.load(x_ptrs, mask=mask2d, other=0.0)
-        acc_sum += tl.sum(x_tile, axis=0)
-    m = acc_sum / N
-
-    mean_ptrs = mean_ptr + pid_b * stride_mb + t_idx * stride_mt
-    tl.store(mean_ptrs, m, mask=t_mask)
 
     acc = tl.zeros((BLOCK_T, BLOCK_T), dtype=tl.float32)
     for n0 in range(0, N, BLOCK_N):
         n_idx = n0 + tl.arange(0, BLOCK_N)
-        n_mask = n_idx < N
-        mask2d = n_mask[:, None] & t_mask[None, :]
-        x_ptrs = (
-            x_ptr
-            + pid_b * stride_xb
-            + n_idx[:, None] * stride_xn
-            + t_idx[None, :] * stride_xt
+        mask2d = (n_idx < N)[:, None] & t_mask[None, :]
+        rows = _patch_offsets(base, n_idx, sx, sy, sz, PY, PZ)
+        x_tile = tl.load(
+            x_ptr + rows[:, None] + t_idx[None, :] * st, mask=mask2d, other=0.0
         )
-        x_tile = tl.load(x_ptrs, mask=mask2d, other=0.0)
-        xc_tile = tl.where(mask2d, x_tile - m[None, :], 0.0)
-        acc += tl.dot(tl.trans(xc_tile), xc_tile, allow_tf32=False)
+        m = tl.sum(x_tile, axis=1) / T  # temporal mean of each voxel
+        xc_tile = tl.where(mask2d, x_tile - m[:, None], 0.0)
+        acc = tl.dot(tl.trans(xc_tile), xc_tile, acc, input_precision="ieee")
 
     out_mask = t_mask[:, None] & t_mask[None, :]
-    out_ptrs = (
-        out_ptr
-        + pid_b * stride_ob
-        + t_idx[:, None] * stride_ot1
-        + t_idx[None, :] * stride_ot2
-    )
+    out_ptrs = out_ptr + pid_b * T * T + t_idx[:, None] * T + t_idx[None, :]
     tl.store(out_ptrs, acc, mask=out_mask)
 
 
 @triton.jit
 def _fused_reconstruction_kernel(
     x_ptr,
-    mean_ptr,
+    base_ptr,
     mm_ptr,
+    w_ptr,
     out_ptr,
-    N,
+    wsum_ptr,
     T,
-    stride_xb,
-    stride_xn,
-    stride_xt,
-    stride_mb,
-    stride_mt,
-    stride_mmb,
-    stride_mmt1,
-    stride_mmt2,
-    stride_ob,
-    stride_on,
-    stride_ot,
+    sx,
+    sy,
+    sz,
+    st,
+    N: tl.constexpr,
+    PY: tl.constexpr,
+    PZ: tl.constexpr,
     BLOCK_N: tl.constexpr,
     BLOCK_T: tl.constexpr,
+    SCATTER: tl.constexpr,
 ):
-    """
-    Compute the reconstruction of a batch of patches.
+    """Reconstruct a batch of patches: ``(X[b] - m[b]) @ Mm[b] + m[b]``.
 
-    As for the fused Gram kernel, the centered tensor is never materialized in HBM.
-    The mean is taken as an input, so we compute:
-    out[b] = (x[b]-mean[b]) @ Mm[b] + mean[b].
+    Patches are addressed as in the Gram kernel, and the temporal mean ``m``
+    is again computed in registers. ``Mm[b]`` is the filter matrix computed
+    from the eigendecomposition of the centered Gram matrix.
 
-    Where Mm[b] is the filter matrix computed from the SVD of the centered Gram matrix.
-
+    With ``SCATTER``, ``w[b]`` times the result is atomically added back in
+    place into ``out`` (which shares ``x``'s layout), and ``w[b]`` into
+    ``wsum``: the reconstructed batch never exists in memory. Otherwise it is
+    stored to a contiguous ``(B, N, T)`` ``out``.
     """
     pid_b = tl.program_id(0)
     pid_n = tl.program_id(1)
     n_idx = pid_n * BLOCK_N + tl.arange(0, BLOCK_N)
-    n_mask = n_idx < N
     t_idx = tl.arange(0, BLOCK_T)
     t_mask = t_idx < T
-    mask2d = n_mask[:, None] & t_mask[None, :]
+    mask2d = (n_idx < N)[:, None] & t_mask[None, :]
 
-    mean_ptrs = mean_ptr + pid_b * stride_mb + t_idx * stride_mt
-    m = tl.load(mean_ptrs, mask=t_mask, other=0.0)
-    x_ptrs = (
-        x_ptr
-        + pid_b * stride_xb
-        + n_idx[:, None] * stride_xn
-        + t_idx[None, :] * stride_xt
-    )
-    x_tile = tl.load(x_ptrs, mask=mask2d, other=0.0)
-    xc_tile = tl.where(mask2d, x_tile - m[None, :], 0.0)
+    rows = _patch_offsets(tl.load(base_ptr + pid_b), n_idx, sx, sy, sz, PY, PZ)
+    offsets = rows[:, None] + t_idx[None, :] * st
+    x_tile = tl.load(x_ptr + offsets, mask=mask2d, other=0.0)
+    m = tl.sum(x_tile, axis=1) / T
+    xc_tile = tl.where(mask2d, x_tile - m[:, None], 0.0)
 
     mm_mask = t_mask[:, None] & t_mask[None, :]
-    mm_ptrs = (
-        mm_ptr
-        + pid_b * stride_mmb
-        + t_idx[:, None] * stride_mmt1
-        + t_idx[None, :] * stride_mmt2
-    )
+    mm_ptrs = mm_ptr + pid_b * T * T + t_idx[:, None] * T + t_idx[None, :]
     Mm = tl.load(mm_ptrs, mask=mm_mask, other=0.0)
-    out_tile = tl.dot(xc_tile, Mm, allow_tf32=False) + m[None, :]
-    out_ptrs = (
-        out_ptr
-        + pid_b * stride_ob
-        + n_idx[:, None] * stride_on
-        + t_idx[None, :] * stride_ot
-    )
-    tl.store(out_ptrs, out_tile, mask=mask2d)
+    out_tile = tl.dot(xc_tile, Mm, input_precision="ieee") + m[:, None]
+    if SCATTER:
+        w = tl.load(w_ptr + pid_b)
+        # A sum needs no ordering between the atomics: the default
+        # (acq_rel) fences cost ~3x on this kernel.
+        tl.atomic_add(out_ptr + offsets, w * out_tile, mask=mask2d, sem="relaxed")
+        tl.atomic_add(
+            wsum_ptr + offsets, w + tl.zeros_like(out_tile), mask=mask2d, sem="relaxed"
+        )
+    else:
+        out_ptrs = out_ptr + (pid_b * N + n_idx[:, None]) * T + t_idx[None, :]
+        tl.store(out_ptrs, out_tile, mask=mask2d)
 
 
-def _fused_centered_gram(x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-    """Compute the batched centered Gram matrix and mean of a batch of patches.
+def _patch_layout(x, patch_shape):
+    """Kernel addressing arguments: ``(T, sx, sy, sz, st)`` and ``(N, PY, PZ)``.
+
+    ``x`` is either a ``(B, N, T)`` batch (``patch_shape=None``, read as
+    ``(N, 1, 1)`` patches) or a volume of which ``patch_shape`` patches are
+    read in place.
+    """
+    if patch_shape is None:
+        _, N, T = x.shape
+        return (T, x.stride(1), 0, 0, x.stride(2)), dict(N=N, PY=1, PZ=1)
+    px, py, pz, T = patch_shape
+    return (T, *x.stride()), dict(N=px * py * pz, PY=py, PZ=pz)
+
+
+def _batch_bases(x):
+    """Offset of each patch of a ``(B, N, T)`` batch, for the kernels above."""
+    return torch.arange(x.shape[0], device=x.device, dtype=torch.int64) * x.stride(0)
+
+
+def _fused_centered_gram(x, bases, patch_shape=None):
+    """Compute the batched Gram matrix of patches centered along time.
 
     Parameters
     ----------
-    x : (B, N, T) tensor, float32
+    x : tensor, float32
+        ``(B, N, T)`` batch of patches, or a volume ``(X, Y, Z, T')`` read in
+        place, see ``patch_shape``.
+    bases : (B,) int64 tensor
+        Element offset in ``x`` of each patch's first voxel.
+    patch_shape : (px, py, pz, T) tuple, optional
+        Shape of the patches, when ``x`` is a volume.
 
     Returns
     -------
     gc : (B, T, T) tensor, float32
-        Centered Gram matrix: ``gc[b] = (x[b]-mean[b])^T @ (x[b]-mean[b])``.
-    m : (B, 1, T) tensor, float32
-        Per-row mean: ``m[b] = mean(x[b], dim=0, keepdim=True)``.
-
+        ``gc[b] = (X[b] - m[b])^T @ (X[b] - m[b])``, with ``m[b]`` the
+        ``(N, 1)`` temporal mean of each voxel.
     """
-    B, N, T = x.shape
-    m = torch.empty(B, T, device=x.device, dtype=torch.float32)
+    (T, *strides), meta = _patch_layout(x, patch_shape)
+    B = bases.shape[0]
     gc = torch.empty(B, T, T, device=x.device, dtype=torch.float32)
-    BLOCK_T = _block_t(T)
     _fused_centered_gram_kernel[(B,)](
         x,
-        m,
+        bases,
         gc,
-        N,
         T,
-        x.stride(0),
-        x.stride(1),
-        x.stride(2),
-        m.stride(0),
-        m.stride(1),
-        gc.stride(0),
-        gc.stride(1),
-        gc.stride(2),
-        BLOCK_T=BLOCK_T,  # type: ignore
-        **_GRAM_REAL_CFG,  # type: ignore
+        *strides,
+        BLOCK_T=_block_t(T),  # type: ignore
+        **meta,
+        **_GRAM_REAL_CFG,
     )
-    return gc, m.unsqueeze(1)
+    return gc
 
 
-def _fused_reconstruction(x, m, Mm):
-    """Compute ``(x-m) @ Mm + m`` via the fused Triton kernel above. Float32 only.
+def _fused_reconstruction(
+    x, bases, Mm, patch_shape=None, weight=None, out=None, wsum=None
+):
+    """Compute ``(X - m) @ Mm + m`` via the fused Triton kernel above. Float32 only.
 
     Parameters
     ----------
-    x : (B, N, T) tensor, float32
-        Input patches.
-    m : (B, 1, T) tensor, float32
-        Per-row mean.
+    x, bases, patch_shape :
+        Patches to reconstruct, as in :func:`_fused_centered_gram`.
     Mm : (B, T, T) tensor, float32
-        Filter matrix computed from the SVD of the centered Gram matrix.
+        Filter matrix computed from the eigendecomposition of the Gram matrix.
+    weight : (B,) tensor, float32, optional
+        Per-patch weights. When given, the weighted reconstruction is
+        atomically added in place into ``out`` (same shape and strides as
+        ``x``), and the weights into ``wsum`` (idem).
 
     Returns
     -------
-    out : (B, N, T) tensor, float32
-        Reconstructed patches: ``out[b] = (x[b]-m[b]) @ Mm[b] + m[b]``.
+    out : tensor, float32
+        Without ``weight``, the reconstructed ``(B, N, T)`` patches:
+        ``out[b] = (X[b] - m[b]) @ Mm[b] + m[b]``. Otherwise the input ``out``.
     """
-    B, N, T = x.shape
-    m2 = m.reshape(B, T)
-    out = torch.empty_like(x)
-    BLOCK_T = _block_t(T)
-    grid = (B, triton.cdiv(N, _RECON_REAL_CFG["BLOCK_N"]))
+    (T, *strides), meta = _patch_layout(x, patch_shape)
+    B = bases.shape[0]
+    scatter = weight is not None
+    if scatter:
+        if out is None or wsum is None:
+            raise ValueError("Scattering needs both an `out` and a `wsum` accumulator.")
+        if out.stride() != x.stride() or wsum.stride() != x.stride():
+            raise ValueError("`out` and `wsum` must share the layout of `x`.")
+    else:
+        out = torch.empty(B, meta["N"], T, device=x.device, dtype=torch.float32)
+    grid = (B, triton.cdiv(meta["N"], _RECON_REAL_CFG["BLOCK_N"]))
     _fused_reconstruction_kernel[grid](
         x,
-        m2,
-        Mm,
+        bases,
+        Mm.contiguous(),
+        weight,
         out,
-        N,
+        wsum,
         T,
-        x.stride(0),
-        x.stride(1),
-        x.stride(2),
-        m2.stride(0),
-        m2.stride(1),
-        Mm.stride(0),
-        Mm.stride(1),
-        Mm.stride(2),
-        out.stride(0),
-        out.stride(1),
-        out.stride(2),
-        BLOCK_T=BLOCK_T,  # type: ignore
-        **_RECON_REAL_CFG,  # type: ignore
+        *strides,
+        BLOCK_T=_block_t(T),  # type: ignore
+        SCATTER=scatter,  # type: ignore
+        **meta,
+        **_RECON_REAL_CFG,
     )
     return out
 
@@ -425,8 +421,8 @@ class FastPatchSVD(torch.nn.Module):
 
     def eigh(
         self, x_flat: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor | None]:
-        """Eigendecompose the centered Gram matrix of a batch of flattened patches.
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor | None, torch.Tensor | None]:
+        """Eigendecompose the Gram matrix of a batch of patches centered along time.
 
         Parameters
         ----------
@@ -434,13 +430,16 @@ class FastPatchSVD(torch.nn.Module):
 
         Returns
         -------
-        s : (B, T) tensor
-            Descending real singular values.
-        vh : (B, T, T) tensor
+        s : (B, k) tensor
+            Descending real singular values, ``k = min(N, T - 1)``: centering
+            along time makes the constant time course an exact null direction,
+            which is dropped.
+        vh : (B, k, T) tensor
             Right singular vectors, ``Vh`` row-convention (matches
             ``torch.linalg.svd``'s ``vh``). ``U`` is never computed.
-        m : (B, 1, T) tensor
-            Per-row mean.
+        m : (B, N, 1) tensor or None
+            Temporal mean of each voxel; ``None`` for float32 (the fused
+            Triton kernels compute it in registers).
         xc : (B, N, T) tensor or None
             Centered data: ``None`` for float32 (the fused Triton path never
             materializes it), the real centered tensor for complex64 (computed
@@ -452,22 +451,50 @@ class FastPatchSVD(torch.nn.Module):
                 f"FastPatchSVD only supports float32/complex64, got {dtype}"
             )
 
-        if dtype == torch.float32 and _block_t(x_flat.shape[-1]) <= _FUSED_MAX_BLOCK_T:
-            gc, m = _fused_centered_gram(x_flat)
-            xc = None
+        if fused_supported(dtype, x_flat.shape[-1]):
+            gc = _fused_centered_gram(x_flat, _batch_bases(x_flat))
+            m = xc = None
         else:
-            m = torch.mean(x_flat, dim=-2, keepdim=True)
+            m = torch.mean(x_flat, dim=-1, keepdim=True)
             xc = x_flat - m
             xch = xc.conj().transpose(-2, -1) if dtype == torch.complex64 else xc.mT
             gc = torch.matmul(xch, xc)
 
-        solver = self._get_solver(x_flat.shape[0], dtype, x_flat.device)
+        s, vh = self._solve(gc, x_flat.shape[-2])
+        return s, vh, m, xc
+
+    def eigh_patches(
+        self, vol: torch.Tensor, bases: torch.Tensor, patch_shape: tuple[int, ...]
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Eigendecompose, as :meth:`eigh`, patches read in place from ``vol``.
+
+        Float32 only, and only when :func:`fused_supported`.
+
+        Parameters
+        ----------
+        vol : (X, Y, Z, T') tensor, float32
+        bases : (B,) int64 tensor
+            Element offset in ``vol`` of the first voxel of each patch.
+        patch_shape : (px, py, pz, T) tuple
+
+        Returns
+        -------
+        s, vh :
+            As for :meth:`eigh`.
+        """
+        gc = _fused_centered_gram(vol, bases, patch_shape)
+        return self._solve(gc, math.prod(patch_shape[:-1]))
+
+    def _solve(self, gc: torch.Tensor, N: int) -> tuple[torch.Tensor, torch.Tensor]:
+        solver = self._get_solver(gc.shape[0], gc.dtype, gc.device)
         w = solver(gc)  # in-place: gc now holds eigenvectors; w ascending real.
         # Row j of the raw output already equals conj(eigenvector_j) -- i.e.
-        # exactly Vh's row j (see module docstring). Reverse for descending.
-        vh = gc.flip(-2)
-        s = w.clamp_min(0).sqrt().flip(-1)
-        return s, vh, m, xc
+        # exactly Vh's row j (see module docstring). Reverse for descending,
+        # and keep the k non-trivial components.
+        k = min(N, self.T - 1)
+        vh = gc.flip(-2)[:, :k]
+        s = w.clamp_min(0).sqrt().flip(-1)[:, :k]
+        return s, vh
 
     @staticmethod
     def _filter_matrix(vh: torch.Tensor, ratio: torch.Tensor) -> torch.Tensor:
@@ -478,7 +505,7 @@ class FastPatchSVD(torch.nn.Module):
     def reconstruct(
         self,
         x_flat: torch.Tensor,
-        m: torch.Tensor,
+        m: torch.Tensor | None,
         xc: torch.Tensor | None,
         vh: torch.Tensor,
         ratio: torch.Tensor,
@@ -491,13 +518,34 @@ class FastPatchSVD(torch.nn.Module):
         """
         M = self._filter_matrix(vh, ratio)
         if xc is None:
-            return _fused_reconstruction(x_flat, m, M)
+            return _fused_reconstruction(x_flat, _batch_bases(x_flat), M)
+        assert m is not None
         return torch.baddbmm(m, xc, M)
+
+    def reconstruct_patches(
+        self,
+        vol: torch.Tensor,
+        bases: torch.Tensor,
+        patch_shape: tuple[int, ...],
+        vh: torch.Tensor,
+        ratio: torch.Tensor,
+        weight: torch.Tensor,
+        out: torch.Tensor,
+        wsum: torch.Tensor,
+    ) -> None:
+        """Weighted reconstruction of patches read in place, scattered in place.
+
+        ``weight[b] * ((X[b] - m[b]) @ M[b] + m[b])`` is atomically added into
+        ``out`` and ``weight[b]`` into ``wsum``, over the footprint of patch
+        ``b``. ``out`` and ``wsum`` must share ``vol``'s shape and strides.
+        See :meth:`eigh_patches` for ``vol``, ``bases`` and ``patch_shape``.
+        """
+        M = self._filter_matrix(vh, ratio)
+        _fused_reconstruction(vol, bases, M, patch_shape, weight, out, wsum)
 
     def center_reconstruct(
         self,
         x_flat: torch.Tensor,
-        m: torch.Tensor,
         vh: torch.Tensor,
         ratio: torch.Tensor,
         spatial_idx: int,
@@ -509,12 +557,10 @@ class FastPatchSVD(torch.nn.Module):
         ----------
         x_flat : (B, N, T) tensor
             Input patches.
-        m : (B, 1, T) tensor
-            Per-row mean.
-        vh : (B, T, T) tensor
+        vh : (B, k, T) tensor
             Right singular vectors, ``Vh`` row-convention (matches
             ``torch.linalg.svd``'s ``vh``). ``U`` is never computed
-        ratio : (B, T) tensor
+        ratio : (B, k) tensor
             Singular value shrinkage ratio.
         spatial_idx : int
             Index of the spatial location to reconstruct (0 <= spatial_idx < N).
@@ -528,9 +574,23 @@ class FastPatchSVD(torch.nn.Module):
             Reconstructed row or scalar for the specified spatial and time indices.
 
         """
-        M = self._filter_matrix(vh, ratio)
-        xc_center = x_flat[:, spatial_idx, :] - m[:, 0, :]  # (B,T)
+        return self.reconstruct_row(x_flat[:, spatial_idx, :], vh, ratio, time_idx)
+
+    @staticmethod
+    def reconstruct_row(
+        x_row: torch.Tensor,
+        vh: torch.Tensor,
+        ratio: torch.Tensor,
+        time_idx: int | None = None,
+    ) -> torch.Tensor:
+        """Reconstruct a single row ``x_row`` (B, T) of each patch.
+
+        ``(x_row - m) @ V diag(ratio) Vh + m``, contracted right to left
+        from the row: O(T k) per patch instead of the O(T^3) filter matrix.
+        See :meth:`center_reconstruct` for ``time_idx`` and the output.
+        """
+        m = x_row.mean(dim=-1, keepdim=True)  # its temporal mean, (B, 1)
+        coef = torch.einsum("bt,bkt->bk", x_row - m, vh.conj()) * ratio
         if time_idx is None:
-            return torch.matmul(xc_center.unsqueeze(1), M).squeeze(1) + m[:, 0, :]
-        M_col = M[:, :, time_idx]  # (B,T)
-        return torch.sum(xc_center * M_col, dim=-1) + m[:, 0, time_idx]
+            return torch.einsum("bk,bkt->bt", coef, vh) + m
+        return torch.einsum("bk,bk->b", coef, vh[:, :, time_idx]) + m[:, 0]
