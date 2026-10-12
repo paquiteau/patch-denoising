@@ -31,7 +31,8 @@ Each patch is processed, by applying a threshold function on the centered singul
 
     X = U S V^T + M
 
-Where :math:`M = \langle X \rangle` is the mean of each row of :math:`X`, and :math:`U,S,V^T` is the SVD decomposition of :math:`X-M`.
+Where :math:`M = \langle X \rangle` is the mean of each row of :math:`X` (the temporal mean of each voxel), and :math:`U,S,V^T` is the SVD decomposition of :math:`X-M`.
+Centering along time makes the constant time course a null direction of :math:`X-M`: only its :math:`n = \min(M, N-1)` non-trivial components are kept, and the noise of the centered patch behaves as an :math:`M \times (N-1)` random matrix, which is the size the thresholds below are computed for.
 In particular, :math:`S=\mathrm{diag}(\sigma_1, \dots, \sigma_n)`
 
 The processing of the singular values by a threshold function :math:`\eta(\sigma_i) = \sigma_i'` yields  new (typically sparser) singular values :math:`S'`

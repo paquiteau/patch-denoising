@@ -12,11 +12,19 @@ with some twists:
   algebraically to a single ``(T, T)`` filter matrix
   ``M = V @ diag(s_shrink / S) @ Vh`` and one GEMM, ``x_denoised = Xc @ M + m``,
   instead of forming ``U`` (one GEMM) and then reconstructing (a second GEMM).
-- We apply the centering of the Gram Matrix inline,
-  to avoid materializing the centered tensor (``Xc = X - m``) in HBM.
+- Patches are centered along time (``m`` is the temporal mean of each voxel),
+  inline in the Triton kernels, to avoid materializing the centered tensor
+  (``Xc = X - m``) in HBM. A tile holds whole rows, so the mean is a register
+  reduction.
+- Centering along time makes the constant time course an exact null direction
+  of ``Xc``: only the ``k = min(N, T - 1)`` non-trivial components are returned.
+  This also removes the mean image -- by far the dominant component of a real
+  patch -- from the Gram matrix, which keeps it well conditioned enough for an
+  FP32 eigensolver to resolve the noise eigenvalues.
 """
 
 import logging
+import math
 
 import nvmath.bindings.cublas as cublas
 import nvmath.bindings.cusolver as cusolver
@@ -387,9 +395,9 @@ class FastPatchSVD(torch.nn.Module):
     This class implements a custom SVD driver for a batch of tall-skinny
     matrices (patches) that avoids the FP64 promotion of ``gesvda`` in cuSOLVER.
 
-    It computes the eigendecomposition of the centered Gram matrix and
-    reconstructs the denoised patches without explicitly forming the left
-    singular vectors.
+    It computes the eigendecomposition of the Gram matrix of the patches,
+    centered along time, and reconstructs the denoised patches without
+    explicitly forming the left singular vectors.
 
     Moreover, it does not materialize the centered tensor nor the "U" matrix,
     which saves memory and computation time.
