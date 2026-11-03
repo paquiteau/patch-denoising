@@ -50,8 +50,36 @@ Installation
 
    $ pip install patch-denoise
 
-patch-denoise requires Python>=3.9
+patch-denoise requires Python>=3.12
 
+
+Apptainer / Singularity
+-----------------------
+
+A container recipe with the GPU extras (PyTorch, Triton) is provided in ``patch-denoise.def``.
+Build it once, from a checkout of this repository (no root needed with ``--fakeroot``):
+
+.. code::
+
+   $ apptainer build --fakeroot --build-arg VERSION=$(git describe --tags | sed s/^v//) \
+         patch-denoise.sif patch-denoise.def
+
+and run it like the regular command-line. Use ``--nv`` to expose the host GPU, and ``--bind`` for
+data that lives outside your home directory:
+
+.. code::
+
+   $ apptainer run --nv --bind /path/to/data patch-denoise.sif input.nii output.nii --mask="auto"
+
+The image bundles CUDA 13 user-space libraries, so the host NVIDIA driver must support CUDA 13
+(``nvidia-smi`` reporting driver >= 580). Without ``--nv`` the CPU implementation is used.
+
+On a Slurm cluster:
+
+.. code::
+
+   $ srun --gres=gpu:1 --cpus-per-task=8 --mem=32G --time=01:00:00 \
+         apptainer run --nv --bind /path/to/data patch-denoise.sif input.nii output.nii --mask="auto"
 
 Quickstart
 ==========

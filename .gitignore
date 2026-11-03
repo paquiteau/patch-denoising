@@ -21,3 +21,4 @@ docs_build/
 src/patch_denoise/_version.py
 
 tests/data
+*.sif

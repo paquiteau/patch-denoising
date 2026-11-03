@@ -1,0 +1,48 @@
+Bootstrap: docker
+From: ghcr.io/astral-sh/uv:python3.13-bookworm-slim
+
+%arguments
+    # Override with: apptainer build --build-arg VERSION=2.3.0 ...
+    VERSION=99.dev
+
+%files
+    pyproject.toml /opt/src/pyproject.toml
+    uv.lock /opt/src/uv.lock
+    README.rst /opt/src/README.rst
+    LICENSE.txt /opt/src/LICENSE.txt
+    src /opt/src/src
+
+%post
+    # gcc is required by triton to JIT-compile kernels at runtime.
+    apt-get update
+    apt-get install -y --no-install-recommends build-essential
+    rm -rf /var/lib/apt/lists/*
+
+    cd /opt/src
+    export UV_PROJECT_ENVIRONMENT=/opt/venv
+    export UV_COMPILE_BYTECODE=1
+    export UV_LINK_MODE=copy
+    export SETUPTOOLS_SCM_PRETEND_VERSION={{ VERSION }}
+    uv sync --frozen --no-dev --no-editable --extra gpu
+
+    cd /
+    rm -rf /opt/src /root/.cache
+
+%environment
+    export PATH=/opt/venv/bin:$PATH
+    export PYTHONNOUSERSITE=1
+
+%runscript
+    exec patch-denoise "$@"
+
+%test
+    patch-denoise --help > /dev/null
+    python -c "import patch_denoise, torch"
+
+%labels
+    Author Pierre-antoine Comby
+    Version {{ VERSION }}
+
+%help
+    Patch-denoise CLI. Use --gpu for GPU support.
+      apptainer run --gpu patch-denoise.sif input.nii output.nii --mask auto
