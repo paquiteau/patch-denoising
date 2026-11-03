@@ -405,7 +405,9 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         **kwargs,
     ):
         u_vec, s_values, v_vec, p_tmean = svd_analysis(patch)
-        n_dim = patch.shape[-1] - 1  # time dimension left after temporal centering
+        # The noise of the centered patch is N x (T - 1), with N >= T - 1:
+        # singular values are normalized by the larger dimension, N.
+        n_dim = patch.shape[0]
         if var_apriori is not None:
             sigma = np.sqrt(np.mean(var_apriori.get_patch(patch_idx)))
         else:
@@ -414,7 +416,7 @@ class OptimalSVDDenoiser(BaseSpaceTimeDenoiser):
         scale_factor = np.sqrt(n_dim) * sigma
         thresh_s_values = scale_factor * shrink_func(
             s_values / scale_factor,
-            beta=n_dim / patch.shape[0],
+            beta=(patch.shape[-1] - 1) / n_dim,
         )
         thresh_s_values[np.isnan(thresh_s_values)] = 0
 

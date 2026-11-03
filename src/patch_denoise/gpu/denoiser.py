@@ -176,7 +176,8 @@ class OptimalSVDDenoiser(_LowRankDenoiser):
         if loss not in ["fro", "nuc", "ope"]:
             raise ValueError(f"Invalid loss {loss}, must be 'fro', 'nuc', or 'ope'")
 
-        # Patches are centered along time: the noise is an N x (T - 1) matrix.
+        # Patches are centered along time: the noise is an N x (T - 1) matrix,
+        # N >= T - 1, whose singular values are normalized by sqrt(N).
         self.M: int = self.T - 1
 
         self.beta = float(self.M / self.N)
@@ -229,7 +230,7 @@ class OptimalSVDDenoiser(_LowRankDenoiser):
         """
         if var_apriori is not None:
             sigma = torch.sqrt(var_apriori)
-            scale_factor = sigma * (self.M**0.5)
+            scale_factor = sigma * (self.N**0.5)
         else:
             # manual median because s is already sorted.
             k = s.shape[-1]
@@ -238,7 +239,7 @@ class OptimalSVDDenoiser(_LowRankDenoiser):
             # scale factor to apply to the singular values before shrinkage.
             scale_factor = s[..., lo] + s[..., hi]
             scale_factor /= 2 * self.sqrt_mp_med
-            sigma = scale_factor / (self.M**0.5)
+            sigma = scale_factor / (self.N**0.5)
 
         # Apply shrink
         scale_factor_exp = scale_factor.unsqueeze(-1)
